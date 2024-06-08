@@ -1,4 +1,5 @@
 #include <hyprutils/string/String.hpp>
+#include <hyprutils/string/VarList.hpp>
 #include "shared.hpp"
 
 using namespace Hyprutils::String;
@@ -28,6 +29,10 @@ int main(int argc, char** argv, char** envp) {
     EXPECT(isNumber("vvss", true), false);
     EXPECT(isNumber("0.9999s", true), false);
     EXPECT(isNumber("s0.9999", true), false);
+
+    CVarList list("hello    world!", 0, 's', true);
+    EXPECT(list[0], "hello");
+    EXPECT(list[1], "world!");
 
     return ret;
 }
