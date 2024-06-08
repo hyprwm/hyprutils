@@ -56,3 +56,13 @@ bool Hyprutils::String::isNumber(const std::string& str, bool allowfloat) {
 
     return true;
 }
+
+void Hyprutils::String::replaceInString(std::string& string, const std::string& what, const std::string& to) {
+    if (string.empty())
+        return;
+    size_t pos = 0;
+    while ((pos = string.find(what, pos)) != std::string::npos) {
+        string.replace(pos, what.length(), to);
+        pos += to.length();
+    }
+}

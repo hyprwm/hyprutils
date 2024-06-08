@@ -34,5 +34,9 @@ int main(int argc, char** argv, char** envp) {
     EXPECT(list[0], "hello");
     EXPECT(list[1], "world!");
 
+    std::string hello = "hello world!";
+    replaceInString(hello, "hello", "hi");
+    EXPECT(hello, "hi world!");
+
     return ret;
 }
