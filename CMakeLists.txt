@@ -5,7 +5,7 @@ add_compile_definitions(HYPRUTILS_VERSION="${HYPRUTILS_VERSION}")
 
 project(hyprutils
     VERSION ${HYPRUTILS_VERSION}
-    DESCRIPTION "A library and toolkit for the Hyprland cursor format"
+    DESCRIPTION "Small C++ library for utilities used across the Hypr* ecosystem"
 )
 
 include(CTest)
