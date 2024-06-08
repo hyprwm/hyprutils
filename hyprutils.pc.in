@@ -1,0 +1,10 @@
+prefix=@PREFIX@
+includedir=@INCLUDE@
+libdir=@LIBDIR@
+
+Name: hyprutils
+URL: https://github.com/hyprwm/hyprutils
+Description: Hyprland utilities library used across the ecosystem 
+Version: @HYPRUTILS_VERSION@
+Cflags: -I${includedir}
+Libs: -L${libdir} -lhyprutils
