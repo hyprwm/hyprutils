@@ -38,7 +38,6 @@ target_include_directories( hyprutils
 set_target_properties(hyprutils PROPERTIES
     VERSION ${hyprutils_VERSION}
     SOVERSION 0
-    PUBLIC_HEADER ${PUBLIC_HEADERS}
 )
 
 # tests
@@ -62,3 +61,4 @@ add_dependencies(tests hyprutils_signal)
 # Installation
 install(TARGETS hyprutils)
 install(DIRECTORY "include/hyprutils" DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(FILES ${CMAKE_BINARY_DIR}/hyprutils.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
