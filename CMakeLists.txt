@@ -28,6 +28,7 @@ else()
 endif()
 
 file(GLOB_RECURSE SRCFILES CONFIGURE_DEPENDS "src/*.cpp" "include/*.hpp")
+file(GLOB_RECURSE PUBLIC_HEADERS CONFIGURE_DEPENDS "include/*.hpp")
 
 add_library(hyprutils SHARED ${SRCFILES})
 target_include_directories( hyprutils
@@ -37,7 +38,7 @@ target_include_directories( hyprutils
 set_target_properties(hyprutils PROPERTIES
     VERSION ${hyprutils_VERSION}
     SOVERSION 0
-    PUBLIC_HEADER include/hyprutils/hyprutils.hpp include/hyprutils/hyprutils.h include/hyprutils/shared.h
+    PUBLIC_HEADER ${PUBLIC_HEADERS}
 )
 
 # tests
