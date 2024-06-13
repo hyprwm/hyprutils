@@ -169,13 +169,7 @@ namespace Hyprutils {
             }
 
             ~CSharedPointer() {
-                // we do not decrement here,
-                // because we want to preserve the pointer
-                // in case this is the last owner.
-                if (impl_ && impl_->ref() == 1)
-                    destroyImpl();
-                else
-                    decrement();
+                decrement();
             }
 
             template <typename U>
