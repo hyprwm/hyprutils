@@ -51,7 +51,7 @@ bool Hyprutils::String::isNumber(const std::string& str, bool allowfloat) {
         }
     }
 
-    if (str.back() == '.')
+    if (!isdigit(str.back()))
         return false;
 
     return true;

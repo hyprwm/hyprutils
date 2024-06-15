@@ -19,6 +19,7 @@ int main(int argc, char** argv, char** envp) {
     EXPECT(isNumber("---3423--432s"), false);
     EXPECT(isNumber("1s"), false);
     EXPECT(isNumber(""), false);
+    EXPECT(isNumber("-"), false);
     EXPECT(isNumber("--0"), false);
     EXPECT(isNumber("abc"), false);
     EXPECT(isNumber("0.0", true), true);
