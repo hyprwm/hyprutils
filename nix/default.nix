@@ -14,6 +14,10 @@ stdenv.mkDerivation {
 
   outputs = ["out" "dev"];
 
+  cmakeBuildType = "RelWithDebInfo";
+
+  dontStrip = true;
+
   meta = with lib; {
     homepage = "https://github.com/hyprwm/hyprutils";
     description = "Small C++ library for utilities used across the Hypr* ecosystem";
