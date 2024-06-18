@@ -30,6 +30,9 @@ endif()
 file(GLOB_RECURSE SRCFILES CONFIGURE_DEPENDS "src/*.cpp" "include/*.hpp")
 file(GLOB_RECURSE PUBLIC_HEADERS CONFIGURE_DEPENDS "include/*.hpp")
 
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(deps REQUIRED IMPORTED_TARGET pixman-1)
+
 add_library(hyprutils SHARED ${SRCFILES})
 target_include_directories( hyprutils
     PUBLIC "./include"
@@ -39,24 +42,30 @@ set_target_properties(hyprutils PROPERTIES
     VERSION ${hyprutils_VERSION}
     SOVERSION 0
 )
+target_link_libraries(hyprutils PkgConfig::deps)
 
 # tests
 add_custom_target(tests)
 
 add_executable(hyprutils_memory "tests/memory.cpp")
-target_link_libraries(hyprutils_memory PRIVATE hyprutils)
+target_link_libraries(hyprutils_memory PRIVATE hyprutils PkgConfig::deps)
 add_test(NAME "Memory" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/tests COMMAND hyprutils_memory "memory")
 add_dependencies(tests hyprutils_memory)
 
 add_executable(hyprutils_string "tests/string.cpp")
-target_link_libraries(hyprutils_string PRIVATE hyprutils)
+target_link_libraries(hyprutils_string PRIVATE hyprutils PkgConfig::deps)
 add_test(NAME "String" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/tests COMMAND hyprutils_string "string")
 add_dependencies(tests hyprutils_string)
 
 add_executable(hyprutils_signal "tests/signal.cpp")
-target_link_libraries(hyprutils_signal PRIVATE hyprutils)
+target_link_libraries(hyprutils_signal PRIVATE hyprutils PkgConfig::deps)
 add_test(NAME "Signal" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/tests COMMAND hyprutils_signal "signal")
 add_dependencies(tests hyprutils_signal)
+
+add_executable(hyprutils_math "tests/math.cpp")
+target_link_libraries(hyprutils_math PRIVATE hyprutils PkgConfig::deps)
+add_test(NAME "Math" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/tests COMMAND hyprutils_math "math")
+add_dependencies(tests hyprutils_math)
 
 # Installation
 install(TARGETS hyprutils)
