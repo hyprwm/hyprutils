@@ -9,6 +9,11 @@ Hyprutils::Math::Vector2D::Vector2D(double xx, double yy) {
     y = yy;
 }
 
+Hyprutils::Math::Vector2D::Vector2D(int xx, int yy) {
+    x = (double)xx;
+    y = (double)yy;
+}
+
 Hyprutils::Math::Vector2D::Vector2D() {
     x = 0;
     y = 0;

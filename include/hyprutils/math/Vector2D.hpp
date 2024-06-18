@@ -8,6 +8,7 @@ namespace Hyprutils {
         class Vector2D {
           public:
             Vector2D(double, double);
+            Vector2D(int, int);
             Vector2D();
             ~Vector2D();
 
