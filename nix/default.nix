@@ -2,6 +2,8 @@
   lib,
   stdenv,
   cmake,
+  pkg-config,
+  pixman,
   version ? "git",
   doCheck ? false,
 }:
@@ -10,7 +12,14 @@ stdenv.mkDerivation {
   inherit version doCheck;
   src = ../.;
 
-  nativeBuildInputs = [cmake];
+  nativeBuildInputs = [
+    cmake
+    pkg-config
+  ];
+
+  buildInputs = [
+    pixman
+  ];
 
   outputs = ["out" "dev"];
 
