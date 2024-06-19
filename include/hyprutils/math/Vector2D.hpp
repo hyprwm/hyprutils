@@ -102,7 +102,7 @@ namespace Hyprutils {
 }
 
 // absolutely ridiculous formatter spec parsing
-#define FORMAT_PARSE(specs__, type__)                                                                                                                                              \
+#define AQ_FORMAT_PARSE(specs__, type__)                                                                                                                                              \
     template <typename FormatContext>                                                                                                                                              \
     constexpr auto parse(FormatContext& ctx) {                                                                                                                                     \
         auto it = ctx.begin();                                                                                                                                                     \
@@ -112,10 +112,10 @@ namespace Hyprutils {
         return it;                                                                                                                                                                 \
     }
 
-#define FORMAT_FLAG(spec__, flag__)                                                                                                                                                \
+#define AQ_FORMAT_FLAG(spec__, flag__)                                                                                                                                                \
     case spec__: (flag__) = true; break;
 
-#define FORMAT_NUMBER(buf__)                                                                                                                                                       \
+#define AQ_FORMAT_NUMBER(buf__)                                                                                                                                                       \
     case '0':                                                                                                                                                                      \
     case '1':                                                                                                                                                                      \
     case '2':                                                                                                                                                                      \
@@ -138,9 +138,9 @@ struct std::formatter<Hyprutils::Math::Vector2D, CharT> : std::formatter<CharT> 
     bool        formatJson = false;
     bool        formatX    = false;
     std::string precision  = "";
-    FORMAT_PARSE(FORMAT_FLAG('j', formatJson) //
-                 FORMAT_FLAG('X', formatX)    //
-                 FORMAT_NUMBER(precision),
+    AQ_FORMAT_PARSE(AQ_FORMAT_FLAG('j', formatJson) //
+                 AQ_FORMAT_FLAG('X', formatX)    //
+                 AQ_FORMAT_NUMBER(precision),
                  Hyprutils::Math::Vector2D)
 
     template <typename FormatContext>
@@ -159,7 +159,3 @@ struct std::formatter<Hyprutils::Math::Vector2D, CharT> : std::formatter<CharT> 
         } catch (std::format_error& e) { return std::format_to(ctx.out(), "[{}, {}]", vec.x, vec.y); }
     }
 };
-
-#undef FORMAT_PARSE
-#undef FORMAT_FLAG
-#undef FORMAT_NUMBER
