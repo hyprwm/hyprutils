@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.19)
 
-set(HYPRUTILS_VERSION "0.1.3")
+set(HYPRUTILS_VERSION "0.1.4")
 add_compile_definitions(HYPRUTILS_VERSION="${HYPRUTILS_VERSION}")
 
 project(hyprutils
