@@ -64,11 +64,6 @@ CBox& Hyprutils::Math::CBox::round() {
 
 CBox& Hyprutils::Math::CBox::transform(const eTransform t, double w, double h) {
 
-    //Validate transforamtion
-    if (t < HYPRUTILS_TRANSFORM_NORMAL || t > HYPRUTILS_TRANSFORM_FLIPPED_270) {
-        throw std::invalid_argument("Invalid transformation type");
-    }
-
     CBox temp = *this;
 
     if (t % 2 == 0) {
