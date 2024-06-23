@@ -7,6 +7,10 @@
 
 using namespace Hyprutils::Math;
 
+constexpr double HALF = 0.5;
+constexpr double DOUBLE = 2.0;
+constexpr double EPSILON = 1e-9;
+
 CBox& Hyprutils::Math::CBox::scale(double scale) {
     x *= scale;
     y *= scale;
@@ -33,7 +37,7 @@ CBox& Hyprutils::Math::CBox::translate(const Vector2D& vec) {
 }
 
 Vector2D Hyprutils::Math::CBox::middle() const {
-    return Vector2D{x + w / 2.0, y + h / 2.0};
+    return Vector2D{x + w * HALF, y + h * HALF};
 }
 
 bool Hyprutils::Math::CBox::containsPoint(const Vector2D& vec) const {
@@ -41,14 +45,17 @@ bool Hyprutils::Math::CBox::containsPoint(const Vector2D& vec) const {
 }
 
 bool Hyprutils::Math::CBox::empty() const {
-    return w == 0 || h == 0;
+    return std::fabs(w) < EPSILON || std::fabs(h) < EPSILON;
 }
 
 CBox& Hyprutils::Math::CBox::round() {
-    float newW = x + w - std::round(x);
-    float newH = y + h - std::round(y);
-    x          = std::round(x);
-    y          = std::round(y);
+    double roundedX = std::round(x);
+    double roundedY = std::round(y);
+    double newW = x + w - roundedX;
+    double newH = y + h - roundedY; 
+    
+    x          = roundedX;
+    y          = roundedY;
     w          = std::round(newW);
     h          = std::round(newH);
 
@@ -56,6 +63,7 @@ CBox& Hyprutils::Math::CBox::round() {
 }
 
 CBox& Hyprutils::Math::CBox::transform(const eTransform t, double w, double h) {
+
     CBox temp = *this;
 
     if (t % 2 == 0) {
@@ -119,8 +127,8 @@ CBox& Hyprutils::Math::CBox::scaleFromCenter(double scale) {
     w *= scale;
     h *= scale;
 
-    x -= (w - oldW) / 2.0;
-    y -= (h - oldH) / 2.0;
+    x -= (w - oldW) * HALF;
+    y -= (h - oldH) * HALF;
 
     return *this;
 }
@@ -128,10 +136,10 @@ CBox& Hyprutils::Math::CBox::scaleFromCenter(double scale) {
 CBox& Hyprutils::Math::CBox::expand(const double& value) {
     x -= value;
     y -= value;
-    w += value * 2.0;
-    h += value * 2.0;
+    w += value * DOUBLE;
+    h += value * DOUBLE;
 
-    if (w <= 0 || h <= 0) {
+    if (w <= EPSILON || h <= EPSILON) {
         w = 0;
         h = 0;
     }
@@ -147,14 +155,14 @@ CBox& Hyprutils::Math::CBox::noNegativeSize() {
 }
 
 CBox Hyprutils::Math::CBox::intersection(const CBox& other) const {
-    const float newX      = std::max(x, other.x);
-    const float newY      = std::max(y, other.y);
-    const float newBottom = std::min(y + h, other.y + other.h);
-    const float newRight  = std::min(x + w, other.x + other.w);
-    float       newW      = newRight - newX;
-    float       newH      = newBottom - newY;
+    const double newX      = std::max(x, other.x);
+    const double newY      = std::max(y, other.y);
+    const double newBottom = std::min(y + h, other.y + other.h);
+    const double newRight  = std::min(x + w, other.x + other.w);
+    double       newW      = newRight - newX;
+    double       newH      = newBottom - newY;
 
-    if (newW <= 0 || newH <= 0) {
+    if (newW <= EPSILON || newH <= EPSILON) {
         newW = 0;
         newH = 0;
     }
@@ -171,10 +179,12 @@ bool Hyprutils::Math::CBox::inside(const CBox& bound) const {
 }
 
 CBox Hyprutils::Math::CBox::roundInternal() {
-    float newW = x + w - std::floor(x);
-    float newH = y + h - std::floor(y);
+    double flooredX = std::floor(x); 
+    double flooredY = std::floor(y);
+    double newW = x + w - flooredX; 
+    double newH = y + h - flooredY;
 
-    return CBox{std::floor(x), std::floor(y), std::floor(newW), std::floor(newH)};
+    return CBox{flooredX, flooredY, std::floor(newW), std::floor(newH)};
 }
 
 CBox Hyprutils::Math::CBox::copy() const {
@@ -196,6 +206,17 @@ Vector2D Hyprutils::Math::CBox::closestPoint(const Vector2D& vec) const {
     Vector2D nv = vec;
     nv.x        = std::clamp(nv.x, x, x + w);
     nv.y        = std::clamp(nv.y, y, y + h);
+
+    if (std::fabs(nv.x - x) < EPSILON)
+        nv.x = x;
+    else if (std::fabs(nv.x - (x + w)) < EPSILON)
+        nv.x = x + w;
+
+    if (std::fabs(nv.y - y) < EPSILON)
+        nv.y = y;
+    else if (std::fabs(nv.y - (y + h)) < EPSILON)
+        nv.y = y + h;
+
     return nv;
 }
 
