@@ -18,3 +18,14 @@ namespace Colors {
     } else {                                                                                                                                                                       \
         std::cout << Colors::GREEN << "Passed " << Colors::RESET << #expr << ". Got " << val << "\n";                                                                              \
     }
+#define EXPECT_VECTOR2D(expr, val)                                                                                                                                                \
+    do {                                                                                                                                                                           \
+        const auto& RESULT = expr;                                                                                                                                                 \
+        const auto& EXPECTED = val;                                                                                                                                               \
+        if (!(std::abs(RESULT.x - EXPECTED.x) < 1e-6 && std::abs(RESULT.y - EXPECTED.y) < 1e-6)) {                                                                                 \
+            std::cout << Colors::RED << "Failed: " << Colors::RESET << #expr << ", expected (" << EXPECTED.x << ", " << EXPECTED.y << ") but got (" << RESULT.x << ", " << RESULT.y << ")\n"; \
+            ret = 1;                                                                                                                                                               \
+        } else {                                                                                                                                                                   \
+            std::cout << Colors::GREEN << "Passed " << Colors::RESET << #expr << ". Got (" << RESULT.x << ", " << RESULT.y << ")\n";                                               \
+        }                                                                                                                                                                          \
+    } while(0)
