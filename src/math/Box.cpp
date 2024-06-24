@@ -7,11 +7,11 @@
 
 using namespace Hyprutils::Math;
 
-constexpr double HALF = 0.5;
-constexpr double DOUBLE = 2.0;
+constexpr double HALF    = 0.5;
+constexpr double DOUBLE  = 2.0;
 constexpr double EPSILON = 1e-9;
 
-CBox& Hyprutils::Math::CBox::scale(double scale) {
+CBox&            Hyprutils::Math::CBox::scale(double scale) {
     x *= scale;
     y *= scale;
     w *= scale;
@@ -51,13 +51,13 @@ bool Hyprutils::Math::CBox::empty() const {
 CBox& Hyprutils::Math::CBox::round() {
     double roundedX = std::round(x);
     double roundedY = std::round(y);
-    double newW = x + w - roundedX;
-    double newH = y + h - roundedY; 
-    
-    x          = roundedX;
-    y          = roundedY;
-    w          = std::round(newW);
-    h          = std::round(newH);
+    double newW     = x + w - roundedX;
+    double newH     = y + h - roundedY;
+
+    x = roundedX;
+    y = roundedY;
+    w = std::round(newW);
+    h = std::round(newH);
 
     return *this;
 }
@@ -179,10 +179,10 @@ bool Hyprutils::Math::CBox::inside(const CBox& bound) const {
 }
 
 CBox Hyprutils::Math::CBox::roundInternal() {
-    double flooredX = std::floor(x); 
+    double flooredX = std::floor(x);
     double flooredY = std::floor(y);
-    double newW = x + w - flooredX; 
-    double newH = y + h - flooredY;
+    double newW     = x + w - flooredX;
+    double newH     = y + h - flooredY;
 
     return CBox{flooredX, flooredY, std::floor(newW), std::floor(newH)};
 }
