@@ -80,7 +80,7 @@ namespace Hyprutils {
             /* create a weak ptr from a shared ptr with assignment */
             template <typename U>
             validHierarchy<const CWeakPointer<U>&> operator=(const CSharedPointer<U>& rhs) {
-                if ((uintptr_t)impl_ == (uintptr_t)rhs.impl_)
+                if (reinterpret_cast<uintptr_t>(impl_) == reinterpret_cast<uintptr_t>(rhs.impl_))
                     return *this;
 
                 decrementWeak();
@@ -139,11 +139,11 @@ namespace Hyprutils {
             }
 
             bool operator()(const CWeakPointer& lhs, const CWeakPointer& rhs) const {
-                return (uintptr_t)lhs.impl_ < (uintptr_t)rhs.impl_;
+                return reinterpret_cast<uintptr_t>(lhs.impl_) < reinterpret_cast<uintptr_t>(rhs.impl_);
             }
 
             bool operator<(const CWeakPointer& rhs) const {
-                return (uintptr_t)impl_ < (uintptr_t)rhs.impl_;
+                return reinterpret_cast<uintptr_t>(impl_) < reinterpret_cast<uintptr_t>(rhs.impl_);
             }
 
             T* get() const {

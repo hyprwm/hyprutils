@@ -218,11 +218,11 @@ namespace Hyprutils {
             }
 
             bool operator()(const CSharedPointer& lhs, const CSharedPointer& rhs) const {
-                return (uintptr_t)lhs.impl_ < (uintptr_t)rhs.impl_;
+                return reinterpret_cast<uintptr_t>(lhs.impl_) < reinterpret_cast<uintptr_t>(rhs.impl_);
             }
 
             bool operator<(const CSharedPointer& rhs) const {
-                return (uintptr_t)impl_ < (uintptr_t)rhs.impl_;
+                return reinterpret_cast<uintptr_t>(impl_) < reinterpret_cast<uintptr_t>(rhs.impl_);
             }
 
             T* operator->() const {
