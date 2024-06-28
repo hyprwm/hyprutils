@@ -20,7 +20,7 @@ namespace Hyprutils {
         namespace CSharedPointer_ {
             class impl_base {
               public:
-                virtual ~impl_base(){};
+                virtual ~impl_base() {};
 
                 virtual void         inc() noexcept         = 0;
                 virtual void         dec() noexcept         = 0;
@@ -31,6 +31,7 @@ namespace Hyprutils {
                 virtual void         destroy() noexcept     = 0;
                 virtual bool         destroying() noexcept  = 0;
                 virtual bool         dataNonNull() noexcept = 0;
+                virtual void*        getData() noexcept     = 0;
             };
 
             template <typename T>
@@ -107,6 +108,10 @@ namespace Hyprutils {
                 }
 
                 virtual bool dataNonNull() noexcept {
+                    return _data != nullptr;
+                }
+
+                virtual void* getData() noexcept {
                     return _data;
                 }
 
@@ -234,7 +239,7 @@ namespace Hyprutils {
             }
 
             T* get() const {
-                return (T*)(impl_ ? static_cast<CSharedPointer_::impl<T>*>(impl_)->_data : nullptr);
+                return impl_ ? static_cast<T*>(impl_->getData()) : nullptr;
             }
 
             unsigned int strongRef() const {

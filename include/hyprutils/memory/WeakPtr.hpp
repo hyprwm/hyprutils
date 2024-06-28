@@ -147,7 +147,7 @@ namespace Hyprutils {
             }
 
             T* get() const {
-                return (T*)(impl_ ? static_cast<CSharedPointer_::impl<T>*>(impl_)->_data : nullptr);
+                return impl_ ? static_cast<T*>(impl_->getData()) : nullptr;
             }
 
             T* operator->() const {
