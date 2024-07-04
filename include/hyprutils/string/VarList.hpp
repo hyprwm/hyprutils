@@ -12,7 +12,7 @@ namespace Hyprutils {
                 @param delim if delimiter is 's', use std::isspace
                 @param removeEmpty remove empty args from argv
             */
-            CVarList(const std::string& in, const size_t maxSize = 0, const char delim = ',', const bool removeEmpty = false);
+            CVarList(const std::string& in, const size_t lastArgNo = 0, const char delim = ',', const bool removeEmpty = false);
 
             ~CVarList() = default;
 
