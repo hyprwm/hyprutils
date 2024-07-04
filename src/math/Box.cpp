@@ -206,8 +206,14 @@ Vector2D Hyprutils::Math::CBox::closestPoint(const Vector2D& vec) const {
     Vector2D nv       = vec;
     Vector2D maxPoint = {x + w - EPSILON, y + h - EPSILON};
 
-    nv.x = std::clamp(nv.x, x, maxPoint.x);
-    nv.y = std::clamp(nv.y, y, maxPoint.y);
+    if (x < maxPoint.x)
+        nv.x = std::clamp(nv.x, x, maxPoint.x);
+    else
+        nv.x = x;
+    if (y < maxPoint.y)
+        nv.y = std::clamp(nv.y, y, maxPoint.y);
+    else
+        nv.y = y;
 
     if (std::fabs(nv.x - x) < EPSILON)
         nv.x = x;
