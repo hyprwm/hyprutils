@@ -6,7 +6,7 @@
 using namespace Hyprutils::String;
 
 Hyprutils::String::CVarList::CVarList(const std::string& in, const size_t lastArgNo, const char delim, const bool removeEmpty) {
-    if (in.empty())
+    if (!removeEmpty && in.empty())
         m_vArgs.emplace_back("");
 
     std::string args{in};
