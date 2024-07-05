@@ -49,6 +49,7 @@ namespace Hyprutils {
             CRegion&                    invert(const CBox& box);
             CRegion&                    scale(float scale);
             CRegion&                    scale(const Vector2D& scale);
+            CRegion&                    expand(double units);
             CRegion&                    rationalize();
             CBox                        getExtents();
             bool                        containsPoint(const Vector2D& vec) const;

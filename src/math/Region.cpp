@@ -112,6 +112,19 @@ CRegion& Hyprutils::Math::CRegion::transform(const eTransform t, double w, doubl
     return *this;
 }
 
+CRegion& Hyprutils::Math::CRegion::expand(double units) {
+    auto rects = getRects();
+
+    clear();
+
+    for (auto& r : rects) {
+        CBox b{(double)r.x1 - units, (double)r.y1 - units, (double)r.x2 - r.x1 + units * 2, (double)r.y2 - r.y1 + units * 2};
+        add(b);
+    }
+
+    return *this;
+}
+
 CRegion& Hyprutils::Math::CRegion::rationalize() {
     intersect(CBox{-MAX_REGION_SIDE, -MAX_REGION_SIDE, MAX_REGION_SIDE * 2, MAX_REGION_SIDE * 2});
     return *this;
