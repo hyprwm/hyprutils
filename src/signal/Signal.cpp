@@ -9,14 +9,10 @@ using namespace Hyprutils::Memory;
 #define WP CWeakPointer
 
 void Hyprutils::Signal::CSignal::emit(std::any data) {
-    bool                             dirty = false;
-
     std::vector<SP<CSignalListener>> listeners;
     for (auto& l : m_vListeners) {
-        if (l.expired()) {
-            dirty = true;
+        if (l.expired())
             continue;
-        }
 
         listeners.emplace_back(l.lock());
     }
@@ -29,10 +25,9 @@ void Hyprutils::Signal::CSignal::emit(std::any data) {
     for (auto& l : listeners) {
         // if there is only one lock, it means the event is only held by the listeners
         // vector and was removed during our iteration
-        if (l.strongRef() == 1) {
-            dirty = true;
+        if (l.strongRef() == 1)
             continue;
-        }
+        
         l->emit(data);
     }
 
@@ -43,13 +38,17 @@ void Hyprutils::Signal::CSignal::emit(std::any data) {
     // release SPs
     listeners.clear();
 
-    if (dirty)
-        std::erase_if(m_vListeners, [](const auto& other) { return other.expired(); });
+    // we cannot release any expired refs here as one of the listeners could've removed this object and 
+    // as such we'd be doing a UAF
 }
 
 CHyprSignalListener Hyprutils::Signal::CSignal::registerListener(std::function<void(std::any)> handler) {
     CHyprSignalListener listener = makeShared<CSignalListener>(handler);
     m_vListeners.emplace_back(listener);
+
+    // housekeeping: remove any stale listeners
+    std::erase_if(m_vListeners, [](const auto& other) { return other.expired(); });
+    
     return listener;
 }
 
