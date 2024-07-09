@@ -44,20 +44,20 @@ namespace Hyprutils::Path {
 
     using T = std::optional<std::string>;
     std::pair<T, T> findConfig(std::string programName) {
-        static const auto xdgConfigHome = getXdgConfigHome();
+        bool              xdgConfigHomeExists = false;
+        static const auto xdgConfigHome       = getXdgConfigHome();
         if (xdgConfigHome.has_value()) {
+            xdgConfigHomeExists = true;
             if (checkConfigExists(xdgConfigHome.value(), programName))
                 return std::make_pair(fullConfigPath(xdgConfigHome.value(), programName), xdgConfigHome);
-            else
-                return std::make_pair(std::nullopt, xdgConfigHome);
         }
 
-        static const auto home = getHome();
+        bool              homeExists = false;
+        static const auto home       = getHome();
         if (home.has_value()) {
+            homeExists = true;
             if (checkConfigExists(home.value(), programName))
                 return std::make_pair(fullConfigPath(home.value(), programName), home);
-            else
-                return std::make_pair(std::nullopt, home);
         }
 
         static const auto xdgConfigDirs = getXdgConfigDirs();
@@ -70,6 +70,11 @@ namespace Hyprutils::Path {
 
         if (checkConfigExists("/etc/xdg", programName))
             return std::make_pair(fullConfigPath("/etc/xdg", programName), std::nullopt);
+
+        if (xdgConfigHomeExists)
+            return std::make_pair(std::nullopt, xdgConfigHome);
+        else if (homeExists)
+            return std::make_pair(std::nullopt, home);
 
         return std::make_pair(std::nullopt, std::nullopt);
     }
