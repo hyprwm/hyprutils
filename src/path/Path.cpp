@@ -42,41 +42,31 @@ namespace Hyprutils::Path {
         return xdgConfigHome;
     }
 
-    std::optional<std::string> findConfig(std::string programName) {
-        bool              xdgConfigHomeExists = false;
-        static const auto xdgConfigHome       = getXdgConfigHome();
+    using T = std::optional<std::string>;
+    std::pair<T, T> findConfig(std::string programName) {
+        static const auto xdgConfigHome = getXdgConfigHome();
         if (xdgConfigHome.has_value()) {
             if (checkConfigExists(xdgConfigHome.value(), programName))
-                return fullConfigPath(xdgConfigHome.value(), programName);
-            else
-                xdgConfigHomeExists = true;
+                return std::make_pair(fullConfigPath(xdgConfigHome.value(), programName), xdgConfigHome);
         }
 
-        bool              homeExists = false;
-        static const auto home       = getHome();
+        static const auto home = getHome();
         if (home.has_value()) {
             if (checkConfigExists(home.value(), programName))
-                return fullConfigPath(home.value(), programName);
-            else
-                homeExists = true;
+                return std::make_pair(fullConfigPath(home.value(), programName), home);
         }
 
         static const auto xdgConfigDirs = getXdgConfigDirs();
         if (xdgConfigDirs.has_value()) {
             for (auto dir : xdgConfigDirs.value()) {
                 if (checkConfigExists(dir, programName))
-                    return fullConfigPath(dir, programName);
+                    return std::make_pair(fullConfigPath(dir, programName), std::nullopt);
             }
         }
 
         if (checkConfigExists("/etc/xdg", programName))
-            return fullConfigPath("/etc/xdg", programName);
+            return std::make_pair(fullConfigPath("/etc/xdg", programName), std::nullopt);
 
-        if (xdgConfigHomeExists)
-            return xdgConfigHome;
-        else if (homeExists)
-            return home;
-        else
-            return std::nullopt;
+        return std::make_pair(std::nullopt, std::nullopt);
     }
 }

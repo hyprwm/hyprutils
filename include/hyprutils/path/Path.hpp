@@ -2,6 +2,7 @@
 #include "../string/VarList.hpp"
 #include <string>
 #include <optional>
+#include <utility>
 
 namespace Hyprutils {
     namespace Path {
@@ -30,10 +31,12 @@ namespace Hyprutils {
         std::optional<std::string> getXdgConfigHome();
 
         /** Searches for a config according to the XDG Base Directory specification.
-            Returns either the full path to a config if found, or
-            $XDG_CONFIG_HOME/$HOME if no config could be found.
+            Returns a pair of the full path to a config and the base path.
+            Returns std::nullopt in case of a non-existent value.
             @param programName name of the program (and config file)
         */
-        std::optional<std::string> findConfig(const std::string programName);
+
+        using T = std::optional<std::string>;
+        std::pair<T, T> findConfig(const std::string programName);
     }
 }
