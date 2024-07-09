@@ -48,12 +48,16 @@ namespace Hyprutils::Path {
         if (xdgConfigHome.has_value()) {
             if (checkConfigExists(xdgConfigHome.value(), programName))
                 return std::make_pair(fullConfigPath(xdgConfigHome.value(), programName), xdgConfigHome);
+            else
+                return std::make_pair(std::nullopt, xdgConfigHome);
         }
 
         static const auto home = getHome();
         if (home.has_value()) {
             if (checkConfigExists(home.value(), programName))
                 return std::make_pair(fullConfigPath(home.value(), programName), home);
+            else
+                return std::make_pair(std::nullopt, home);
         }
 
         static const auto xdgConfigDirs = getXdgConfigDirs();
