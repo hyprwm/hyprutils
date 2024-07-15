@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.19)
 
-set(HYPRUTILS_VERSION "0.1.5")
+set(HYPRUTILS_VERSION "0.2.0")
 add_compile_definitions(HYPRUTILS_VERSION="${HYPRUTILS_VERSION}")
 
 project(hyprutils
@@ -40,7 +40,7 @@ target_include_directories( hyprutils
 )
 set_target_properties(hyprutils PROPERTIES
     VERSION ${hyprutils_VERSION}
-    SOVERSION 0
+    SOVERSION 1
 )
 target_link_libraries(hyprutils PkgConfig::deps)
 
