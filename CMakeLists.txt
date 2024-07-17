@@ -40,7 +40,7 @@ target_include_directories( hyprutils
 )
 set_target_properties(hyprutils PROPERTIES
     VERSION ${hyprutils_VERSION}
-    SOVERSION 1
+    SOVERSION 0
 )
 target_link_libraries(hyprutils PkgConfig::deps)
 
