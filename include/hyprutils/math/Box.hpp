@@ -136,6 +136,12 @@ namespace Hyprutils::Math {
         Vector2D size() const;
 
         /**
+            * @brief Retrieves the size of the box offset by its position.
+            * @return Vector2D representing the bottom right extent of the box.
+            */
+        Vector2D extent() const;
+
+        /**
             * @brief Finds the closest point within the box to a given vector.
             * @param vec Vector from which to find the closest point.
             * @return Vector2D representing the closest point within the box.
