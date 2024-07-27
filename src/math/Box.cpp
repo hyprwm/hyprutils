@@ -199,6 +199,10 @@ Vector2D Hyprutils::Math::CBox::size() const {
     return {w, h};
 }
 
+Vector2D Hyprutils::Math::CBox::extent() const {
+  return pos() + size();
+}
+
 Vector2D Hyprutils::Math::CBox::closestPoint(const Vector2D& vec) const {
     if (containsPoint(vec))
         return vec;
