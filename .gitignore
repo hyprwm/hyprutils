@@ -34,3 +34,13 @@
 build/
 .vscode/
 .cache/
+
+.cmake/
+CMakeCache.txt
+CMakeFiles/
+CTestTestfile.cmake
+DartConfiguration.tcl
+Makefile
+cmake_install.cmake
+compile_commands.json
+hyprutils.pc
