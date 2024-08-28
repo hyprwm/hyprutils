@@ -30,6 +30,9 @@ int main(int argc, char** argv, char** envp) {
     EXPECT(isNumber("vvss", true), false);
     EXPECT(isNumber("0.9999s", true), false);
     EXPECT(isNumber("s0.9999", true), false);
+    EXPECT(isNumber("-1.0", true), true);
+    EXPECT(isNumber("-1..0", true), false);
+    EXPECT(isNumber("-10.0000000001", true), true);
 
     CVarList list("hello    world!", 0, 's', true);
     EXPECT(list[0], "hello");

@@ -26,6 +26,8 @@ bool Hyprutils::String::isNumber(const std::string& str, bool allowfloat) {
     if (str.empty())
         return false;
 
+    bool decimalParsed = false;
+
     for (size_t i = 0; i < str.length(); ++i) {
         const char& c = str.at(i);
 
@@ -44,8 +46,10 @@ bool Hyprutils::String::isNumber(const std::string& str, bool allowfloat) {
             if (i == 0)
                 return false;
 
-            if (str.at(0) == '-')
+            if (decimalParsed)
                 return false;
+
+            decimalParsed = true;
 
             continue;
         }
