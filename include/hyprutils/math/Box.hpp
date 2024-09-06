@@ -94,7 +94,6 @@ namespace Hyprutils::Math {
         }
 
         // Geometric operations
-        CBox& applyFromWlr();
         CBox& scale(double scale);
         CBox& scaleFromCenter(double scale);
         CBox& scale(const Vector2D& scale);
