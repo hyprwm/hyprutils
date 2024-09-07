@@ -78,6 +78,15 @@ add_test(
   COMMAND hyprutils_math "math")
 add_dependencies(tests hyprutils_math)
 
+add_executable(hyprutils_matrix "tests/matrix.cpp"
+        tests/matrix.cpp)
+target_link_libraries(hyprutils_matrix PRIVATE hyprutils PkgConfig::deps)
+add_test(
+        NAME "Matrix"
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/tests
+        COMMAND hyprutils_matrix "matrix")
+add_dependencies(tests hyprutils_matrix)
+
 # Installation
 install(TARGETS hyprutils)
 install(DIRECTORY "include/hyprutils" DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
