@@ -2,13 +2,18 @@
 #include <hyprutils/string/VarList.hpp>
 #include <hyprutils/debug/Log.hpp>
 #include <filesystem>
-#include <set>
+#include <vector>
 
 using namespace Hyprutils;
 
 namespace Hyprutils::Path {
     std::string fullConfigPath(std::string basePath, std::string programName) {
         return basePath + "/hypr/" + programName + ".conf";
+    }
+
+    void push_if_new(std::vector<std::string> vec, std::string str) {
+        if (std::find(vec.begin(), vec.end(), str) == vec.end())
+            vec.push_back(str);
     }
 
     std::optional<std::string> getHome() {
@@ -49,23 +54,23 @@ namespace Hyprutils::Path {
     using T = std::optional<std::string>;
     std::pair<T, T> findConfig(std::string programName) {
         std::string           configPath;
-        std::set<std::string> paths;
+        std::vector<std::string> paths;
 
         static const auto     xdgConfigHome = getXdgConfigHome();
         if (xdgConfigHome.has_value())
-            paths.insert(xdgConfigHome.value());
+            push_if_new(paths, xdgConfigHome.value());
 
         static const auto home = getHome();
         if (home.has_value())
-            paths.insert(home.value());
+            push_if_new(paths, home.value());
 
         static const auto xdgConfigDirs = getXdgConfigDirs();
         if (xdgConfigDirs.has_value()) {
             for (auto dir : xdgConfigDirs.value())
-                paths.insert(dir);
+                push_if_new(paths, dir);
         }
 
-        paths.insert("/etc/xdg");
+        push_if_new(paths, "/etc/xdg");
 
         for (auto path : paths) {
             configPath = fullConfigPath(path, programName);
