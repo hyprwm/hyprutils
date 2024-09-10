@@ -74,6 +74,7 @@ namespace Hyprutils::Path {
 
         for (auto path : paths) {
             configPath = fullConfigPath(path, programName);
+            Debug::log(INFO, "Checking config {}", configPath);
             if (std::filesystem::exists(configPath))
                 return std::make_pair(configPath, path);
             else
