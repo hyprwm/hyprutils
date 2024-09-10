@@ -18,7 +18,7 @@ namespace Hyprutils::Path {
         static const auto homeDir = getenv("HOME");
 
         if (!homeDir || !std::filesystem::path(homeDir).is_absolute()) {
-            Debug::log(INFO, "'$HOME' is either not found or not an absolute path");
+            Debug::log(LOG, "'$HOME' is either not found or not an absolute path");
             return std::nullopt;
         }
 
@@ -29,7 +29,7 @@ namespace Hyprutils::Path {
         static const auto xdgConfigDirs = getenv("XDG_CONFIG_DIRS");
 
         if (!xdgConfigDirs) {
-            Debug::log(INFO, "'$XDG_CONFIG_DIRS' is not set");
+            Debug::log(LOG, "'$XDG_CONFIG_DIRS' is not set");
             return std::nullopt;
         }
 
@@ -42,7 +42,7 @@ namespace Hyprutils::Path {
         static const auto xdgConfigHome = getenv("XDG_CONFIG_HOME");
 
         if (!xdgConfigHome || !std::filesystem::path(xdgConfigHome).is_absolute()) {
-            Debug::log(INFO, "'$XDG_CONFIG_HOME' is either not found or not an absolute path");
+            Debug::log(LOG, "'$XDG_CONFIG_HOME' is either not found or not an absolute path");
             return std::nullopt;
         }
 
@@ -60,7 +60,7 @@ namespace Hyprutils::Path {
             configPath = fullConfigPath(xdgConfigHome.value(), programName);
             if (std::filesystem::exists(configPath))
                 return std::make_pair(configPath, xdgConfigHome);
-            Debug::log(INFO, "No config file {}", configPath);
+            Debug::log(LOG, "No config file {}", configPath);
         }
 
         bool              homeExists = false;
@@ -70,7 +70,7 @@ namespace Hyprutils::Path {
             configPath = fullConfigPath(home.value(), programName);
             if (std::filesystem::exists(configPath))
                 return std::make_pair(configPath, home);
-            Debug::log(INFO, "No config file {}", configPath);
+            Debug::log(LOG, "No config file {}", configPath);
         }
 
         static const auto xdgConfigDirs = getXdgConfigDirs();
@@ -79,14 +79,14 @@ namespace Hyprutils::Path {
                 configPath = fullConfigPath(dir, programName);
                 if (std::filesystem::exists(configPath))
                     return std::make_pair(configPath, std::nullopt);
-                Debug::log(INFO, "No config file {}", configPath);
+                Debug::log(LOG, "No config file {}", configPath);
             }
         }
 
         configPath = fullConfigPath("/etc/xdg", programName);
         if (std::filesystem::exists(configPath))
             return std::make_pair(configPath, std::nullopt);
-        Debug::log(INFO, "No config file {}", configPath);
+        Debug::log(LOG, "No config file {}", configPath);
 
         if (xdgConfigHomeExists)
             return std::make_pair(std::nullopt, xdgConfigHome);
