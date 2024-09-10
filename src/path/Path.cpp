@@ -51,36 +51,42 @@ namespace Hyprutils::Path {
 
     using T = std::optional<std::string>;
     std::pair<T, T> findConfig(std::string programName) {
+        std::string       configPath;
+
         bool              xdgConfigHomeExists = false;
         static const auto xdgConfigHome       = getXdgConfigHome();
         if (xdgConfigHome.has_value()) {
             xdgConfigHomeExists = true;
-            if (checkConfigExists(xdgConfigHome.value(), programName))
-                return std::make_pair(fullConfigPath(xdgConfigHome.value(), programName), xdgConfigHome);
-            Debug::log(INFO, "No config file could be found in {}/{}", xdgConfigHome.value(), programName);
+            configPath = fullConfigPath(xdgConfigHome.value(), programName);
+            if (std::filesystem::exists(configPath))
+                return std::make_pair(configPath, xdgConfigHome);
+            Debug::log(INFO, "No config file {}", configPath);
         }
 
         bool              homeExists = false;
         static const auto home       = getHome();
         if (home.has_value()) {
             homeExists = true;
-            if (checkConfigExists(home.value(), programName))
-                return std::make_pair(fullConfigPath(home.value(), programName), home);
-            Debug::log(INFO, "No config file could be found in {}/{}", home.value(), programName);
+            configPath = fullConfigPath(home.value(), programName);
+            if (std::filesystem::exists(configPath))
+                return std::make_pair(configPath, home);
+            Debug::log(INFO, "No config file {}", configPath);
         }
 
         static const auto xdgConfigDirs = getXdgConfigDirs();
         if (xdgConfigDirs.has_value()) {
             for (auto dir : xdgConfigDirs.value()) {
-                if (checkConfigExists(dir, programName))
-                    return std::make_pair(fullConfigPath(dir, programName), std::nullopt);
-                Debug::log(INFO, "No config file could be found in {}/{}", dir, programName);
+                configPath = fullConfigPath(dir, programName);
+                if (std::filesystem::exists(configPath))
+                    return std::make_pair(configPath, std::nullopt);
+                Debug::log(INFO, "No config file {}", configPath);
             }
         }
 
-        if (checkConfigExists("/etc/xdg", programName))
-            return std::make_pair(fullConfigPath("/etc/xdg", programName), std::nullopt);
-        Debug::log(INFO, "No config file could be found in /etc/xdg/{}", programName);
+        configPath = fullConfigPath("/etc/xdg", programName);
+        if (std::filesystem::exists(configPath))
+            return std::make_pair(configPath, std::nullopt);
+        Debug::log(INFO, "No config file {}", configPath);
 
         if (xdgConfigHomeExists)
             return std::make_pair(std::nullopt, xdgConfigHome);
