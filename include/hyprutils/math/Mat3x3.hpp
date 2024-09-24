@@ -24,7 +24,7 @@ namespace Hyprutils {
             /* create an output projection matrix */
             static Mat3x3 outputProjection(const Vector2D& size, eTransform transform);
 
-            /* get the matrix as an array, in a RTL TTB order. */
+            /* get the matrix as an array, in a row-major order. */
             std::array<float, 9> getMatrix() const;
 
             /* create a box projection matrix */
