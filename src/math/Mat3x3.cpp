@@ -46,8 +46,8 @@ Mat3x3 Mat3x3::outputProjection(const Vector2D& size, eTransform transform) {
     // Rotation + reflection
     mat.matrix[0] = x * t.matrix[0];
     mat.matrix[1] = x * t.matrix[1];
-    mat.matrix[3] = y * -t.matrix[3];
-    mat.matrix[4] = y * -t.matrix[4];
+    mat.matrix[3] = y * t.matrix[3];
+    mat.matrix[4] = y * t.matrix[4];
 
     // Translation
     mat.matrix[2] = -copysign(1.0f, mat.matrix[0] + mat.matrix[1]);
