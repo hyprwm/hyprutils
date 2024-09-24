@@ -135,6 +135,10 @@ Mat3x3& Mat3x3::multiply(const Mat3x3& other) {
     return *this;
 }
 
+Mat3x3 Mat3x3::copy() const {
+    return *this;
+}
+
 std::string Mat3x3::toString() const {
     return std::format("[mat3x3: {}, {}, {}, {}, {}, {}, {}, {}, {}]", matrix.at(0), matrix.at(1), matrix.at(2), matrix.at(3), matrix.at(4), matrix.at(5), matrix.at(6),
                        matrix.at(7), matrix.at(8));

@@ -40,9 +40,10 @@ namespace Hyprutils {
             Mat3x3& multiply(const Mat3x3& other);
 
             /* misc utils */
+            Mat3x3      copy() const;
             std::string toString() const;
 
-            bool    operator==(const Mat3x3& other) const {
+            bool        operator==(const Mat3x3& other) const {
                 return other.matrix == matrix;
             }
 
