@@ -84,7 +84,7 @@ Mat3x3 Mat3x3::projectBox(const CBox& box, eTransform transform, float rot /* ra
         mat.translate({-0.5, -0.5});
     }
 
-    return mat.multiply(*this);
+    return this->copy().multiply(mat);
 }
 
 Mat3x3& Mat3x3::transform(eTransform transform) {
