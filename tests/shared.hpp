@@ -13,7 +13,7 @@ namespace Colors {
 
 #define EXPECT(expr, val)                                                                                                                                                          \
     if (const auto RESULT = expr; RESULT != (val)) {                                                                                                                               \
-        std::cout << Colors::RED << "Failed: " << Colors::RESET << #expr << ", expected " << val << " but got " << RESULT << "\n";                                                \
+        std::cout << Colors::RED << "Failed: " << Colors::RESET << #expr << ", expected " << val << " but got " << RESULT << "\n";                                                 \
         ret = 1;                                                                                                                                                                   \
     } else {                                                                                                                                                                       \
         std::cout << Colors::GREEN << "Passed " << Colors::RESET << #expr << ". Got " << val << "\n";                                                                              \

@@ -6,13 +6,11 @@ using namespace Hyprutils::Signal;
 using namespace Hyprutils::Memory;
 
 int main(int argc, char** argv, char** envp) {
-    int ret = 0;
+    int     ret = 0;
 
     CSignal signal;
-    int data = 0;
-    auto listener = signal.registerListener([&] (std::any d) {
-        data = 1;
-    });
+    int     data     = 0;
+    auto    listener = signal.registerListener([&](std::any d) { data = 1; });
 
     signal.emit();
 

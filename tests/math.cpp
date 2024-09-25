@@ -88,7 +88,7 @@ int main(int argc, char** argv, char** envp) {
 
     // Test matrices
     {
-        Mat3x3 jeremy = Mat3x3::outputProjection({1920, 1080}, HYPRUTILS_TRANSFORM_FLIPPED_90);
+        Mat3x3 jeremy    = Mat3x3::outputProjection({1920, 1080}, HYPRUTILS_TRANSFORM_FLIPPED_90);
         Mat3x3 matrixBox = jeremy.projectBox(CBox{10, 10, 200, 200}, HYPRUTILS_TRANSFORM_NORMAL).translate({100, 100}).scale({1.25F, 1.5F}).transpose();
 
         Mat3x3 expected = std::array<float, 9>{0, 0.46296296, 0, 0.3125, 0, 0, 19.84375, 36.055557, 1};
