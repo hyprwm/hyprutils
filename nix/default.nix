@@ -1,36 +1,49 @@
 {
   lib,
   stdenv,
+  stdenvAdapters,
   cmake,
   pkg-config,
   pixman,
   version ? "git",
   doCheck ? false,
-}:
-stdenv.mkDerivation {
-  pname = "hyprutils";
-  inherit version doCheck;
-  src = ../.;
+  debug ? false,
+}: let
+  inherit (builtins) foldl';
+  inherit (lib.lists) flatten;
 
-  nativeBuildInputs = [
-    cmake
-    pkg-config
+  adapters = flatten [
+    stdenvAdapters.useMoldLinker
+    (lib.optional debug stdenvAdapters.keepDebugInfo)
   ];
 
-  buildInputs = [
-    pixman
-  ];
+  customStdenv = foldl' (acc: adapter: adapter acc) stdenv adapters;
+in
+  customStdenv.mkDerivation {
+    pname = "hyprutils";
+    inherit version doCheck;
+    src = ../.;
 
-  outputs = ["out" "dev"];
+    nativeBuildInputs = [
+      cmake
+      pkg-config
+    ];
 
-  cmakeBuildType = "RelWithDebInfo";
+    buildInputs = [
+      pixman
+    ];
 
-  dontStrip = true;
+    outputs = ["out" "dev"];
 
-  meta = with lib; {
-    homepage = "https://github.com/hyprwm/hyprutils";
-    description = "Small C++ library for utilities used across the Hypr* ecosystem";
-    license = licenses.bsd3;
-    platforms = platforms.linux;
-  };
-}
+    cmakeBuildType =
+      if debug
+      then "Debug"
+      else "RelWithDebInfo";
+
+    meta = with lib; {
+      homepage = "https://github.com/hyprwm/hyprutils";
+      description = "Small C++ library for utilities used across the Hypr* ecosystem";
+      license = licenses.bsd3;
+      platforms = platforms.linux;
+    };
+  }
