@@ -1,6 +1,7 @@
 #include <hyprutils/os/Process.hpp>
 using namespace Hyprutils::OS;
 
+#include <csignal>
 #include <cstdio>
 #include <unistd.h>
 #include <cstring>
