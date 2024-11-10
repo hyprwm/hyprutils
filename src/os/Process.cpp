@@ -9,6 +9,10 @@ using namespace Hyprutils::OS;
 
 #include <sys/wait.h>
 
+#ifdef __APPLE__
+#include <signal.h>
+#endif
+
 Hyprutils::OS::CProcess::CProcess(const std::string& binary_, const std::vector<std::string>& args_) : binary(binary_), args(args_) {
     ;
 }
