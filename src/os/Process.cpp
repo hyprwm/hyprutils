@@ -10,6 +10,7 @@ using namespace Hyprutils::OS;
 
 #include <sys/fcntl.h>
 #include <sys/wait.h>
+#include <sys/poll.h>
 
 Hyprutils::OS::CProcess::CProcess(const std::string& binary_, const std::vector<std::string>& args_) : binary(binary_), args(args_) {
     ;
@@ -75,34 +76,68 @@ bool Hyprutils::OS::CProcess::runSync() {
         if (fcntl(errPipe[0], F_SETFL, fdFlags | O_NONBLOCK) < 0)
             return false;
 
-        // FIXME: this sucks, but it prevents a pipe deadlock.
-        // Problem is, if we exceed the 64k buffer, we end up in a deadlock.
-        // So, as a "solution", we keep reading until the child pid exits.
-        // If nothing is read from either stdout or stderr, sleep for 100µs, to maybe not peg a core THAT much.
-        // If anyone knows a better solution, feel free to make a MR.
+        pollfd pollfds[2] = {
+            {
+                .fd     = outPipe[0],
+                .events = POLLIN,
+            },
+            {
+                .fd     = errPipe[0],
+                .events = POLLIN,
+            },
+        };
 
-        while (waitpid(pid, nullptr, WNOHANG) == 0) {
-            int any = 0;
+        while (1337) {
+            int ret = poll(pollfds, 2, 5000);
 
-            while ((ret = read(outPipe[0], buf.data(), 1023)) > 0) {
-                out += std::string{(char*)buf.data(), (size_t)ret};
+            if (ret < 0) {
+                if (errno == EINTR)
+                    continue;
+
+                return false;
             }
 
-            any += errno == EWOULDBLOCK || errno == EAGAIN ? 1 : 0;
+            bool hupd = false;
 
-            buf.fill(0);
-
-            while ((ret = read(errPipe[0], buf.data(), 1023)) > 0) {
-                err += std::string{(char*)buf.data(), (size_t)ret};
+            for (size_t i = 0; i < 2; ++i) {
+                if (pollfds[i].revents & POLLHUP) {
+                    hupd = true;
+                    break;
+                }
             }
 
-            any += errno == EWOULDBLOCK || errno == EAGAIN ? 1 : 0;
+            if (hupd)
+                break;
 
-            buf.fill(0);
+            if (pollfds[0].revents & POLLIN) {
+                while ((ret = read(outPipe[0], buf.data(), 1023)) > 0) {
+                    out += std::string_view{(char*)buf.data(), (size_t)ret};
+                }
 
-            if (any >= 2)
-                std::this_thread::sleep_for(std::chrono::microseconds(100));
+                buf.fill(0);
+            }
+
+            if (pollfds[1].revents & POLLIN) {
+                while ((ret = read(errPipe[0], buf.data(), 1023)) > 0) {
+                    err += std::string_view{(char*)buf.data(), (size_t)ret};
+                }
+
+                buf.fill(0);
+            }
         }
+
+        // Final reads. Nonblock, so its ok.
+        while ((ret = read(outPipe[0], buf.data(), 1023)) > 0) {
+            out += std::string_view{(char*)buf.data(), (size_t)ret};
+        }
+
+        buf.fill(0);
+
+        while ((ret = read(errPipe[0], buf.data(), 1023)) > 0) {
+            err += std::string_view{(char*)buf.data(), (size_t)ret};
+        }
+
+        buf.fill(0);
 
         close(outPipe[0]);
         close(errPipe[0]);
