@@ -142,6 +142,9 @@ bool Hyprutils::OS::CProcess::runSync() {
         close(outPipe[0]);
         close(errPipe[0]);
 
+        // reap child
+        waitpid(pid, nullptr, 0);
+
         return true;
     }
 
