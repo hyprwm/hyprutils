@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <utility>
 
 namespace Hyprutils {
     namespace OS {
@@ -9,6 +10,8 @@ namespace Hyprutils {
           public:
             /* Creates a process object, doesn't run yet */
             CProcess(const std::string& binary_, const std::vector<std::string>& args_);
+
+            void addEnv(const std::string& name, const std::string& value);
 
             /* Run the process, synchronously, get the stdout and stderr. False on fail */
             bool runSync();
@@ -21,8 +24,9 @@ namespace Hyprutils {
             const std::string& stdErr();
 
           private:
-            std::string              binary, out, err;
-            std::vector<std::string> args;
+            std::string                                      binary, out, err;
+            std::vector<std::string>                         args;
+            std::vector<std::pair<std::string, std::string>> env;
         };
     }
 }

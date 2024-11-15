@@ -6,7 +6,8 @@ using namespace Hyprutils::OS;
 int main(int argc, char** argv, char** envp) {
     int ret = 0;
 
-    CProcess process("echo", {"Hello World!"});
+    CProcess process("sh", {"-c", "echo \"Hello $WORLD!\""});
+    process.addEnv("WORLD", "World");
 
     EXPECT(process.runAsync(), true);
     EXPECT(process.runSync(), true);

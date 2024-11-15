@@ -16,6 +16,10 @@ Hyprutils::OS::CProcess::CProcess(const std::string& binary_, const std::vector<
     ;
 }
 
+void Hyprutils::OS::CProcess::addEnv(const std::string& name, const std::string& value) {
+    env.emplace_back(std::make_pair<>(name, value));
+}
+
 bool Hyprutils::OS::CProcess::runSync() {
     int outPipe[2], errPipe[2];
     if (pipe(outPipe))
@@ -52,6 +56,11 @@ bool Hyprutils::OS::CProcess::runSync() {
         }
 
         argsC.emplace_back(nullptr);
+
+        // pass env
+        for (auto& [n, v] : env) {
+            setenv(n.c_str(), v.c_str(), 1);
+        }
 
         execvp(binary.c_str(), (char* const*)argsC.data());
         exit(1);
