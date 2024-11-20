@@ -86,6 +86,14 @@ add_test(
   COMMAND hyprutils_os "os")
 add_dependencies(tests hyprutils_os)
 
+add_executable(hyprutils_filedescriptor "tests/filedescriptor.cpp")
+target_link_libraries(hyprutils_filedescriptor PRIVATE hyprutils PkgConfig::deps)
+add_test(
+  NAME "Filedescriptor"
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/tests
+  COMMAND hyprutils_filedescriptor "filedescriptor")
+add_dependencies(tests hyprutils_filedescriptor)
+
 # Installation
 install(TARGETS hyprutils)
 install(DIRECTORY "include/hyprutils" DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
