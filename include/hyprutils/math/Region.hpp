@@ -1,6 +1,6 @@
 #pragma once
 
-#include <pixman.h>
+#include <pixman-1/pixman.h>
 #include <vector>
 #include "Vector2D.hpp"
 #include "Box.hpp"
