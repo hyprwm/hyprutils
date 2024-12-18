@@ -94,6 +94,14 @@ add_test(
   COMMAND hyprutils_filedescriptor "filedescriptor")
 add_dependencies(tests hyprutils_filedescriptor)
 
+add_executable(hyprutils_animation "tests/animation.cpp")
+target_link_libraries(hyprutils_animation PRIVATE hyprutils PkgConfig::deps)
+add_test(
+  NAME "Animation"
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/tests
+  COMMAND hyprutils_animation "utils")
+add_dependencies(tests hyprutils_animation)
+
 # Installation
 install(TARGETS hyprutils)
 install(DIRECTORY "include/hyprutils" DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
