@@ -209,7 +209,9 @@ bool Hyprutils::OS::CProcess::runAsync() {
     read(socket[0], &grandchild, sizeof(grandchild));
     close(socket[0]);
     // clear child and leave grandchild to init
-    waitpid(child, NULL, 0);
+    waitpid(child, nullptr, 0);
+
+    grandchildPid = grandchild;
 
     return true;
 }
@@ -220,4 +222,8 @@ const std::string& Hyprutils::OS::CProcess::stdOut() {
 
 const std::string& Hyprutils::OS::CProcess::stdErr() {
     return err;
+}
+
+const pid_t Hyprutils::OS::CProcess::pid() {
+    return grandchildPid;
 }

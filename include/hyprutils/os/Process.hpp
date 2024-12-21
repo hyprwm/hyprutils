@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <sys/types.h>
 
 namespace Hyprutils {
     namespace OS {
@@ -23,10 +24,14 @@ namespace Hyprutils {
             const std::string& stdOut();
             const std::string& stdErr();
 
+            // only populated when ran async
+            const pid_t pid();
+
           private:
             std::string                                      binary, out, err;
             std::vector<std::string>                         args;
             std::vector<std::pair<std::string, std::string>> env;
+            pid_t                                            grandchildPid = 0;
         };
     }
 }

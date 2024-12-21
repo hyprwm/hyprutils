@@ -1,3 +1,7 @@
+#include <csignal>
+#include <cerrno>
+#include <cstdlib>
+#include <unistd.h>
 #include <hyprutils/os/Process.hpp>
 #include "shared.hpp"
 
@@ -14,6 +18,13 @@ int main(int argc, char** argv, char** envp) {
 
     EXPECT(process.stdOut(), std::string{"Hello World!\n"});
     EXPECT(process.stdErr(), std::string{""});
+
+    CProcess process2("sh", {"-c", "while true; do sleep 1; done;"});
+
+    EXPECT(process2.runAsync(), true);
+    EXPECT(getpgid(process2.pid()) >= 0, true);
+
+    kill(process2.pid(), SIGKILL);
 
     return ret;
 }
