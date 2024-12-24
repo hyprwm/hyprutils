@@ -7,7 +7,7 @@ using namespace Hyprutils::Memory;
 #define SP CSharedPointer
 #define WP CWeakPointer
 
-int main(int argc, char** argv, char** envp) {
+int main() {
     SP<int> intPtr  = makeShared<int>(10);
     SP<int> intPtr2 = makeShared<int>(1337);
 

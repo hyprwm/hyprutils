@@ -4,7 +4,7 @@
 
 using namespace Hyprutils::Math;
 
-int main(int argc, char** argv, char** envp) {
+int main() {
     CRegion rg = {0, 0, 100, 100};
     rg.add(CBox{{}, {20, 200}});
 

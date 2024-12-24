@@ -86,14 +86,8 @@ bool Hyprutils::OS::CProcess::runSync() {
             return false;
 
         pollfd pollfds[2] = {
-            {
-                .fd     = outPipe[0],
-                .events = POLLIN,
-            },
-            {
-                .fd     = errPipe[0],
-                .events = POLLIN,
-            },
+            {.fd = outPipe[0], .events = POLLIN, .revents = 0},
+            {.fd = errPipe[0], .events = POLLIN, .revents = 0},
         };
 
         while (1337) {
@@ -188,26 +182,33 @@ bool Hyprutils::OS::CProcess::runAsync() {
             std::vector<const char*> argsC;
             argsC.emplace_back(strdup(binary.c_str()));
             for (auto& arg : args) {
-                // TODO: does this leak? Can we just pipe c_str() as the strings won't be realloc'd?
                 argsC.emplace_back(strdup(arg.c_str()));
             }
 
             argsC.emplace_back(nullptr);
 
             execvp(binary.c_str(), (char* const*)argsC.data());
-            // exit grandchild
             _exit(0);
         }
         close(socket[0]);
-        write(socket[1], &grandchild, sizeof(grandchild));
+        if (write(socket[1], &grandchild, sizeof(grandchild)) != sizeof(grandchild)) {
+            close(socket[1]);
+            _exit(1);
+        }
         close(socket[1]);
-        // exit child
         _exit(0);
     }
+
     // run in parent
     close(socket[1]);
-    read(socket[0], &grandchild, sizeof(grandchild));
+    ssize_t bytesRead = read(socket[0], &grandchild, sizeof(grandchild));
     close(socket[0]);
+
+    if (bytesRead != sizeof(grandchild)) {
+        waitpid(child, nullptr, 0);
+        return false;
+    }
+
     // clear child and leave grandchild to init
     waitpid(child, nullptr, 0);
 
@@ -224,6 +225,6 @@ const std::string& Hyprutils::OS::CProcess::stdErr() {
     return err;
 }
 
-const pid_t Hyprutils::OS::CProcess::pid() {
+const pid_t& Hyprutils::OS::CProcess::pid() {
     return grandchildPid;
 }

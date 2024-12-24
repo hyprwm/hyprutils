@@ -12,8 +12,7 @@ Hyprutils::String::CVarList::CVarList(const std::string& in, const size_t lastAr
     std::string args{in};
     size_t      idx = 0;
     size_t      pos = 0;
-    std::ranges::replace_if(
-        args, [&](const char& c) { return delim == 's' ? std::isspace(c) : c == delim; }, 0);
+    std::ranges::replace_if(args, [&](const char& c) { return delim == 's' ? std::isspace(c) : c == delim; }, 0);
 
     for (const auto& s : args | std::views::split(0)) {
         if (removeEmpty && s.empty())

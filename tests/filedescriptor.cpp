@@ -6,7 +6,7 @@
 
 using namespace Hyprutils::OS;
 
-int main(int argc, char** argv, char** envp) {
+int main() {
     std::string     name = "/test_filedescriptors";
     CFileDescriptor fd(shm_open(name.c_str(), O_RDWR | O_CREAT | O_EXCL, 0600));
 

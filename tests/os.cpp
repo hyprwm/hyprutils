@@ -7,8 +7,8 @@
 
 using namespace Hyprutils::OS;
 
-int main(int argc, char** argv, char** envp) {
-    int ret = 0;
+int main() {
+    int      ret = 0;
 
     CProcess process("sh", {"-c", "echo \"Hello $WORLD!\""});
     process.addEnv("WORLD", "World");
