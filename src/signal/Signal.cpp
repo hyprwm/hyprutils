@@ -27,7 +27,7 @@ void Hyprutils::Signal::CSignal::emit(std::any data) {
         // vector and was removed during our iteration
         if (l.strongRef() == 1)
             continue;
-        
+
         l->emit(data);
     }
 
@@ -38,7 +38,7 @@ void Hyprutils::Signal::CSignal::emit(std::any data) {
     // release SPs
     listeners.clear();
 
-    // we cannot release any expired refs here as one of the listeners could've removed this object and 
+    // we cannot release any expired refs here as one of the listeners could've removed this object and
     // as such we'd be doing a UAF
 }
 
@@ -48,7 +48,7 @@ CHyprSignalListener Hyprutils::Signal::CSignal::registerListener(std::function<v
 
     // housekeeping: remove any stale listeners
     std::erase_if(m_vListeners, [](const auto& other) { return other.expired(); });
-    
+
     return listener;
 }
 

@@ -10,7 +10,7 @@ int main(int argc, char** argv, char** envp) {
 
     CSignal signal;
     int     data     = 0;
-    auto    listener = signal.registerListener([&](std::any d) { data = 1; });
+    auto    listener = signal.registerListener([&]([[maybe_unused]] std::any d) { data = 1; });
 
     signal.emit();
 

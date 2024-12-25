@@ -200,7 +200,7 @@ Vector2D Hyprutils::Math::CBox::size() const {
 }
 
 Vector2D Hyprutils::Math::CBox::extent() const {
-  return pos() + size();
+    return pos() + size();
 }
 
 Vector2D Hyprutils::Math::CBox::closestPoint(const Vector2D& vec) const {
