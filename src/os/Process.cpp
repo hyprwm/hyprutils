@@ -225,6 +225,6 @@ const std::string& Hyprutils::OS::CProcess::stdErr() {
     return err;
 }
 
-const pid_t& Hyprutils::OS::CProcess::pid() {
+const pid_t Hyprutils::OS::CProcess::pid() {
     return grandchildPid;
 }
