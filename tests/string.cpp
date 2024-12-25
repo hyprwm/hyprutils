@@ -4,7 +4,7 @@
 
 using namespace Hyprutils::String;
 
-int main() {
+int main(int argc, char** argv, char** envp) {
     int ret = 0;
 
     EXPECT(trim("               a             "), "a");

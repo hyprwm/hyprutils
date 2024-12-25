@@ -7,7 +7,7 @@
 
 using namespace Hyprutils::OS;
 
-int main() {
+int main(int argc, char** argv, char** envp) {
     int      ret = 0;
 
     CProcess process("sh", {"-c", "echo \"Hello $WORLD!\""});

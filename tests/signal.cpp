@@ -5,7 +5,7 @@
 using namespace Hyprutils::Signal;
 using namespace Hyprutils::Memory;
 
-int main() {
+int main(int argc, char** argv, char** envp) {
     int     ret = 0;
 
     CSignal signal;
