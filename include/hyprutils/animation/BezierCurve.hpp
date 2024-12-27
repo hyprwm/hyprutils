@@ -5,11 +5,10 @@
 
 #include "../math/Vector2D.hpp"
 
-constexpr int   BAKEDPOINTS    = 255;
-constexpr float INVBAKEDPOINTS = 1.f / BAKEDPOINTS;
-
 namespace Hyprutils {
     namespace Animation {
+        constexpr int   BAKEDPOINTS    = 255;
+        constexpr float INVBAKEDPOINTS = 1.f / BAKEDPOINTS;
 
         /* An implementation of a cubic bezier curve. */
         class CBezierCurve {
