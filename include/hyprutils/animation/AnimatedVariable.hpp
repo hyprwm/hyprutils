@@ -23,9 +23,6 @@ namespace Hyprutils {
             SAnimationPropertyConfig* pParentAnimation = nullptr;
         };
 
-        static const std::string DEFAULTSTYLE      = "";
-        static const std::string DEFAULTBEZIERNAME = "default";
-
         /* A base class for animated variables. */
         class CBaseAnimatedVariable {
           public:
@@ -59,17 +56,9 @@ namespace Hyprutils {
                 return m_pConfig;
             }
 
-            bool enabled() const {
-                return m_pConfig ? m_pConfig->pValues->internalEnabled : false;
-            }
-
-            const std::string& getBezierName() const {
-                return m_pConfig ? m_pConfig->pValues->internalBezier : DEFAULTBEZIERNAME;
-            }
-
-            const std::string& getStyle() const {
-                return m_pConfig ? m_pConfig->pValues->internalStyle : DEFAULTSTYLE;
-            }
+            bool               enabled() const;
+            const std::string& getBezierName() const;
+            const std::string& getStyle() const;
 
             /* returns the spent (completion) % */
             float getPercent() const;
@@ -82,75 +71,31 @@ namespace Hyprutils {
                 return m_bIsBeingAnimated;
             }
 
+            /* checks m_bDummy and m_pAnimationManager */
+            bool ok() const;
+
             /* calls the update callback */
-            void onUpdate() {
-                if (m_fUpdateCallback)
-                    m_fUpdateCallback(this);
-            }
+            void onUpdate();
 
-            bool ok() const {
-                return !m_bDummy && m_pAnimationManager;
-            }
-
-            /* sets a function to be ran when the animation finishes.
-               if an animation is not running, runs instantly.
-               if "remove" is set to true, will remove the callback when ran. */
-            void setCallbackOnEnd(CallbackFun func, bool remove = true) {
-                m_fEndCallback       = std::move(func);
-                m_bRemoveEndAfterRan = remove;
-
-                if (!isBeingAnimated())
-                    onAnimationEnd();
-            }
+            /* sets a function to be ran when an animation ended.
+               if "remove" is set to true, it will remove the callback when ran. */
+            void setCallbackOnEnd(CallbackFun func, bool remove = true);
 
             /* sets a function to be ran when an animation is started.
-               if "remove" is set to true, will remove the callback when ran. */
-            void setCallbackOnBegin(CallbackFun func, bool remove = true) {
-                m_fBeginCallback       = std::move(func);
-                m_bRemoveBeginAfterRan = remove;
-            }
+               if "remove" is set to true, it will remove the callback when ran. */
+            void setCallbackOnBegin(CallbackFun func, bool remove = true);
 
             /* sets the update callback, called every time the value is animated and a step is done
                Warning: calling unregisterVar/registerVar in this handler will cause UB */
-            void setUpdateCallback(CallbackFun func) {
-                m_fUpdateCallback = std::move(func);
-            }
+            void setUpdateCallback(CallbackFun func);
 
             /* resets all callbacks. Does not call any. */
-            void resetAllCallbacks() {
-                m_fBeginCallback       = nullptr;
-                m_fEndCallback         = nullptr;
-                m_fUpdateCallback      = nullptr;
-                m_bRemoveBeginAfterRan = false;
-                m_bRemoveEndAfterRan   = false;
-            }
+            void resetAllCallbacks();
 
-            void onAnimationEnd() {
-                m_bIsBeingAnimated = false;
-                /* We do not call disconnectFromActive here. The animation manager will remove it on a call to tickDone. */
+            void onAnimationEnd();
+            void onAnimationBegin();
 
-                if (m_fEndCallback) {
-                    /* loading m_bRemoveEndAfterRan before calling the callback allows the callback to delete this animation safely if it is false. */
-                    auto removeEndCallback = m_bRemoveEndAfterRan;
-                    m_fEndCallback(this);
-                    if (removeEndCallback)
-                        m_fEndCallback = nullptr; // reset
-                }
-            }
-
-            void onAnimationBegin() {
-                m_bIsBeingAnimated = true;
-                animationBegin     = std::chrono::steady_clock::now();
-                connectToActive();
-
-                if (m_fBeginCallback) {
-                    m_fBeginCallback(this);
-                    if (m_bRemoveBeginAfterRan)
-                        m_fBeginCallback = nullptr; // reset
-                }
-            }
-
-            int m_Type = -1;
+            int  m_Type = -1;
 
           protected:
             friend class CAnimationManager;
@@ -178,10 +123,8 @@ namespace Hyprutils {
         template <class ValueImpl>
         concept AnimatedType = requires(ValueImpl val) {
             requires std::is_copy_constructible_v<ValueImpl>;
-            // requires operator==
-            { val == val } -> std::same_as<bool>;
-            // requires operator=
-            { val = val };
+            { val == val } -> std::same_as<bool>; // requires operator==
+            { val = val };                        // requires operator=
         };
 
         /*
@@ -251,7 +194,7 @@ namespace Hyprutils {
                 return *this;
             }
 
-            // Sets the actual stored value, without affecting the goal, but resets the timer
+            /* Sets the actual stored value, without affecting the goal, but resets the timer*/
             void setValue(const VarType& v) {
                 if (v == m_Value)
                     return;
@@ -262,7 +205,7 @@ namespace Hyprutils {
                 onAnimationBegin();
             }
 
-            // Sets the actual value and goal
+            /* Sets the actual value and goal*/
             void setValueAndWarp(const VarType& v) {
                 m_Goal             = v;
                 m_bIsBeingAnimated = true;
