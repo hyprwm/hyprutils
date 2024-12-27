@@ -38,6 +38,8 @@ bool CAnimationManager::shouldTickForNext() {
 
 void CAnimationManager::tickDone() {
     std::vector<CBaseAnimatedVariable*> active;
+    // avoid reallocations
+    active.reserve(m_vActiveAnimatedVariables.size());
     for (auto const& av : m_vActiveAnimatedVariables) {
         if (av->ok() && av->isBeingAnimated())
             active.push_back(av);
