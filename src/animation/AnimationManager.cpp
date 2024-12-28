@@ -38,8 +38,7 @@ bool CAnimationManager::shouldTickForNext() {
 
 void CAnimationManager::tickDone() {
     std::vector<CWeakPointer<CBaseAnimatedVariable>> active;
-    // avoid reallocations
-    active.reserve(m_vActiveAnimatedVariables.size());
+    active.reserve(m_vActiveAnimatedVariables.size()); // avoid reallocations
     for (auto const& av : m_vActiveAnimatedVariables) {
         const auto PAV = av.lock();
         if (!PAV)
@@ -69,6 +68,6 @@ SP<CBezierCurve> CAnimationManager::getBezier(const std::string& name) {
     return BEZIER == m_mBezierCurves.end() ? m_mBezierCurves["default"] : BEZIER->second;
 }
 
-std::unordered_map<std::string, SP<CBezierCurve>> CAnimationManager::getAllBeziers() {
+const std::unordered_map<std::string, SP<CBezierCurve>>& CAnimationManager::getAllBeziers() {
     return m_mBezierCurves;
 }

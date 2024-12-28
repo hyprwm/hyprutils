@@ -121,6 +121,7 @@ int main(int argc, char** argv, char** envp) {
     animationConfig["default"]                  = makeShared<SAnimationPropertyConfig>();
     animationConfig["default"]->internalBezier  = "default";
     animationConfig["default"]->internalSpeed   = 1.0;
+    animationConfig["default"]->internalStyle   = "asdf";
     animationConfig["default"]->internalEnabled = 1;
     animationConfig["default"]->pValues         = animationConfig["default"];
 
@@ -165,6 +166,30 @@ int main(int argc, char** argv, char** envp) {
 
     EXPECT(s.m_iA->value(), 10);
     EXPECT(s.m_iB->value(), 100);
+
+    // Test config stuff
+    EXPECT(s.m_iA->getBezierName(), "default");
+    EXPECT(s.m_iA->getStyle(), "asdf");
+    EXPECT(s.m_iA->enabled(), true);
+
+    animationConfig["default"]->internalEnabled = 0;
+
+    EXPECT(s.m_iA->enabled(), false);
+
+    *s.m_iA = 50;
+    gAnimationManager.tick(); // Expecting a warp
+    EXPECT(s.m_iA->value(), 50);
+
+    // Test missing pValues
+    animationConfig["default"]->internalEnabled = 1;
+    animationConfig["default"]->pValues.reset();
+
+    EXPECT(s.m_iA->enabled(), false);
+    EXPECT(s.m_iA->getBezierName(), "default");
+    EXPECT(s.m_iA->getStyle(), "");
+    EXPECT(s.m_iA->getPercent(), 1.f);
+
+    animationConfig["default"]->pValues = animationConfig["default"];
 
     //
     // Test callbacks

@@ -67,7 +67,13 @@ const std::string& CBaseAnimatedVariable::getStyle() const {
 
 float CBaseAnimatedVariable::getPercent() const {
     const auto DURATIONPASSED = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - animationBegin).count();
-    return std::clamp((DURATIONPASSED / 100.f) / m_pConfig->pValues->internalSpeed, 0.f, 1.f);
+
+    if (const auto PCONFIG = m_pConfig.lock()) {
+        const auto PVALUES = PCONFIG->pValues.lock();
+        return PVALUES ? std::clamp((DURATIONPASSED / 100.f) / PVALUES->internalSpeed, 0.f, 1.f) : 1.f;
+    }
+
+    return 1.f;
 }
 
 float CBaseAnimatedVariable::getCurveValue() const {
