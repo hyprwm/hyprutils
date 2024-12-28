@@ -37,9 +37,6 @@ struct SomeTestType {
     }
 };
 
-#define INITANIMCFG(name)           animationConfig[name] = makeShared<SAnimationPropertyConfig>();
-#define CREATEANIMCFG(name, parent) *animationConfig[name] = {false, "", "", 0.f, -1, animationConfig["global"], animationConfig[parent]}
-
 std::unordered_map<std::string, SP<SAnimationPropertyConfig>> animationConfig;
 
 class CMyAnimationManager : public CAnimationManager {
