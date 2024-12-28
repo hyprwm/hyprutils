@@ -7,8 +7,6 @@ using namespace Hyprutils::Animation;
 using namespace Hyprutils::Math;
 
 void CBezierCurve::setup(const std::array<Vector2D, 2>& pVec) {
-    //const auto BEGIN = std::chrono::high_resolution_clock::now();
-
     // Avoid reallocations by reserving enough memory upfront
     m_vPoints.resize(pVec.size() + 2);
     m_vPoints = {
@@ -27,18 +25,10 @@ void CBezierCurve::setup(const std::array<Vector2D, 2>& pVec) {
         m_aPointsBaked[i] = Vector2D(getXForT(t), getYForT(t));
     }
 
-    //const auto ELAPSEDUS  = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - BEGIN).count() / 1000.f;
-    //const auto POINTSSIZE = m_aPointsBaked.size() * sizeof(m_aPointsBaked[0]) / 1000.f;
-
-    //const auto BEGINCALC = std::chrono::high_resolution_clock::now();
     for (int j = 1; j < 10; ++j) {
         float i = j / 10.0f;
         getYForPoint(i);
     }
-    //const auto ELAPSEDCALCAVG = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - BEGINCALC).count() / 1000.f / 10.f;
-
-    //Debug::log(LOG, "Created a bezier curve, baked {} points, mem usage: {:.2f}kB, time to bake: {:.2f}µs. Estimated average calc time: {:.2f}µs.", BAKEDPOINTS, POINTSSIZE,
-    //           ELAPSEDUS, ELAPSEDCALCAVG);
 }
 
 float CBezierCurve::getXForT(float const& t) const {
