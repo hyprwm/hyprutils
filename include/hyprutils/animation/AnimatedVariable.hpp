@@ -39,7 +39,7 @@ namespace Hyprutils {
             void connectToActive();
             void disconnectFromActive();
 
-            /* Needs to call disconnectFromActive to remove `this` from the active animations */
+            /* Needs to call disconnectFromActive to remove `m_pSelf` from the active animation list */
             virtual ~CBaseAnimatedVariable() {
                 disconnectFromActive();
             };
