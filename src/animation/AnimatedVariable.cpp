@@ -1,11 +1,17 @@
 #include <hyprutils/animation/AnimatedVariable.hpp>
 #include <hyprutils/animation/AnimationManager.hpp>
+#include <hyprutils/memory/WeakPtr.hpp>
 
 using namespace Hyprutils::Animation;
+using namespace Hyprutils::Memory;
 
-void CBaseAnimatedVariable::create(Hyprutils::Animation::CAnimationManager* pAnimationManager, int typeInfo) {
+#define SP CSharedPointer
+#define WP CWeakPointer
+
+void CBaseAnimatedVariable::create(Hyprutils::Animation::CAnimationManager* pAnimationManager, int typeInfo, SP<CBaseAnimatedVariable> pSelf) {
     m_pAnimationManager = pAnimationManager;
     m_Type              = typeInfo;
+    m_pSelf             = pSelf;
 
     m_bDummy = false;
 }
@@ -16,7 +22,7 @@ void CBaseAnimatedVariable::connectToActive() {
 
     m_pAnimationManager->scheduleTick(); // otherwise the animation manager will never pick this up
     if (!m_bIsConnectedToActive)
-        m_pAnimationManager->m_vActiveAnimatedVariables.push_back(this);
+        m_pAnimationManager->m_vActiveAnimatedVariables.push_back(m_pSelf);
     m_bIsConnectedToActive = true;
 }
 
@@ -24,22 +30,39 @@ void CBaseAnimatedVariable::disconnectFromActive() {
     if (!m_pAnimationManager)
         return;
 
-    std::erase_if(m_pAnimationManager->m_vActiveAnimatedVariables, [&](const auto& other) { return other == this; });
+    std::erase_if(m_pAnimationManager->m_vActiveAnimatedVariables, [&](const auto& other) { return other == m_pSelf; });
     m_bIsConnectedToActive = false;
 }
 
 bool Hyprutils::Animation::CBaseAnimatedVariable::enabled() const {
-    return m_pConfig ? m_pConfig->pValues->internalEnabled : false;
+    if (const auto PCONFIG = m_pConfig.lock()) {
+        const auto PVALUES = PCONFIG->pValues.lock();
+        return PVALUES ? PVALUES->internalEnabled : false;
+    }
+
+    return false;
 }
 
 const std::string& CBaseAnimatedVariable::getBezierName() const {
     static constexpr const std::string DEFAULTBEZIERNAME = "default";
-    return m_pConfig ? m_pConfig->pValues->internalBezier : DEFAULTBEZIERNAME;
+
+    if (const auto PCONFIG = m_pConfig.lock()) {
+        const auto PVALUES = PCONFIG->pValues.lock();
+        return PVALUES ? PVALUES->internalBezier : DEFAULTBEZIERNAME;
+    }
+
+    return DEFAULTBEZIERNAME;
 }
 
 const std::string& CBaseAnimatedVariable::getStyle() const {
     static constexpr const std::string DEFAULTSTYLE = "";
-    return m_pConfig ? m_pConfig->pValues->internalStyle : DEFAULTSTYLE;
+
+    if (const auto PCONFIG = m_pConfig.lock()) {
+        const auto PVALUES = PCONFIG->pValues.lock();
+        return PVALUES ? PVALUES->internalStyle : DEFAULTSTYLE;
+    }
+
+    return DEFAULTSTYLE;
 }
 
 float CBaseAnimatedVariable::getPercent() const {
@@ -51,12 +74,22 @@ float CBaseAnimatedVariable::getCurveValue() const {
     if (!m_bIsBeingAnimated || !m_pAnimationManager)
         return 1.f;
 
-    const auto SPENT = getPercent();
+    std::string bezierName = "";
+    if (const auto PCONFIG = m_pConfig.lock()) {
+        const auto PVALUES = PCONFIG->pValues.lock();
+        if (PVALUES)
+            bezierName = PVALUES->internalBezier;
+    }
 
+    const auto BEZIER = m_pAnimationManager->getBezier(bezierName);
+    if (!BEZIER)
+        return 1.f;
+
+    const auto SPENT = getPercent();
     if (SPENT >= 1.f)
         return 1.f;
 
-    return m_pAnimationManager->getBezier(m_pConfig->pValues->internalBezier)->getYForPoint(SPENT);
+    return BEZIER->getYForPoint(SPENT);
 }
 
 bool CBaseAnimatedVariable::ok() const {
@@ -65,7 +98,7 @@ bool CBaseAnimatedVariable::ok() const {
 
 void CBaseAnimatedVariable::onUpdate() {
     if (m_fUpdateCallback)
-        m_fUpdateCallback(this);
+        m_fUpdateCallback(m_pSelf);
 }
 
 void CBaseAnimatedVariable::setCallbackOnEnd(CallbackFun func, bool remove) {
@@ -100,7 +133,7 @@ void CBaseAnimatedVariable::onAnimationEnd() {
     if (m_fEndCallback) {
         /* loading m_bRemoveEndAfterRan before calling the callback allows the callback to delete this animation safely if it is false. */
         auto removeEndCallback = m_bRemoveEndAfterRan;
-        m_fEndCallback(this);
+        m_fEndCallback(m_pSelf);
         if (removeEndCallback)
             m_fEndCallback = nullptr; // reset
     }
@@ -112,7 +145,7 @@ void CBaseAnimatedVariable::onAnimationBegin() {
     connectToActive();
 
     if (m_fBeginCallback) {
-        m_fBeginCallback(this);
+        m_fBeginCallback(m_pSelf);
         if (m_bRemoveBeginAfterRan)
             m_fBeginCallback = nullptr; // reset
     }

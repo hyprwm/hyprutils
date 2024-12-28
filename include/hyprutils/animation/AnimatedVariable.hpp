@@ -1,5 +1,8 @@
 #pragma once
 
+#include "../memory/WeakPtr.hpp"
+#include "hyprutils/memory/SharedPtr.hpp"
+
 #include <functional>
 #include <chrono>
 
@@ -12,27 +15,27 @@ namespace Hyprutils {
             Config properties need to have a static lifetime to allow for config reload.
         */
         struct SAnimationPropertyConfig {
-            bool                      overridden = true;
+            bool                                           overridden = true;
 
-            std::string               internalBezier  = "";
-            std::string               internalStyle   = "";
-            float                     internalSpeed   = 0.f;
-            int                       internalEnabled = -1;
+            std::string                                    internalBezier  = "";
+            std::string                                    internalStyle   = "";
+            float                                          internalSpeed   = 0.f;
+            int                                            internalEnabled = -1;
 
-            SAnimationPropertyConfig* pValues          = nullptr;
-            SAnimationPropertyConfig* pParentAnimation = nullptr;
+            Memory::CWeakPointer<SAnimationPropertyConfig> pValues;
+            Memory::CWeakPointer<SAnimationPropertyConfig> pParentAnimation;
         };
 
         /* A base class for animated variables. */
         class CBaseAnimatedVariable {
           public:
-            using CallbackFun = std::function<void(CBaseAnimatedVariable* thisptr)>;
+            using CallbackFun = std::function<void(Memory::CWeakPointer<CBaseAnimatedVariable> thisptr)>;
 
             CBaseAnimatedVariable() {
                 ; // m_bDummy = true;
             };
 
-            void create(CAnimationManager* p, int typeInfo);
+            void create(CAnimationManager*, int, Memory::CSharedPointer<CBaseAnimatedVariable>);
             void connectToActive();
             void disconnectFromActive();
 
@@ -48,11 +51,11 @@ namespace Hyprutils {
             CBaseAnimatedVariable& operator=(const CBaseAnimatedVariable&) = delete;
             CBaseAnimatedVariable& operator=(CBaseAnimatedVariable&&)      = delete;
 
-            void                   setConfig(SAnimationPropertyConfig* pConfig) {
+            void                   setConfig(Memory::CSharedPointer<SAnimationPropertyConfig> pConfig) {
                 m_pConfig = pConfig;
             }
 
-            SAnimationPropertyConfig* getConfig() const {
+            Memory::CWeakPointer<SAnimationPropertyConfig> getConfig() const {
                 return m_pConfig;
             }
 
@@ -100,23 +103,25 @@ namespace Hyprutils {
           protected:
             friend class CAnimationManager;
 
-            bool m_bIsConnectedToActive = false;
-            bool m_bIsBeingAnimated     = false;
+            bool                                        m_bIsConnectedToActive = false;
+            bool                                        m_bIsBeingAnimated     = false;
+
+            Memory::CWeakPointer<CBaseAnimatedVariable> m_pSelf;
 
           private:
-            SAnimationPropertyConfig*             m_pConfig;
+            Memory::CWeakPointer<SAnimationPropertyConfig> m_pConfig;
 
-            std::chrono::steady_clock::time_point animationBegin;
+            std::chrono::steady_clock::time_point          animationBegin;
 
-            bool                                  m_bDummy = true;
+            bool                                           m_bDummy = true;
 
-            CAnimationManager*                    m_pAnimationManager;
-            bool                                  m_bRemoveEndAfterRan   = true;
-            bool                                  m_bRemoveBeginAfterRan = true;
+            CAnimationManager*                             m_pAnimationManager;
+            bool                                           m_bRemoveEndAfterRan   = true;
+            bool                                           m_bRemoveBeginAfterRan = true;
 
-            CallbackFun                           m_fEndCallback;
-            CallbackFun                           m_fBeginCallback;
-            CallbackFun                           m_fUpdateCallback;
+            CallbackFun                                    m_fEndCallback;
+            CallbackFun                                    m_fBeginCallback;
+            CallbackFun                                    m_fUpdateCallback;
         };
 
         /* This concept represents the minimum requirement for a type to be used with CGenericAnimatedVariable */
@@ -138,12 +143,13 @@ namespace Hyprutils {
           public:
             CGenericAnimatedVariable() = default;
 
-            void create(const int typeInfo, const VarType& initialValue, CAnimationManager* pAnimationManager) {
+            void create(const int typeInfo, CAnimationManager* pAnimationManager, Memory::CSharedPointer<CGenericAnimatedVariable<VarType, AnimationContext>> pSelf,
+                        const VarType& initialValue) {
                 m_Begun = initialValue;
                 m_Value = initialValue;
                 m_Goal  = initialValue;
 
-                CBaseAnimatedVariable::create(pAnimationManager, typeInfo);
+                CBaseAnimatedVariable::create(pAnimationManager, typeInfo, pSelf);
             }
 
             CGenericAnimatedVariable(const CGenericAnimatedVariable&)            = delete;

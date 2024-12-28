@@ -37,14 +37,18 @@ bool CAnimationManager::shouldTickForNext() {
 }
 
 void CAnimationManager::tickDone() {
-    std::vector<CBaseAnimatedVariable*> active;
+    std::vector<CWeakPointer<CBaseAnimatedVariable>> active;
     // avoid reallocations
     active.reserve(m_vActiveAnimatedVariables.size());
     for (auto const& av : m_vActiveAnimatedVariables) {
-        if (av->ok() && av->isBeingAnimated())
+        const auto PAV = av.lock();
+        if (!PAV)
+            continue;
+
+        if (PAV->ok() && PAV->isBeingAnimated())
             active.push_back(av);
         else
-            av->m_bIsConnectedToActive = false;
+            PAV->m_bIsConnectedToActive = false;
     }
 
     m_vActiveAnimatedVariables = std::move(active);
