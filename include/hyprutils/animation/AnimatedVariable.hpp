@@ -115,7 +115,7 @@ namespace Hyprutils {
 
             bool                                           m_bDummy = true;
 
-            CAnimationManager*                             m_pAnimationManager;
+            CAnimationManager*                             m_pAnimationManager    = nullptr;
             bool                                           m_bRemoveEndAfterRan   = true;
             bool                                           m_bRemoveBeginAfterRan = true;
 
