@@ -8,9 +8,6 @@
 #include <unordered_map>
 #include <vector>
 
-using namespace Hyprutils::Memory;
-using namespace Hyprutils::Math;
-
 namespace Hyprutils {
     namespace Animation {
         /* A class for managing bezier curves and variables that are being animated. */
@@ -18,26 +15,26 @@ namespace Hyprutils {
           public:
             CAnimationManager();
 
-            void                                                          tickDone();
-            bool                                                          shouldTickForNext();
+            void                                                                  tickDone();
+            bool                                                                  shouldTickForNext();
 
-            virtual void                                                  scheduleTick() = 0;
-            virtual void                                                  onTicked()     = 0;
+            virtual void                                                          scheduleTick() = 0;
+            virtual void                                                          onTicked()     = 0;
 
-            void                                                          addBezierWithName(std::string, const Vector2D&, const Vector2D&);
-            void                                                          removeAllBeziers();
+            void                                                                  addBezierWithName(std::string, const Math::Vector2D&, const Math::Vector2D&);
+            void                                                                  removeAllBeziers();
 
-            bool                                                          bezierExists(const std::string&);
-            CSharedPointer<CBezierCurve>                                  getBezier(const std::string&);
+            bool                                                                  bezierExists(const std::string&);
+            Memory::CSharedPointer<CBezierCurve>                                  getBezier(const std::string&);
 
-            std::unordered_map<std::string, CSharedPointer<CBezierCurve>> getAllBeziers();
+            std::unordered_map<std::string, Memory::CSharedPointer<CBezierCurve>> getAllBeziers();
 
-            std::vector<CWeakPointer<CBaseAnimatedVariable>>              m_vActiveAnimatedVariables;
+            std::vector<Memory::CWeakPointer<CBaseAnimatedVariable>>              m_vActiveAnimatedVariables;
 
           private:
-            std::unordered_map<std::string, CSharedPointer<CBezierCurve>> m_mBezierCurves;
+            std::unordered_map<std::string, Memory::CSharedPointer<CBezierCurve>> m_mBezierCurves;
 
-            bool                                                          m_bTickScheduled = false;
+            bool                                                                  m_bTickScheduled = false;
         };
     }
 }
