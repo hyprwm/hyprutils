@@ -45,7 +45,7 @@ void CAnimationManager::tickDone() {
             continue;
 
         if (PAV->ok() && PAV->isBeingAnimated())
-            active.push_back(av);
+            active.emplace_back(av);
         else
             PAV->m_bIsConnectedToActive = false;
     }
