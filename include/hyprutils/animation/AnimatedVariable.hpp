@@ -1,5 +1,6 @@
 #pragma once
 
+#include "AnimationConfig.hpp"
 #include "../memory/WeakPtr.hpp"
 #include "hyprutils/memory/SharedPtr.hpp"
 
@@ -9,22 +10,6 @@
 namespace Hyprutils {
     namespace Animation {
         class CAnimationManager;
-
-        /*
-            Structure for animation properties.
-            Config properties need to have a static lifetime to allow for config reload.
-        */
-        struct SAnimationPropertyConfig {
-            bool                                           overridden = true;
-
-            std::string                                    internalBezier  = "";
-            std::string                                    internalStyle   = "";
-            float                                          internalSpeed   = 0.f;
-            int                                            internalEnabled = -1;
-
-            Memory::CWeakPointer<SAnimationPropertyConfig> pValues;
-            Memory::CWeakPointer<SAnimationPropertyConfig> pParentAnimation;
-        };
 
         /* A base class for animated variables. */
         class CBaseAnimatedVariable {
