@@ -1,3 +1,4 @@
+#include <hyprutils/animation/AnimationConfig.hpp>
 #include <hyprutils/animation/AnimationManager.hpp>
 #include <hyprutils/animation/AnimatedVariable.hpp>
 #include <hyprutils/memory/WeakPtr.hpp>
@@ -37,7 +38,7 @@ struct SomeTestType {
     }
 };
 
-std::unordered_map<std::string, SP<SAnimationPropertyConfig>> animationConfig;
+CAnimationConfigTree animationTree;
 
 class CMyAnimationManager : public CAnimationManager {
   public:
@@ -90,7 +91,7 @@ class CMyAnimationManager : public CAnimationManager {
         const auto               PAV     = makeShared<CGenericAnimatedVariable<VarType, EmtpyContext>>();
 
         PAV->create(EAVTYPE, static_cast<CAnimationManager*>(this), PAV, v);
-        PAV->setConfig(animationConfig[animationConfigName]);
+        PAV->setConfig(animationTree.getConfig(animationConfigName));
         av = std::move(PAV);
     }
 
@@ -109,7 +110,7 @@ class Subject {
   public:
     Subject(const int& a, const int& b) {
         gAnimationManager.createAnimation(a, m_iA, "default");
-        gAnimationManager.createAnimation(b, m_iB, "default");
+        gAnimationManager.createAnimation(b, m_iB, "internal");
         gAnimationManager.createAnimation({}, m_iC, "default");
     }
     PANIMVAR<int>          m_iA;
@@ -117,15 +118,78 @@ class Subject {
     PANIMVAR<SomeTestType> m_iC;
 };
 
-int main(int argc, char** argv, char** envp) {
-    animationConfig["default"]                  = makeShared<SAnimationPropertyConfig>();
-    animationConfig["default"]->internalBezier  = "default";
-    animationConfig["default"]->internalSpeed   = 1.0;
-    animationConfig["default"]->internalStyle   = "asdf";
-    animationConfig["default"]->internalEnabled = 1;
-    animationConfig["default"]->pValues         = animationConfig["default"];
+int config() {
+    int ret = 0;
 
-    int     ret = 0;
+    animationTree.createNode("global");
+    animationTree.createNode("internal");
+
+    animationTree.createNode("foo", "internal");
+    animationTree.createNode("default", "global");
+    animationTree.createNode("bar", "default");
+
+    /*
+      internal
+        ↳ foo
+      global
+        ↳ default
+          ↳ bar
+    */
+
+    auto barCfg      = animationTree.getConfig("bar");
+    auto internalCfg = animationTree.getConfig("internal");
+
+    // internal is a root node and should point to itself
+    EXPECT(internalCfg->pParentAnimation.get(), internalCfg.get());
+    EXPECT(internalCfg->pValues.get(), internalCfg.get());
+
+    animationTree.setConfigForNode("global", 1, 4.0, "default", "asdf");
+
+    EXPECT(barCfg->internalEnabled, -1);
+    {
+        const auto PVALUES = barCfg->pValues.lock();
+        EXPECT(PVALUES->internalEnabled, 1);
+        EXPECT(PVALUES->internalBezier, "default");
+        EXPECT(PVALUES->internalStyle, "asdf");
+        EXPECT(PVALUES->internalSpeed, 4.0);
+    }
+    EXPECT(barCfg->pParentAnimation.get(), animationTree.getConfig("default").get());
+
+    // Overwrite our own values
+    animationTree.setConfigForNode("bar", 1, 4.2, "test", "qwer");
+
+    {
+        const auto PVALUES = barCfg->pValues.lock();
+        EXPECT(PVALUES->internalEnabled, 1);
+        EXPECT(PVALUES->internalBezier, "test");
+        EXPECT(PVALUES->internalStyle, "qwer");
+        EXPECT(PVALUES->internalSpeed, 4.2f);
+    }
+
+    // Now overwrite the parent
+    animationTree.setConfigForNode("default", 0, 0.0, "zxcv", "foo");
+
+    {
+        // Expecting no change
+        const auto PVALUES = barCfg->pValues.lock();
+        EXPECT(PVALUES->internalEnabled, 1);
+        EXPECT(PVALUES->internalBezier, "test");
+        EXPECT(PVALUES->internalStyle, "qwer");
+        EXPECT(PVALUES->internalSpeed, 4.2f);
+    }
+
+    return ret;
+}
+
+int main(int argc, char** argv, char** envp) {
+    int ret = config();
+
+    animationTree.createNode("global");
+    animationTree.createNode("internal");
+
+    animationTree.createNode("default", "global");
+    animationTree.setConfigForNode("global", 1, 4.0, "default", "asdf");
+
     Subject s(0, 0);
 
     EXPECT(s.m_iA->value(), 0);
@@ -172,7 +236,7 @@ int main(int argc, char** argv, char** envp) {
     EXPECT(s.m_iA->getStyle(), "asdf");
     EXPECT(s.m_iA->enabled(), true);
 
-    animationConfig["default"]->internalEnabled = 0;
+    animationTree.getConfig("global")->internalEnabled = 0;
 
     EXPECT(s.m_iA->enabled(), false);
 
@@ -181,15 +245,13 @@ int main(int argc, char** argv, char** envp) {
     EXPECT(s.m_iA->value(), 50);
 
     // Test missing pValues
-    animationConfig["default"]->internalEnabled = 1;
-    animationConfig["default"]->pValues.reset();
+    animationTree.getConfig("global")->internalEnabled = 0;
+    animationTree.getConfig("default")->pValues.reset();
 
     EXPECT(s.m_iA->enabled(), false);
     EXPECT(s.m_iA->getBezierName(), "default");
     EXPECT(s.m_iA->getStyle(), "");
     EXPECT(s.m_iA->getPercent(), 1.f);
-
-    animationConfig["default"]->pValues = animationConfig["default"];
 
     //
     // Test callbacks
