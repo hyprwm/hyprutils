@@ -3,6 +3,7 @@
 #include "../memory/WeakPtr.hpp"
 #include "hyprutils/memory/WeakPtr.hpp"
 
+#include <string>
 #include <unordered_map>
 
 namespace Hyprutils {
