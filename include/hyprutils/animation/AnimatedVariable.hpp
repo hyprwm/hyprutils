@@ -14,7 +14,7 @@ namespace Hyprutils {
         /* A base class for animated variables. */
         class CBaseAnimatedVariable {
           public:
-            using CallbackFun = std::function<void(Memory::CWeakPointer<CBaseAnimatedVariable> thisptr)>;
+            using CallbackFun = std::function<void(Memory::CSharedPointer<CBaseAnimatedVariable> thisptr)>;
 
             CBaseAnimatedVariable() {
                 ; // m_bDummy = true;

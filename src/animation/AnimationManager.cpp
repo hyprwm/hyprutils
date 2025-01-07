@@ -37,6 +37,27 @@ bool CAnimationManager::shouldTickForNext() {
 }
 
 void CAnimationManager::tickDone() {
+    std::vector<std::function<void(void)>> callbacks;
+    callbacks.reserve(m_vActiveAnimatedVariables.size());
+    for (auto const& av : m_vActiveAnimatedVariables) {
+        const auto PAV = av.lock();
+        if (!PAV)
+            continue;
+
+        if (PAV->ok() && PAV->isBeingAnimated()) {
+            if (PAV->m_fUpdateCallback)
+                callbacks.emplace_back(std::bind(PAV->m_fUpdateCallback, PAV));
+        } else {
+            if (PAV->m_fEndCallback)
+                callbacks.emplace_back(std::bind(PAV->m_fEndCallback, PAV));
+            if (PAV->m_bRemoveEndAfterRan)
+                PAV->m_fEndCallback = nullptr;
+        }
+    }
+
+    for (const auto& cb : callbacks)
+        cb();
+
     std::vector<CWeakPointer<CBaseAnimatedVariable>> active;
     active.reserve(m_vActiveAnimatedVariables.size()); // avoid reallocations
     for (auto const& av : m_vActiveAnimatedVariables) {

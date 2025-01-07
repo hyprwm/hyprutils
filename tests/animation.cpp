@@ -43,8 +43,8 @@ CAnimationConfigTree animationTree;
 class CMyAnimationManager : public CAnimationManager {
   public:
     void tick() {
-        for (size_t i = 0; i < m_vActiveAnimatedVariables.size(); i++) {
-            const auto PAV = m_vActiveAnimatedVariables[i].lock();
+        for (const auto& av : m_vActiveAnimatedVariables) {
+            const auto PAV = av.lock();
             if (!PAV || !PAV->ok())
                 continue;
 
@@ -79,8 +79,6 @@ class CMyAnimationManager : public CAnimationManager {
                     std::cout << Colors::RED << "What are we even doing?" << Colors::RESET;
                 } break;
             }
-
-            PAV->onUpdate();
         }
 
         tickDone();
@@ -263,11 +261,15 @@ int main(int argc, char** argv, char** envp) {
     int beginCallbackRan  = 0;
     int updateCallbackRan = 0;
     int endCallbackRan    = 0;
-    s.m_iA->setCallbackOnBegin([&beginCallbackRan](WP<CBaseAnimatedVariable> pav) { beginCallbackRan++; });
-    s.m_iA->setUpdateCallback([&updateCallbackRan](WP<CBaseAnimatedVariable> pav) { updateCallbackRan++; });
-    s.m_iA->setCallbackOnEnd([&endCallbackRan](WP<CBaseAnimatedVariable> pav) { endCallbackRan++; }, false);
+    s.m_iA->setCallbackOnBegin([&beginCallbackRan](SP<CBaseAnimatedVariable> pav) { beginCallbackRan++; }, false);
+    s.m_iA->setUpdateCallback([&updateCallbackRan](SP<CBaseAnimatedVariable> pav) { updateCallbackRan++; });
+    s.m_iA->setCallbackOnEnd([&endCallbackRan](SP<CBaseAnimatedVariable> pav) { endCallbackRan++; }, false);
+
+    EXPECT(gAnimationManager.shouldTickForNext(), false);
 
     s.m_iA->setValueAndWarp(42);
+
+    EXPECT(gAnimationManager.shouldTickForNext(), false);
 
     EXPECT(beginCallbackRan, 0);
     EXPECT(updateCallbackRan, 1);
@@ -291,8 +293,8 @@ int main(int argc, char** argv, char** envp) {
 
     // test adding / removing vars during a tick
     s.m_iA->resetAllCallbacks();
-    s.m_iA->setUpdateCallback([&vars](WP<CBaseAnimatedVariable> v) {
-        if (v.lock() != vars.back())
+    s.m_iA->setUpdateCallback([&vars](SP<CBaseAnimatedVariable> v) {
+        if (v != vars.back())
             vars.back()->warp();
     });
     s.m_iA->setCallbackOnEnd([&s, &vars](auto) {
@@ -310,6 +312,7 @@ int main(int argc, char** argv, char** envp) {
     EXPECT(s.m_iA->value(), 1000000);
     // all vars should be set to 1337
     EXPECT(std::find_if(vars.begin(), vars.end(), [](const auto& v) { return v->value() != 1337; }) == vars.end(), true);
+    EXPECT(endCallbackRan, 3);
 
     // test one-time callbacks
     s.m_iA->resetAllCallbacks();
