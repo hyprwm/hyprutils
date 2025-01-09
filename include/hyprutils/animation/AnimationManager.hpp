@@ -14,6 +14,7 @@ namespace Hyprutils {
         class CAnimationManager {
           public:
             CAnimationManager();
+			virtual ~CAnimationManager() = default;
 
             void                                                                         tickDone();
             bool                                                                         shouldTickForNext();
