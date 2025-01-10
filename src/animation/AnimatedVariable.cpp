@@ -103,7 +103,7 @@ bool CBaseAnimatedVariable::ok() const {
 }
 
 void CBaseAnimatedVariable::onUpdate() {
-    if (m_fUpdateCallback)
+    if (m_bIsBeingAnimated && m_fUpdateCallback)
         m_fUpdateCallback(m_pSelf);
 }
 
