@@ -43,8 +43,8 @@ CAnimationConfigTree animationTree;
 class CMyAnimationManager : public CAnimationManager {
   public:
     void tick() {
-        for (auto const& av : m_vActiveAnimatedVariables) {
-            const auto PAV = av.lock();
+        for (size_t i = 0; i < m_vActiveAnimatedVariables.size(); i++) {
+            const auto PAV = m_vActiveAnimatedVariables[i].lock();
             if (!PAV || !PAV->ok())
                 continue;
 
@@ -80,7 +80,7 @@ class CMyAnimationManager : public CAnimationManager {
                 } break;
             }
 
-            av->onUpdate();
+            PAV->onUpdate();
         }
 
         tickDone();
