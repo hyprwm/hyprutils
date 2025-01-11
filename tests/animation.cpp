@@ -260,31 +260,27 @@ int main(int argc, char** argv, char** envp) {
     //
     // Test callbacks
     //
-    bool beginCallbackRan  = false;
-    bool updateCallbackRan = false;
-    bool endCallbackRan    = false;
-    s.m_iA->setCallbackOnBegin([&beginCallbackRan](WP<CBaseAnimatedVariable> pav) { beginCallbackRan = true; });
-    s.m_iA->setUpdateCallback([&updateCallbackRan](WP<CBaseAnimatedVariable> pav) { updateCallbackRan = true; });
-    s.m_iA->setCallbackOnEnd([&endCallbackRan](WP<CBaseAnimatedVariable> pav) { endCallbackRan = true; }, false);
+    int beginCallbackRan  = 0;
+    int updateCallbackRan = 0;
+    int endCallbackRan    = 0;
+    s.m_iA->setCallbackOnBegin([&beginCallbackRan](WP<CBaseAnimatedVariable> pav) { beginCallbackRan++; });
+    s.m_iA->setUpdateCallback([&updateCallbackRan](WP<CBaseAnimatedVariable> pav) { updateCallbackRan++; });
+    s.m_iA->setCallbackOnEnd([&endCallbackRan](WP<CBaseAnimatedVariable> pav) { endCallbackRan++; }, false);
 
     s.m_iA->setValueAndWarp(42);
 
-    EXPECT(beginCallbackRan, false);
-    EXPECT(updateCallbackRan, true);
-    EXPECT(endCallbackRan, true);
-
-    beginCallbackRan  = false;
-    updateCallbackRan = false;
-    endCallbackRan    = false;
+    EXPECT(beginCallbackRan, 0);
+    EXPECT(updateCallbackRan, 1);
+    EXPECT(endCallbackRan, 2); // first called when setting the callback, then when warping.
 
     *s.m_iA = 1337;
     while (gAnimationManager.shouldTickForNext()) {
         gAnimationManager.tick();
     }
 
-    EXPECT(beginCallbackRan, true);
-    EXPECT(updateCallbackRan, true);
-    EXPECT(endCallbackRan, true);
+    EXPECT(beginCallbackRan, 1);
+    EXPECT(updateCallbackRan > 2, true);
+    EXPECT(endCallbackRan, 3);
 
     std::vector<PANIMVAR<int>> vars;
     for (int i = 0; i < 10; i++) {
@@ -316,17 +312,14 @@ int main(int argc, char** argv, char** envp) {
     EXPECT(std::find_if(vars.begin(), vars.end(), [](const auto& v) { return v->value() != 1337; }) == vars.end(), true);
 
     // test one-time callbacks
-    endCallbackRan = false;
     s.m_iA->resetAllCallbacks();
-    s.m_iA->setCallbackOnEnd([&endCallbackRan](auto) { endCallbackRan = true; }, true);
+    s.m_iA->setCallbackOnEnd([&endCallbackRan](auto) { endCallbackRan++; }, true);
 
-    EXPECT(endCallbackRan, true);
-
-    endCallbackRan = false;
+    EXPECT(endCallbackRan, 4);
 
     s.m_iA->setValueAndWarp(10);
 
-    EXPECT(endCallbackRan, false);
+    EXPECT(endCallbackRan, 4);
     EXPECT(s.m_iA->value(), 10);
 
     return ret;
