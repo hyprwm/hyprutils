@@ -148,9 +148,9 @@ namespace Hyprutils {
 
                 m_Value = m_Goal;
 
-                m_bIsBeingAnimated = false;
-
                 onUpdate();
+
+                m_bIsBeingAnimated = false;
 
                 if (endCallback)
                     onAnimationEnd();
