@@ -29,7 +29,9 @@ namespace Hyprutils {
 
             const std::unordered_map<std::string, Memory::CSharedPointer<CBezierCurve>>& getAllBeziers();
 
-            std::vector<Memory::CWeakPointer<CBaseAnimatedVariable>>                     m_vActiveAnimatedVariables;
+            virtual                                                                      ~CAnimationManager() {};
+
+            std::vector<Memory::CWeakPointer<CBaseAnimatedVariable>> m_vActiveAnimatedVariables;
 
           private:
             std::unordered_map<std::string, Memory::CSharedPointer<CBezierCurve>> m_mBezierCurves;
