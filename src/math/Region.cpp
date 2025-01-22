@@ -149,9 +149,9 @@ CRegion& Hyprutils::Math::CRegion::scale(const Vector2D& scale) {
 
     for (auto& r : rects) {
         r.x1 = std::floor(r.x1 * scale.x);
-        r.y1 = std::floor(r.y1 * scale.x);
+        r.y1 = std::floor(r.y1 * scale.y);
         r.x2 = std::ceil(r.x2 * scale.x);
-        r.y2 = std::ceil(r.y2 * scale.x);
+        r.y2 = std::ceil(r.y2 * scale.y);
         add(&r);
     }
 
