@@ -1,6 +1,7 @@
 #pragma once
 
 #include "./SharedPtr.hpp"
+#include "./UniquePtr.hpp"
 
 /*
     This is a Hyprland implementation of std::weak_ptr.
@@ -21,6 +22,16 @@ namespace Hyprutils {
             /* create a weak ptr from a reference */
             template <typename U, typename = isConstructible<U>>
             CWeakPointer(const CSharedPointer<U>& ref) noexcept {
+                if (!ref.impl_)
+                    return;
+
+                impl_ = ref.impl_;
+                incrementWeak();
+            }
+
+            /* create a weak ptr from a reference */
+            template <typename U, typename = isConstructible<U>>
+            CWeakPointer(const CUniquePointer<U>& ref) noexcept {
                 if (!ref.impl_)
                     return;
 
@@ -119,7 +130,7 @@ namespace Hyprutils {
             }
 
             CSharedPointer<T> lock() const {
-                if (!impl_ || !impl_->dataNonNull() || impl_->destroying())
+                if (!impl_ || !impl_->dataNonNull() || impl_->destroying() || !impl_->lockable())
                     return {};
 
                 return CSharedPointer<T>(impl_);
@@ -154,7 +165,11 @@ namespace Hyprutils {
                 return get();
             }
 
-            CSharedPointer_::impl_base* impl_ = nullptr;
+            T& operator*() const {
+                return *get();
+            }
+
+            Impl_::impl_base* impl_ = nullptr;
 
           private:
             /* no-op if there is no impl_ */
