@@ -40,7 +40,7 @@ target_include_directories(
   PUBLIC "./include"
   PRIVATE "./src")
 set_target_properties(hyprutils PROPERTIES VERSION ${hyprutils_VERSION}
-                                           SOVERSION 2)
+                                           SOVERSION 3)
 target_link_libraries(hyprutils PkgConfig::deps)
 
 # tests
