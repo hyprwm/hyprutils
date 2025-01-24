@@ -153,6 +153,14 @@ namespace Hyprutils {
                 return impl_ == rhs.impl_;
             }
 
+            bool operator==(std::nullptr_t) const {
+                return !valid();
+            }
+
+            bool operator!=(std::nullptr_t) const {
+                return valid();
+            }
+
             bool operator()(const CWeakPointer& lhs, const CWeakPointer& rhs) const {
                 return reinterpret_cast<uintptr_t>(lhs.impl_) < reinterpret_cast<uintptr_t>(rhs.impl_);
             }
