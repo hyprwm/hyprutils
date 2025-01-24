@@ -149,6 +149,10 @@ namespace Hyprutils {
                 return impl_ == rhs.impl_;
             }
 
+            bool operator==(const CUniquePointer<T>& rhs) const {
+                return impl_ == rhs.impl_;
+            }
+
             bool operator()(const CWeakPointer& lhs, const CWeakPointer& rhs) const {
                 return reinterpret_cast<uintptr_t>(lhs.impl_) < reinterpret_cast<uintptr_t>(rhs.impl_);
             }
