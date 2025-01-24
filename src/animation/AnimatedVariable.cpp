@@ -103,8 +103,11 @@ bool CBaseAnimatedVariable::ok() const {
 }
 
 void CBaseAnimatedVariable::onUpdate() {
-    if (m_bIsBeingAnimated && m_fUpdateCallback)
-        m_fUpdateCallback(m_pSelf);
+    if (!m_bIsBeingAnimated || !m_fUpdateCallback)
+        return;
+
+    if (const auto SELF = m_pSelf.lock(); SELF)
+        m_fUpdateCallback(SELF);
 }
 
 void CBaseAnimatedVariable::setCallbackOnEnd(CallbackFun func, bool remove) {
@@ -133,14 +136,15 @@ void CBaseAnimatedVariable::resetAllCallbacks() {
 }
 
 void CBaseAnimatedVariable::onAnimationEnd() {
-    m_bIsBeingAnimated = false;
     /* We do not call disconnectFromActive here. The animation manager will remove it on a call to tickDone. */
+    m_bIsBeingAnimated = false;
 
-    if (m_fEndCallback) {
-        /* loading m_bRemoveEndAfterRan before calling the callback allows the callback to delete this animation safely if it is false. */
-        auto removeEndCallback = m_bRemoveEndAfterRan;
-        m_fEndCallback(m_pSelf);
-        if (removeEndCallback)
+    if (m_bIsConnectedToActive) // callback will we handled by tickDone
+        return;
+
+    if (const auto SELF = m_pSelf.lock(); SELF && m_fEndCallback) {
+        m_fEndCallback(SELF);
+        if (m_bRemoveEndAfterRan)
             m_fEndCallback = nullptr; // reset
     }
 }
@@ -150,8 +154,8 @@ void CBaseAnimatedVariable::onAnimationBegin() {
     animationBegin     = std::chrono::steady_clock::now();
     connectToActive();
 
-    if (m_fBeginCallback) {
-        m_fBeginCallback(m_pSelf);
+    if (const auto SELF = m_pSelf.lock(); SELF && m_fBeginCallback) {
+        m_fBeginCallback(SELF);
         if (m_bRemoveBeginAfterRan)
             m_fBeginCallback = nullptr; // reset
     }
