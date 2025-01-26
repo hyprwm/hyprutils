@@ -44,11 +44,11 @@ namespace Hyprutils {
             bool                                                                  m_bTickScheduled = false;
 
             void                                                                  connectListener(std::any data);
-            void                                                                  forceDisconnectListener(std::any data);
+            void                                                                  disconnectListener(std::any data);
 
             struct {
                 Signal::CHyprSignalListener connect;
-                Signal::CHyprSignalListener forceDisconnect;
+                Signal::CHyprSignalListener disconnect;
             } m_sListeners;
 
             friend class CBaseAnimatedVariable;

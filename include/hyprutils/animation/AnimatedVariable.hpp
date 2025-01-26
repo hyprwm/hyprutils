@@ -14,8 +14,7 @@ namespace Hyprutils {
 
         struct SAnimVarEvents {
             Signal::CSignal connect;
-            Signal::CSignal forceDisconnect;
-            Signal::CSignal lazyDisconnect;
+            Signal::CSignal disconnect;
         };
 
         /* A base class for animated variables. */
@@ -164,10 +163,8 @@ namespace Hyprutils {
                 if (endCallback)
                     onAnimationEnd();
 
-                if (forceDisconnect) {
-                    if (const auto PEVENTS = m_events.lock())
-                        PEVENTS->forceDisconnect.emit(static_cast<void*>(this));
-                }
+                if (forceDisconnect)
+                    disconnectFromActive();
             }
 
             const VarType& value() const {

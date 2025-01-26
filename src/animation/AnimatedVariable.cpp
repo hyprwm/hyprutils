@@ -28,7 +28,7 @@ void CBaseAnimatedVariable::connectToActive() {
 
 void CBaseAnimatedVariable::disconnectFromActive() {
     if (const auto PEVENTS = m_events.lock())
-        PEVENTS->forceDisconnect.emit(static_cast<void*>(this));
+        PEVENTS->disconnect.emit(static_cast<void*>(this));
 
     m_bIsConnectedToActive = false;
 }
@@ -133,9 +133,7 @@ void CBaseAnimatedVariable::resetAllCallbacks() {
 
 void CBaseAnimatedVariable::onAnimationEnd() {
     m_bIsBeingAnimated = false;
-    /* lazy disconnect, since this animvar is atill alive */
-    if (const auto PEVENTS = m_events.lock())
-        PEVENTS->lazyDisconnect.emit(static_cast<void*>(this));
+    /* We do not call disconnectFromActive here. The animation manager will remove it on a call to tickDone. */
 
     if (m_fEndCallback) {
         /* loading m_bRemoveEndAfterRan before calling the callback allows the callback to delete this animation safely if it is false. */

@@ -16,8 +16,8 @@ CAnimationManager::CAnimationManager() {
 
     m_events = makeShared<SAnimVarEvents>();
 
-    m_sListeners.connect         = m_events->connect.registerListener([this](std::any data) { connectListener(data); });
-    m_sListeners.forceDisconnect = m_events->forceDisconnect.registerListener([this](std::any data) { forceDisconnectListener(data); });
+    m_sListeners.connect    = m_events->connect.registerListener([this](std::any data) { connectListener(data); });
+    m_sListeners.disconnect = m_events->disconnect.registerListener([this](std::any data) { disconnectListener(data); });
 }
 
 void CAnimationManager::connectListener(std::any data) {
@@ -33,7 +33,7 @@ void CAnimationManager::connectListener(std::any data) {
     } catch (const std::bad_any_cast&) { return; }
 }
 
-void CAnimationManager::forceDisconnectListener(std::any data) {
+void CAnimationManager::disconnectListener(std::any data) {
     try {
         const auto PAV = std::any_cast<void*>(data);
         if (!PAV)
