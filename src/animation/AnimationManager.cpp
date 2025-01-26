@@ -3,6 +3,7 @@
 using namespace Hyprutils::Animation;
 using namespace Hyprutils::Math;
 using namespace Hyprutils::Memory;
+using namespace Hyprutils::Signal;
 
 #define SP CSharedPointer
 
@@ -12,6 +13,35 @@ CAnimationManager::CAnimationManager() {
     const auto BEZIER = makeShared<CBezierCurve>();
     BEZIER->setup(DEFAULTBEZIERPOINTS);
     m_mBezierCurves["default"] = BEZIER;
+
+    m_sEvents.connect    = makeShared<CSignal>();
+    m_sEvents.disconnect = makeShared<CSignal>();
+
+    m_sListeners.connect    = m_sEvents.connect->registerListener([this](std::any data) { connectVarListener(data); });
+    m_sListeners.disconnect = m_sEvents.disconnect->registerListener([this](std::any data) { disconnectVarListener(data); });
+}
+
+void CAnimationManager::connectVarListener(std::any data) {
+    if (!m_bTickScheduled)
+        scheduleTick();
+
+    try {
+        const auto PAV = std::any_cast<SP<CBaseAnimatedVariable>>(data);
+        if (!PAV)
+            return;
+
+        m_vActiveAnimatedVariables.emplace_back(PAV);
+    } catch (const std::bad_any_cast&) { return; }
+}
+
+void CAnimationManager::disconnectVarListener(std::any data) {
+    try {
+        const auto PAV = std::any_cast<void*>(data);
+        if (!PAV)
+            return;
+
+        std::erase_if(m_vActiveAnimatedVariables, [&](const auto& other) { return other.get() == PAV; });
+    } catch (const std::bad_any_cast&) { return; }
 }
 
 void CAnimationManager::removeAllBeziers() {

@@ -13,24 +13,26 @@ void CBaseAnimatedVariable::create(Hyprutils::Animation::CAnimationManager* pAni
     m_Type              = typeInfo;
     m_pSelf             = pSelf;
 
+    m_sEvents.connect    = pAnimationManager->m_sEvents.connect;
+    m_sEvents.disconnect = pAnimationManager->m_sEvents.disconnect;
+
     m_bDummy = false;
 }
 
 void CBaseAnimatedVariable::connectToActive() {
-    if (!m_pAnimationManager || m_bDummy)
+    if (m_bDummy || m_bIsConnectedToActive)
         return;
 
-    m_pAnimationManager->scheduleTick(); // otherwise the animation manager will never pick this up
-    if (!m_bIsConnectedToActive)
-        m_pAnimationManager->m_vActiveAnimatedVariables.push_back(m_pSelf);
-    m_bIsConnectedToActive = true;
+    if (const auto CONNECT = m_sEvents.connect.lock()) {
+        CONNECT->emit(m_pSelf.lock());
+        m_bIsConnectedToActive = true;
+    }
 }
 
 void CBaseAnimatedVariable::disconnectFromActive() {
-    if (!m_pAnimationManager)
-        return;
+    if (const auto DISCONNECT = m_sEvents.disconnect.lock())
+        DISCONNECT->emit(static_cast<void*>(this));
 
-    std::erase_if(m_pAnimationManager->m_vActiveAnimatedVariables, [&](const auto& other) { return other == m_pSelf; });
     m_bIsConnectedToActive = false;
 }
 
@@ -80,6 +82,12 @@ float CBaseAnimatedVariable::getCurveValue() const {
     if (!m_bIsBeingAnimated || !m_pAnimationManager)
         return 1.f;
 
+    // Guard against m_pAnimationManager being deleted
+    // TODO: Remove this and m_pAnimationManager
+    if (m_sEvents.connect.expired()) {
+        return 1.f;
+    }
+
     std::string bezierName = "";
     if (const auto PCONFIG = m_pConfig.lock()) {
         const auto PVALUES = PCONFIG->pValues.lock();
@@ -99,7 +107,7 @@ float CBaseAnimatedVariable::getCurveValue() const {
 }
 
 bool CBaseAnimatedVariable::ok() const {
-    return m_pConfig && m_pAnimationManager;
+    return m_pConfig && !m_bDummy;
 }
 
 void CBaseAnimatedVariable::onUpdate() {

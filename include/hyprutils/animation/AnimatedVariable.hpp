@@ -2,7 +2,8 @@
 
 #include "AnimationConfig.hpp"
 #include "../memory/WeakPtr.hpp"
-#include "hyprutils/memory/SharedPtr.hpp"
+#include "../memory/SharedPtr.hpp"
+#include "../signal/Signal.hpp"
 
 #include <functional>
 #include <chrono>
@@ -93,6 +94,11 @@ namespace Hyprutils {
 
             Memory::CWeakPointer<CBaseAnimatedVariable> m_pSelf;
 
+            struct {
+                Memory::CWeakPointer<Signal::CSignal> connect;
+                Memory::CWeakPointer<Signal::CSignal> disconnect;
+            } m_sEvents;
+
           private:
             Memory::CWeakPointer<SAnimationPropertyConfig> m_pConfig;
 
@@ -100,13 +106,16 @@ namespace Hyprutils {
 
             bool                                           m_bDummy = true;
 
-            CAnimationManager*                             m_pAnimationManager    = nullptr;
-            bool                                           m_bRemoveEndAfterRan   = true;
-            bool                                           m_bRemoveBeginAfterRan = true;
+            // TODO: remove this pointer. We still need it for getBezier in getCurveValue.
+            // getCurveValue is only used once in Hyprland. So either remove it or just pass pAnimationManager as a param.
+            CAnimationManager* m_pAnimationManager = nullptr;
 
-            CallbackFun                                    m_fEndCallback;
-            CallbackFun                                    m_fBeginCallback;
-            CallbackFun                                    m_fUpdateCallback;
+            bool               m_bRemoveEndAfterRan   = true;
+            bool               m_bRemoveBeginAfterRan = true;
+
+            CallbackFun        m_fEndCallback;
+            CallbackFun        m_fBeginCallback;
+            CallbackFun        m_fUpdateCallback;
         };
 
         /* This concept represents the minimum requirement for a type to be used with CGenericAnimatedVariable */

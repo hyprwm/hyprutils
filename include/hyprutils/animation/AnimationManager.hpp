@@ -4,6 +4,7 @@
 #include "./AnimatedVariable.hpp"
 #include "../math/Vector2D.hpp"
 #include "../memory/WeakPtr.hpp"
+#include "../signal/Signal.hpp"
 
 #include <unordered_map>
 #include <vector>
@@ -22,6 +23,9 @@ namespace Hyprutils {
             virtual void                                                                 scheduleTick() = 0;
             virtual void                                                                 onTicked()     = 0;
 
+            void                                                                         connectVarListener(std::any data);
+            void                                                                         disconnectVarListener(std::any data);
+
             void                                                                         addBezierWithName(std::string, const Math::Vector2D&, const Math::Vector2D&);
             void                                                                         removeAllBeziers();
 
@@ -36,6 +40,19 @@ namespace Hyprutils {
             std::unordered_map<std::string, Memory::CSharedPointer<CBezierCurve>> m_mBezierCurves;
 
             bool                                                                  m_bTickScheduled = false;
+
+            struct {
+                Signal::CHyprSignalListener connect;
+                Signal::CHyprSignalListener disconnect;
+            } m_sListeners;
+
+            struct {
+                // Those events are shared between animated vars
+                Memory::CSharedPointer<Signal::CSignal> connect;
+                Memory::CSharedPointer<Signal::CSignal> disconnect;
+            } m_sEvents;
+
+            friend class CBaseAnimatedVariable;
         };
     }
 }
