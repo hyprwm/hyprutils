@@ -2,10 +2,12 @@
 #include <hyprutils/animation/AnimationManager.hpp>
 #include <hyprutils/animation/AnimatedVariable.hpp>
 #include <hyprutils/memory/WeakPtr.hpp>
+#include <hyprutils/memory/UniquePtr.hpp>
 #include "shared.hpp"
 
 #define SP CSharedPointer
 #define WP CWeakPointer
+#define UP CUniquePointer
 
 using namespace Hyprutils::Animation;
 using namespace Hyprutils::Math;
@@ -45,7 +47,7 @@ class CMyAnimationManager : public CAnimationManager {
     void tick() {
         for (size_t i = 0; i < m_vActiveAnimatedVariables.size(); i++) {
             const auto PAV = m_vActiveAnimatedVariables[i].lock();
-            if (!PAV || !PAV->ok())
+            if (!PAV || !PAV->ok() || !PAV->isBeingAnimated())
                 continue;
 
             const auto SPENT   = PAV->getPercent();
@@ -105,14 +107,14 @@ class CMyAnimationManager : public CAnimationManager {
     }
 };
 
-CMyAnimationManager gAnimationManager;
+UP<CMyAnimationManager> pAnimationManager;
 
 class Subject {
   public:
     Subject(const int& a, const int& b) {
-        gAnimationManager.createAnimation(a, m_iA, "default");
-        gAnimationManager.createAnimation(b, m_iB, "internal");
-        gAnimationManager.createAnimation({}, m_iC, "default");
+        pAnimationManager->createAnimation(a, m_iA, "default");
+        pAnimationManager->createAnimation(b, m_iB, "internal");
+        pAnimationManager->createAnimation({}, m_iC, "default");
     }
     PANIMVAR<int>          m_iA;
     PANIMVAR<int>          m_iB;
@@ -120,6 +122,8 @@ class Subject {
 };
 
 int config() {
+    pAnimationManager = makeUnique<CMyAnimationManager>();
+
     int ret = 0;
 
     animationTree.createNode("global");
@@ -205,7 +209,7 @@ int main(int argc, char** argv, char** envp) {
         // We deliberately do not tick here, to make sure the destructor removes active animated variables
     }
 
-    EXPECT(gAnimationManager.shouldTickForNext(), false);
+    EXPECT(pAnimationManager->shouldTickForNext(), false);
     EXPECT(s.m_iC->value().done, false);
 
     *s.m_iA = 10;
@@ -214,8 +218,8 @@ int main(int argc, char** argv, char** envp) {
 
     EXPECT(s.m_iC->value().done, false);
 
-    while (gAnimationManager.shouldTickForNext()) {
-        gAnimationManager.tick();
+    while (pAnimationManager->shouldTickForNext()) {
+        pAnimationManager->tick();
     }
 
     EXPECT(s.m_iA->value(), 10);
@@ -225,8 +229,8 @@ int main(int argc, char** argv, char** envp) {
     s.m_iA->setValue(0);
     s.m_iB->setValue(0);
 
-    while (gAnimationManager.shouldTickForNext()) {
-        gAnimationManager.tick();
+    while (pAnimationManager->shouldTickForNext()) {
+        pAnimationManager->tick();
     }
 
     EXPECT(s.m_iA->value(), 10);
@@ -242,7 +246,7 @@ int main(int argc, char** argv, char** envp) {
     EXPECT(s.m_iA->enabled(), false);
 
     *s.m_iA = 50;
-    gAnimationManager.tick(); // Expecting a warp
+    pAnimationManager->tick(); // Expecting a warp
     EXPECT(s.m_iA->value(), 50);
 
     // Test missing pValues
@@ -274,8 +278,8 @@ int main(int argc, char** argv, char** envp) {
     EXPECT(endCallbackRan, 2); // first called when setting the callback, then when warping.
 
     *s.m_iA = 1337;
-    while (gAnimationManager.shouldTickForNext()) {
-        gAnimationManager.tick();
+    while (pAnimationManager->shouldTickForNext()) {
+        pAnimationManager->tick();
     }
 
     EXPECT(beginCallbackRan, 1);
@@ -285,7 +289,7 @@ int main(int argc, char** argv, char** envp) {
     std::vector<PANIMVAR<int>> vars;
     for (int i = 0; i < 10; i++) {
         vars.resize(vars.size() + 1);
-        gAnimationManager.createAnimation(1, vars.back(), "default");
+        pAnimationManager->createAnimation(1, vars.back(), "default");
         *vars.back() = 1337;
     }
 
@@ -297,14 +301,14 @@ int main(int argc, char** argv, char** envp) {
     });
     s.m_iA->setCallbackOnEnd([&s, &vars](auto) {
         vars.resize(vars.size() + 1);
-        gAnimationManager.createAnimation(1, vars.back(), "default");
+        pAnimationManager->createAnimation(1, vars.back(), "default");
         *vars.back() = 1337;
     });
 
     *s.m_iA = 1000000;
 
-    while (gAnimationManager.shouldTickForNext()) {
-        gAnimationManager.tick();
+    while (pAnimationManager->shouldTickForNext()) {
+        pAnimationManager->tick();
     }
 
     EXPECT(s.m_iA->value(), 1000000);
@@ -321,6 +325,33 @@ int main(int argc, char** argv, char** envp) {
 
     EXPECT(endCallbackRan, 4);
     EXPECT(s.m_iA->value(), 10);
+
+    // Test duplicate active anim vars are not allowed
+    {
+        EXPECT(pAnimationManager->m_vActiveAnimatedVariables.size(), 0);
+        PANIMVAR<int> a;
+        pAnimationManager->createAnimation(1, a, "default");
+        EXPECT(pAnimationManager->m_vActiveAnimatedVariables.size(), 0);
+        *a = 10;
+        EXPECT(pAnimationManager->m_vActiveAnimatedVariables.size(), 1);
+        *a = 20;
+        EXPECT(pAnimationManager->m_vActiveAnimatedVariables.size(), 1);
+        a->warp();
+        pAnimationManager->tick(); // trigger cleanup
+        EXPECT(pAnimationManager->m_vActiveAnimatedVariables.size(), 0);
+        EXPECT(a->value(), 20);
+    }
+
+    // Test no crash when animation manager gets destroyed
+    {
+        PANIMVAR<int> a;
+        pAnimationManager->createAnimation(1, a, "default");
+        *a = 10;
+        pAnimationManager.reset();
+    }
+
+    EXPECT(pAnimationManager.get(), nullptr);
+    *s.m_iA = 10;
 
     return ret;
 }
