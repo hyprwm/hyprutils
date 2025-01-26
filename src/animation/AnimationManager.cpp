@@ -14,14 +14,16 @@ CAnimationManager::CAnimationManager() {
     BEZIER->setup(DEFAULTBEZIERPOINTS);
     m_mBezierCurves["default"] = BEZIER;
 
-    m_sEvents.connect    = makeShared<CSignal>();
-    m_sEvents.disconnect = makeShared<CSignal>();
+    m_sEvents.connect         = makeShared<CSignal>();
+    m_sEvents.forceDisconnect = makeShared<CSignal>();
+    m_sEvents.lazyDisconnect  = makeShared<CSignal>();
 
-    m_sListeners.connect    = m_sEvents.connect->registerListener([this](std::any data) { connectVarListener(data); });
-    m_sListeners.disconnect = m_sEvents.disconnect->registerListener([this](std::any data) { disconnectVarListener(data); });
+    m_sListeners.connect         = m_sEvents.connect->registerListener([this](std::any data) { connectListener(data); });
+    m_sListeners.forceDisconnect = m_sEvents.forceDisconnect->registerListener([this](std::any data) { forceDisconnectListener(data); });
+    m_sListeners.lazyDisconnect  = m_sEvents.lazyDisconnect->registerListener([this](std::any data) { lazyDisconnectListener(data); });
 }
 
-void CAnimationManager::connectVarListener(std::any data) {
+void CAnimationManager::connectListener(std::any data) {
     if (!m_bTickScheduled)
         scheduleTick();
 
@@ -32,9 +34,15 @@ void CAnimationManager::connectVarListener(std::any data) {
 
         m_vActiveAnimatedVariables.emplace_back(PAV);
     } catch (const std::bad_any_cast&) { return; }
+
+    // When the animation manager ticks, it will cleanup the active list.
+    // If for some reason we don't tick for a while, but vars get warped a lot, we could end up with a lot of pending disconnects.
+    // So we rorate here, since we don't want the vector to grow too big for no reason.
+    if (m_pendingDisconnects > 100)
+        rotateActive();
 }
 
-void CAnimationManager::disconnectVarListener(std::any data) {
+void CAnimationManager::forceDisconnectListener(std::any data) {
     try {
         const auto PAV = std::any_cast<void*>(data);
         if (!PAV)
@@ -42,6 +50,10 @@ void CAnimationManager::disconnectVarListener(std::any data) {
 
         std::erase_if(m_vActiveAnimatedVariables, [&](const auto& other) { return other.get() == PAV; });
     } catch (const std::bad_any_cast&) { return; }
+}
+
+void CAnimationManager::lazyDisconnectListener(std::any data) {
+    m_pendingDisconnects++;
 }
 
 void CAnimationManager::removeAllBeziers() {
@@ -67,6 +79,10 @@ bool CAnimationManager::shouldTickForNext() {
 }
 
 void CAnimationManager::tickDone() {
+    rotateActive();
+}
+
+void CAnimationManager::rotateActive() {
     std::vector<CWeakPointer<CBaseAnimatedVariable>> active;
     active.reserve(m_vActiveAnimatedVariables.size()); // avoid reallocations
     for (auto const& av : m_vActiveAnimatedVariables) {
@@ -81,6 +97,7 @@ void CAnimationManager::tickDone() {
     }
 
     m_vActiveAnimatedVariables = std::move(active);
+    m_pendingDisconnects       = 0;
 }
 
 bool CAnimationManager::bezierExists(const std::string& bezier) {

@@ -13,8 +13,9 @@ void CBaseAnimatedVariable::create(Hyprutils::Animation::CAnimationManager* pAni
     m_Type              = typeInfo;
     m_pSelf             = pSelf;
 
-    m_sEvents.connect    = pAnimationManager->m_sEvents.connect;
-    m_sEvents.disconnect = pAnimationManager->m_sEvents.disconnect;
+    m_sEvents.connect         = pAnimationManager->m_sEvents.connect;
+    m_sEvents.forceDisconnect = pAnimationManager->m_sEvents.forceDisconnect;
+    m_sEvents.lazyDisconnect  = pAnimationManager->m_sEvents.lazyDisconnect;
 
     m_bDummy = false;
 }
@@ -30,7 +31,7 @@ void CBaseAnimatedVariable::connectToActive() {
 }
 
 void CBaseAnimatedVariable::disconnectFromActive() {
-    if (const auto DISCONNECT = m_sEvents.disconnect.lock())
+    if (const auto DISCONNECT = m_sEvents.forceDisconnect.lock())
         DISCONNECT->emit(static_cast<void*>(this));
 
     m_bIsConnectedToActive = false;
@@ -142,7 +143,9 @@ void CBaseAnimatedVariable::resetAllCallbacks() {
 
 void CBaseAnimatedVariable::onAnimationEnd() {
     m_bIsBeingAnimated = false;
-    /* We do not call disconnectFromActive here. The animation manager will remove it on a call to tickDone. */
+    /* lazy disconnect, since this animvar is atill alive */
+    if (const auto DISCONNECT = m_sEvents.lazyDisconnect.lock())
+        DISCONNECT->emit(static_cast<void*>(this));
 
     if (m_fEndCallback) {
         /* loading m_bRemoveEndAfterRan before calling the callback allows the callback to delete this animation safely if it is false. */

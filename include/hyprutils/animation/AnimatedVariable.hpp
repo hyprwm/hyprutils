@@ -96,7 +96,8 @@ namespace Hyprutils {
 
             struct {
                 Memory::CWeakPointer<Signal::CSignal> connect;
-                Memory::CWeakPointer<Signal::CSignal> disconnect;
+                Memory::CWeakPointer<Signal::CSignal> forceDisconnect;
+                Memory::CWeakPointer<Signal::CSignal> lazyDisconnect;
             } m_sEvents;
 
           private:

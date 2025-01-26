@@ -6,6 +6,7 @@
 #include "../memory/WeakPtr.hpp"
 #include "../signal/Signal.hpp"
 
+#include <cstdint>
 #include <unordered_map>
 #include <vector>
 
@@ -18,13 +19,15 @@ namespace Hyprutils {
             virtual ~CAnimationManager() = default;
 
             void                                                                         tickDone();
+            void                                                                         rotateActive();
             bool                                                                         shouldTickForNext();
 
             virtual void                                                                 scheduleTick() = 0;
             virtual void                                                                 onTicked()     = 0;
 
-            void                                                                         connectVarListener(std::any data);
-            void                                                                         disconnectVarListener(std::any data);
+            void                                                                         connectListener(std::any data);
+            void                                                                         lazyDisconnectListener(std::any data);
+            void                                                                         forceDisconnectListener(std::any data);
 
             void                                                                         addBezierWithName(std::string, const Math::Vector2D&, const Math::Vector2D&);
             void                                                                         removeAllBeziers();
@@ -39,17 +42,20 @@ namespace Hyprutils {
           private:
             std::unordered_map<std::string, Memory::CSharedPointer<CBezierCurve>> m_mBezierCurves;
 
-            bool                                                                  m_bTickScheduled = false;
+            bool                                                                  m_bTickScheduled     = false;
+            uint32_t                                                              m_pendingDisconnects = 0;
 
             struct {
                 Signal::CHyprSignalListener connect;
-                Signal::CHyprSignalListener disconnect;
+                Signal::CHyprSignalListener forceDisconnect;
+                Signal::CHyprSignalListener lazyDisconnect;
             } m_sListeners;
 
             struct {
                 // Those events are shared between animated vars
                 Memory::CSharedPointer<Signal::CSignal> connect;
-                Memory::CSharedPointer<Signal::CSignal> disconnect;
+                Memory::CSharedPointer<Signal::CSignal> forceDisconnect;
+                Memory::CSharedPointer<Signal::CSignal> lazyDisconnect;
             } m_sEvents;
 
             friend class CBaseAnimatedVariable;
