@@ -25,10 +25,6 @@ namespace Hyprutils {
             virtual void                                                                 scheduleTick() = 0;
             virtual void                                                                 onTicked()     = 0;
 
-            void                                                                         connectListener(std::any data);
-            void                                                                         lazyDisconnectListener(std::any data);
-            void                                                                         forceDisconnectListener(std::any data);
-
             void                                                                         addBezierWithName(std::string, const Math::Vector2D&, const Math::Vector2D&);
             void                                                                         removeAllBeziers();
 
@@ -45,18 +41,17 @@ namespace Hyprutils {
             bool                                                                  m_bTickScheduled     = false;
             uint32_t                                                              m_pendingDisconnects = 0;
 
+            void                                                                  connectListener(std::any data);
+            void                                                                  lazyDisconnectListener(std::any data);
+            void                                                                  forceDisconnectListener(std::any data);
+
             struct {
                 Signal::CHyprSignalListener connect;
                 Signal::CHyprSignalListener forceDisconnect;
                 Signal::CHyprSignalListener lazyDisconnect;
             } m_sListeners;
 
-            struct {
-                // Those events are shared between animated vars
-                Memory::CSharedPointer<Signal::CSignal> connect;
-                Memory::CSharedPointer<Signal::CSignal> forceDisconnect;
-                Memory::CSharedPointer<Signal::CSignal> lazyDisconnect;
-            } m_sEvents;
+            Memory::CSharedPointer<SAnimVarEvents> m_events;
 
             friend class CBaseAnimatedVariable;
         };

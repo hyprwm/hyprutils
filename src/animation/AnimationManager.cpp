@@ -14,13 +14,11 @@ CAnimationManager::CAnimationManager() {
     BEZIER->setup(DEFAULTBEZIERPOINTS);
     m_mBezierCurves["default"] = BEZIER;
 
-    m_sEvents.connect         = makeShared<CSignal>();
-    m_sEvents.forceDisconnect = makeShared<CSignal>();
-    m_sEvents.lazyDisconnect  = makeShared<CSignal>();
+    m_events = makeShared<SAnimVarEvents>();
 
-    m_sListeners.connect         = m_sEvents.connect->registerListener([this](std::any data) { connectListener(data); });
-    m_sListeners.forceDisconnect = m_sEvents.forceDisconnect->registerListener([this](std::any data) { forceDisconnectListener(data); });
-    m_sListeners.lazyDisconnect  = m_sEvents.lazyDisconnect->registerListener([this](std::any data) { lazyDisconnectListener(data); });
+    m_sListeners.connect         = m_events->connect.registerListener([this](std::any data) { connectListener(data); });
+    m_sListeners.forceDisconnect = m_events->forceDisconnect.registerListener([this](std::any data) { forceDisconnectListener(data); });
+    m_sListeners.lazyDisconnect  = m_events->lazyDisconnect.registerListener([this](std::any data) { lazyDisconnectListener(data); });
 }
 
 void CAnimationManager::connectListener(std::any data) {

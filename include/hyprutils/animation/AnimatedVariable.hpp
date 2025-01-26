@@ -12,6 +12,12 @@ namespace Hyprutils {
     namespace Animation {
         class CAnimationManager;
 
+        struct SAnimVarEvents {
+            Signal::CSignal connect;
+            Signal::CSignal forceDisconnect;
+            Signal::CSignal lazyDisconnect;
+        };
+
         /* A base class for animated variables. */
         class CBaseAnimatedVariable {
           public:
@@ -94,12 +100,6 @@ namespace Hyprutils {
 
             Memory::CWeakPointer<CBaseAnimatedVariable> m_pSelf;
 
-            struct {
-                Memory::CWeakPointer<Signal::CSignal> connect;
-                Memory::CWeakPointer<Signal::CSignal> forceDisconnect;
-                Memory::CWeakPointer<Signal::CSignal> lazyDisconnect;
-            } m_sEvents;
-
           private:
             Memory::CWeakPointer<SAnimationPropertyConfig> m_pConfig;
 
@@ -109,14 +109,16 @@ namespace Hyprutils {
 
             // TODO: remove this pointer. We still need it for getBezier in getCurveValue.
             // getCurveValue is only used once in Hyprland. So either remove it or just pass pAnimationManager as a param.
-            CAnimationManager* m_pAnimationManager = nullptr;
+            CAnimationManager*                   m_pAnimationManager = nullptr;
 
-            bool               m_bRemoveEndAfterRan   = true;
-            bool               m_bRemoveBeginAfterRan = true;
+            Memory::CWeakPointer<SAnimVarEvents> m_events;
 
-            CallbackFun        m_fEndCallback;
-            CallbackFun        m_fBeginCallback;
-            CallbackFun        m_fUpdateCallback;
+            bool                                 m_bRemoveEndAfterRan   = true;
+            bool                                 m_bRemoveBeginAfterRan = true;
+
+            CallbackFun                          m_fEndCallback;
+            CallbackFun                          m_fBeginCallback;
+            CallbackFun                          m_fUpdateCallback;
         };
 
         /* This concept represents the minimum requirement for a type to be used with CGenericAnimatedVariable */

@@ -13,9 +13,7 @@ void CBaseAnimatedVariable::create(Hyprutils::Animation::CAnimationManager* pAni
     m_Type              = typeInfo;
     m_pSelf             = pSelf;
 
-    m_sEvents.connect         = pAnimationManager->m_sEvents.connect;
-    m_sEvents.forceDisconnect = pAnimationManager->m_sEvents.forceDisconnect;
-    m_sEvents.lazyDisconnect  = pAnimationManager->m_sEvents.lazyDisconnect;
+    m_events = pAnimationManager->m_events;
 
     m_bDummy = false;
 }
@@ -24,15 +22,15 @@ void CBaseAnimatedVariable::connectToActive() {
     if (m_bDummy || m_bIsConnectedToActive)
         return;
 
-    if (const auto CONNECT = m_sEvents.connect.lock()) {
-        CONNECT->emit(m_pSelf.lock());
+    if (const auto PEVENTS = m_events.lock()) {
+        PEVENTS->connect.emit(m_pSelf.lock());
         m_bIsConnectedToActive = true;
     }
 }
 
 void CBaseAnimatedVariable::disconnectFromActive() {
-    if (const auto DISCONNECT = m_sEvents.forceDisconnect.lock())
-        DISCONNECT->emit(static_cast<void*>(this));
+    if (const auto PEVENTS = m_events.lock())
+        PEVENTS->forceDisconnect.emit(static_cast<void*>(this));
 
     m_bIsConnectedToActive = false;
 }
@@ -85,7 +83,7 @@ float CBaseAnimatedVariable::getCurveValue() const {
 
     // Guard against m_pAnimationManager being deleted
     // TODO: Remove this and m_pAnimationManager
-    if (m_sEvents.connect.expired()) {
+    if (m_events.expired()) {
         return 1.f;
     }
 
@@ -108,7 +106,7 @@ float CBaseAnimatedVariable::getCurveValue() const {
 }
 
 bool CBaseAnimatedVariable::ok() const {
-    return m_pConfig && !m_bDummy;
+    return m_pConfig && !m_bDummy && !m_events.expired();
 }
 
 void CBaseAnimatedVariable::onUpdate() {
@@ -144,8 +142,8 @@ void CBaseAnimatedVariable::resetAllCallbacks() {
 void CBaseAnimatedVariable::onAnimationEnd() {
     m_bIsBeingAnimated = false;
     /* lazy disconnect, since this animvar is atill alive */
-    if (const auto DISCONNECT = m_sEvents.lazyDisconnect.lock())
-        DISCONNECT->emit(static_cast<void*>(this));
+    if (const auto PEVENTS = m_events.lock())
+        PEVENTS->lazyDisconnect.emit(static_cast<void*>(this));
 
     if (m_fEndCallback) {
         /* loading m_bRemoveEndAfterRan before calling the callback allows the callback to delete this animation safely if it is false. */
