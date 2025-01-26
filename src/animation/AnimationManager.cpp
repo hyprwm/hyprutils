@@ -1,4 +1,5 @@
 #include <hyprutils/animation/AnimationManager.hpp>
+#include <hyprutils/animation/AnimatedVariable.hpp>
 
 using namespace Hyprutils::Animation;
 using namespace Hyprutils::Math;
@@ -6,6 +7,7 @@ using namespace Hyprutils::Memory;
 using namespace Hyprutils::Signal;
 
 #define SP CSharedPointer
+#define WP CWeakPointer
 
 const std::array<Vector2D, 2> DEFAULTBEZIERPOINTS = {Vector2D(0.0, 0.75), Vector2D(0.15, 1.0)};
 
@@ -14,18 +16,19 @@ CAnimationManager::CAnimationManager() {
     BEZIER->setup(DEFAULTBEZIERPOINTS);
     m_mBezierCurves["default"] = BEZIER;
 
-    m_events = makeShared<SAnimVarEvents>();
+    m_events    = makeUnique<SAnimationManagerSignals>();
+    m_listeners = makeUnique<SAnimVarListeners>();
 
-    m_sListeners.connect    = m_events->connect.registerListener([this](std::any data) { connectListener(data); });
-    m_sListeners.disconnect = m_events->disconnect.registerListener([this](std::any data) { disconnectListener(data); });
+    m_listeners->connect    = m_events->connect.registerListener([this](std::any data) { onConnect(data); });
+    m_listeners->disconnect = m_events->disconnect.registerListener([this](std::any data) { onDisconnect(data); });
 }
 
-void CAnimationManager::connectListener(std::any data) {
+void CAnimationManager::onConnect(std::any data) {
     if (!m_bTickScheduled)
         scheduleTick();
 
     try {
-        const auto PAV = std::any_cast<SP<CBaseAnimatedVariable>>(data);
+        const auto PAV = std::any_cast<WP<CBaseAnimatedVariable>>(data);
         if (!PAV)
             return;
 
@@ -33,13 +36,13 @@ void CAnimationManager::connectListener(std::any data) {
     } catch (const std::bad_any_cast&) { return; }
 }
 
-void CAnimationManager::disconnectListener(std::any data) {
+void CAnimationManager::onDisconnect(std::any data) {
     try {
-        const auto PAV = std::any_cast<void*>(data);
+        const auto PAV = std::any_cast<WP<CBaseAnimatedVariable>>(data);
         if (!PAV)
             return;
 
-        std::erase_if(m_vActiveAnimatedVariables, [&](const auto& other) { return other.get() == PAV; });
+        std::erase_if(m_vActiveAnimatedVariables, [&](const auto& other) { return !other || other == PAV; });
     } catch (const std::bad_any_cast&) { return; }
 }
 
@@ -103,4 +106,8 @@ SP<CBezierCurve> CAnimationManager::getBezier(const std::string& name) {
 
 const std::unordered_map<std::string, SP<CBezierCurve>>& CAnimationManager::getAllBeziers() {
     return m_mBezierCurves;
+}
+
+CWeakPointer<CAnimationManager::SAnimationManagerSignals> CAnimationManager::getSignals() const {
+    return m_events;
 }

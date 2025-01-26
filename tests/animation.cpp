@@ -93,7 +93,7 @@ class CMyAnimationManager : public CAnimationManager {
         constexpr const eAVTypes EAVTYPE = std::is_same_v<VarType, int> ? eAVTypes::INT : eAVTypes::TEST;
         const auto               PAV     = makeShared<CGenericAnimatedVariable<VarType, EmtpyContext>>();
 
-        PAV->create(EAVTYPE, PAV, m_events, v);
+        PAV->create(EAVTYPE, static_cast<CAnimationManager*>(this), PAV, v);
         PAV->setConfig(animationTree.getConfig(animationConfigName));
         av = std::move(PAV);
     }
@@ -339,9 +339,9 @@ int main(int argc, char** argv, char** envp) {
 
     // test getCurveValue
     *s.m_iA = 0;
-    EXPECT(s.m_iA->getCurveValue(pAnimationManager.get()), 0.f);
+    EXPECT(s.m_iA->getCurveValue(), 0.f);
     s.m_iA->warp();
-    EXPECT(s.m_iA->getCurveValue(pAnimationManager.get()), 1.f);
+    EXPECT(s.m_iA->getCurveValue(), 1.f);
     EXPECT(endCallbackRan, 6);
 
     // Test duplicate active anim vars are not allowed
@@ -365,6 +365,7 @@ int main(int argc, char** argv, char** envp) {
         pAnimationManager->createAnimation(1, a, "default");
         *a = 10;
         pAnimationManager.reset();
+        EXPECT(a->isAnimationManagerDead(), true);
         a->setValueAndWarp(11);
         EXPECT(a->value(), 11);
         *a = 12;

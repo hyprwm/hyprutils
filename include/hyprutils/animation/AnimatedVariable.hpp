@@ -4,18 +4,13 @@
 #include "../memory/WeakPtr.hpp"
 #include "../memory/SharedPtr.hpp"
 #include "../signal/Signal.hpp"
+#include "AnimationManager.hpp"
 
 #include <functional>
 #include <chrono>
 
 namespace Hyprutils {
     namespace Animation {
-        class CAnimationManager;
-
-        struct SAnimVarEvents {
-            Signal::CSignal connect;
-            Signal::CSignal disconnect;
-        };
 
         /* A base class for animated variables. */
         class CBaseAnimatedVariable {
@@ -26,7 +21,7 @@ namespace Hyprutils {
                 ; // m_bDummy = true;
             };
 
-            void create(int, Memory::CSharedPointer<CBaseAnimatedVariable>, Memory::CSharedPointer<SAnimVarEvents> events);
+            void create(CAnimationManager*, int, Memory::CSharedPointer<CBaseAnimatedVariable>);
             void connectToActive();
             void disconnectFromActive();
 
@@ -42,7 +37,8 @@ namespace Hyprutils {
             CBaseAnimatedVariable& operator=(const CBaseAnimatedVariable&) = delete;
             CBaseAnimatedVariable& operator=(CBaseAnimatedVariable&&)      = delete;
 
-            void                   setConfig(Memory::CSharedPointer<SAnimationPropertyConfig> pConfig) {
+            //
+            void setConfig(Memory::CSharedPointer<SAnimationPropertyConfig> pConfig) {
                 m_pConfig = pConfig;
             }
 
@@ -57,9 +53,8 @@ namespace Hyprutils {
             /* returns the spent (completion) % */
             float getPercent() const;
 
-            /* returns the current curve value.
-               needs a reference to the animationmgr to get the bezier curve with the configured name from it */
-            float getCurveValue(CAnimationManager*) const;
+            /* returns the current curve value. */
+            float getCurveValue() const;
 
             /* checks if an animation is in progress */
             bool isBeingAnimated() const {
@@ -90,17 +85,22 @@ namespace Hyprutils {
             void onAnimationEnd();
             void onAnimationBegin();
 
+            /* returns whether the parent CAnimationManager is dead */
+            bool isAnimationManagerDead() const;
+
             int  m_Type = -1;
 
           protected:
             friend class CAnimationManager;
 
-            bool                                        m_bIsConnectedToActive = false;
-            bool                                        m_bIsBeingAnimated     = false;
+            CAnimationManager*                                                m_pAnimationManager = nullptr;
 
-            Memory::CWeakPointer<CBaseAnimatedVariable> m_pSelf;
+            bool                                                              m_bIsConnectedToActive = false;
+            bool                                                              m_bIsBeingAnimated     = false;
 
-            Memory::CWeakPointer<SAnimVarEvents>        m_events;
+            Memory::CWeakPointer<CBaseAnimatedVariable>                       m_pSelf;
+
+            Memory::CWeakPointer<CAnimationManager::SAnimationManagerSignals> m_pSignals;
 
           private:
             Memory::CWeakPointer<SAnimationPropertyConfig> m_pConfig;
@@ -136,13 +136,13 @@ namespace Hyprutils {
           public:
             CGenericAnimatedVariable() = default;
 
-            void create(const int typeInfo, Memory::CSharedPointer<CGenericAnimatedVariable<VarType, AnimationContext>> pSelf, Memory::CSharedPointer<SAnimVarEvents> events,
+            void create(const int typeInfo, CAnimationManager* pAnimationManager, Memory::CSharedPointer<CGenericAnimatedVariable<VarType, AnimationContext>> pSelf,
                         const VarType& initialValue) {
                 m_Begun = initialValue;
                 m_Value = initialValue;
                 m_Goal  = initialValue;
 
-                CBaseAnimatedVariable::create(typeInfo, pSelf, events);
+                CBaseAnimatedVariable::create(pAnimationManager, typeInfo, pSelf);
             }
 
             CGenericAnimatedVariable(const CGenericAnimatedVariable&)            = delete;

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "./BezierCurve.hpp"
-#include "./AnimatedVariable.hpp"
 #include "../math/Vector2D.hpp"
 #include "../memory/WeakPtr.hpp"
 #include "../signal/Signal.hpp"
@@ -12,6 +11,8 @@
 
 namespace Hyprutils {
     namespace Animation {
+        class CBaseAnimatedVariable;
+
         /* A class for managing bezier curves and variables that are being animated. */
         class CAnimationManager {
           public:
@@ -33,25 +34,30 @@ namespace Hyprutils {
 
             const std::unordered_map<std::string, Memory::CSharedPointer<CBezierCurve>>& getAllBeziers();
 
-            Memory::CSharedPointer<SAnimVarEvents>                                       getEvents() const;
+            struct SAnimationManagerSignals {
+                Signal::CSignal connect;    // WP<CBaseAnimatedVariable>
+                Signal::CSignal disconnect; // WP<CBaseAnimatedVariable>
+            };
 
-            std::vector<Memory::CWeakPointer<CBaseAnimatedVariable>>                     m_vActiveAnimatedVariables;
-            Memory::CSharedPointer<SAnimVarEvents>                                       m_events;
+            Memory::CWeakPointer<SAnimationManagerSignals>           getSignals() const;
+
+            std::vector<Memory::CWeakPointer<CBaseAnimatedVariable>> m_vActiveAnimatedVariables;
 
           private:
             std::unordered_map<std::string, Memory::CSharedPointer<CBezierCurve>> m_mBezierCurves;
 
             bool                                                                  m_bTickScheduled = false;
 
-            void                                                                  connectListener(std::any data);
-            void                                                                  disconnectListener(std::any data);
+            void                                                                  onConnect(std::any data);
+            void                                                                  onDisconnect(std::any data);
 
-            struct {
+            struct SAnimVarListeners {
                 Signal::CHyprSignalListener connect;
                 Signal::CHyprSignalListener disconnect;
-            } m_sListeners;
+            };
 
-            friend class CBaseAnimatedVariable;
+            Memory::CUniquePointer<SAnimVarListeners>        m_listeners;
+            Memory::CUniquePointer<SAnimationManagerSignals> m_events;
         };
     }
 }

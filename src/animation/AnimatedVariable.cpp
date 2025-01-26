@@ -8,28 +8,28 @@ using namespace Hyprutils::Memory;
 #define SP CSharedPointer
 #define WP CWeakPointer
 
-void CBaseAnimatedVariable::create(int typeInfo, SP<CBaseAnimatedVariable> pSelf, SP<SAnimVarEvents> events) {
+void CBaseAnimatedVariable::create(CAnimationManager* pManager, int typeInfo, SP<CBaseAnimatedVariable> pSelf) {
     m_Type  = typeInfo;
     m_pSelf = pSelf;
 
-    m_events = events;
-    m_bDummy = false;
+    m_pAnimationManager = pManager;
+    m_pSignals = pManager->getSignals();
+    m_bDummy   = false;
 }
 
 void CBaseAnimatedVariable::connectToActive() {
-    if (m_bDummy || m_bIsConnectedToActive)
+    if (m_bDummy || m_bIsConnectedToActive || isAnimationManagerDead())
         return;
 
-    if (const auto PEVENTS = m_events.lock()) {
-        PEVENTS->connect.emit(m_pSelf.lock());
-        m_bIsConnectedToActive = true;
-    }
+    m_pSignals->connect.emit(m_pSelf);
+    m_bIsConnectedToActive = true;
 }
 
 void CBaseAnimatedVariable::disconnectFromActive() {
-    if (const auto PEVENTS = m_events.lock())
-        PEVENTS->disconnect.emit(static_cast<void*>(this));
+    if (isAnimationManagerDead())
+        return;
 
+    m_pSignals->disconnect.emit(m_pSelf);
     m_bIsConnectedToActive = false;
 }
 
@@ -75,8 +75,8 @@ float CBaseAnimatedVariable::getPercent() const {
     return 1.f;
 }
 
-float CBaseAnimatedVariable::getCurveValue(CAnimationManager* pAnimationManager) const {
-    if (!m_bIsBeingAnimated || !pAnimationManager)
+float CBaseAnimatedVariable::getCurveValue() const {
+    if (!m_bIsBeingAnimated || isAnimationManagerDead())
         return 1.f;
 
     std::string bezierName = "";
@@ -86,7 +86,7 @@ float CBaseAnimatedVariable::getCurveValue(CAnimationManager* pAnimationManager)
             bezierName = PVALUES->internalBezier;
     }
 
-    const auto BEZIER = pAnimationManager->getBezier(bezierName);
+    const auto BEZIER = m_pAnimationManager->getBezier(bezierName);
     if (!BEZIER)
         return 1.f;
 
@@ -98,7 +98,7 @@ float CBaseAnimatedVariable::getCurveValue(CAnimationManager* pAnimationManager)
 }
 
 bool CBaseAnimatedVariable::ok() const {
-    return m_pConfig && !m_bDummy && !m_events.expired();
+    return m_pConfig && !m_bDummy && !isAnimationManagerDead();
 }
 
 void CBaseAnimatedVariable::onUpdate() {
@@ -154,4 +154,8 @@ void CBaseAnimatedVariable::onAnimationBegin() {
         if (m_bRemoveBeginAfterRan)
             m_fBeginCallback = nullptr; // reset
     }
+}
+
+bool CBaseAnimatedVariable::isAnimationManagerDead() const {
+    return m_pSignals.expired();
 }
