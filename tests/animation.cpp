@@ -54,7 +54,7 @@ class CMyAnimationManager : public CAnimationManager {
             const auto PBEZIER = getBezier(PAV->getBezierName());
 
             if (SPENT >= 1.f || !PAV->enabled()) {
-                PAV->warp();
+                PAV->warp(true, false);
                 continue;
             }
 
@@ -93,7 +93,7 @@ class CMyAnimationManager : public CAnimationManager {
         constexpr const eAVTypes EAVTYPE = std::is_same_v<VarType, int> ? eAVTypes::INT : eAVTypes::TEST;
         const auto               PAV     = makeShared<CGenericAnimatedVariable<VarType, EmtpyContext>>();
 
-        PAV->create(EAVTYPE, static_cast<CAnimationManager*>(this), PAV, v);
+        PAV->create(EAVTYPE, PAV, m_events, v);
         PAV->setConfig(animationTree.getConfig(animationConfigName));
         av = std::move(PAV);
     }
@@ -326,6 +326,24 @@ int main(int argc, char** argv, char** envp) {
     EXPECT(endCallbackRan, 4);
     EXPECT(s.m_iA->value(), 10);
 
+    // test warp
+    *s.m_iA = 3;
+    s.m_iA->setCallbackOnEnd([&endCallbackRan](auto) { endCallbackRan++; }, false);
+
+    s.m_iA->warp(false);
+    EXPECT(endCallbackRan, 4);
+
+    *s.m_iA = 4;
+    s.m_iA->warp(true);
+    EXPECT(endCallbackRan, 5);
+
+    // test getCurveValue
+    *s.m_iA = 0;
+    EXPECT(s.m_iA->getCurveValue(pAnimationManager.get()), 0.f);
+    s.m_iA->warp();
+    EXPECT(s.m_iA->getCurveValue(pAnimationManager.get()), 1.f);
+    EXPECT(endCallbackRan, 6);
+
     // Test duplicate active anim vars are not allowed
     {
         EXPECT(pAnimationManager->m_vActiveAnimatedVariables.size(), 0);
@@ -337,7 +355,6 @@ int main(int argc, char** argv, char** envp) {
         *a = 20;
         EXPECT(pAnimationManager->m_vActiveAnimatedVariables.size(), 1);
         a->warp();
-        pAnimationManager->tick(); // trigger cleanup
         EXPECT(pAnimationManager->m_vActiveAnimatedVariables.size(), 0);
         EXPECT(a->value(), 20);
     }
@@ -348,10 +365,15 @@ int main(int argc, char** argv, char** envp) {
         pAnimationManager->createAnimation(1, a, "default");
         *a = 10;
         pAnimationManager.reset();
-    }
+        a->setValueAndWarp(11);
+        EXPECT(a->value(), 11);
+        *a = 12;
+        a->warp();
+        EXPECT(a->value(), 12);
+        *a = 13;
+    } // a gets destroyed
 
     EXPECT(pAnimationManager.get(), nullptr);
-    *s.m_iA = 10;
 
     return ret;
 }

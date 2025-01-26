@@ -27,7 +27,7 @@ namespace Hyprutils {
                 ; // m_bDummy = true;
             };
 
-            void create(CAnimationManager*, int, Memory::CSharedPointer<CBaseAnimatedVariable>);
+            void create(int, Memory::CSharedPointer<CBaseAnimatedVariable>, Memory::CSharedPointer<SAnimVarEvents> events);
             void connectToActive();
             void disconnectFromActive();
 
@@ -36,7 +36,7 @@ namespace Hyprutils {
                 disconnectFromActive();
             };
 
-            virtual void warp(bool endCallback = true) = 0;
+            virtual void warp(bool endCallback = true, bool forceDisconnect = true) = 0;
 
             CBaseAnimatedVariable(const CBaseAnimatedVariable&)            = delete;
             CBaseAnimatedVariable(CBaseAnimatedVariable&&)                 = delete;
@@ -58,8 +58,9 @@ namespace Hyprutils {
             /* returns the spent (completion) % */
             float getPercent() const;
 
-            /* returns the current curve value */
-            float getCurveValue() const;
+            /* returns the current curve value.
+               needs a reference to the animationmgr to get the bezier curve with the configured name from it */
+            float getCurveValue(CAnimationManager*) const;
 
             /* checks if an animation is in progress */
             bool isBeingAnimated() const {
@@ -100,6 +101,8 @@ namespace Hyprutils {
 
             Memory::CWeakPointer<CBaseAnimatedVariable> m_pSelf;
 
+            Memory::CWeakPointer<SAnimVarEvents>        m_events;
+
           private:
             Memory::CWeakPointer<SAnimationPropertyConfig> m_pConfig;
 
@@ -107,18 +110,12 @@ namespace Hyprutils {
 
             bool                                           m_bDummy = true;
 
-            // TODO: remove this pointer. We still need it for getBezier in getCurveValue.
-            // getCurveValue is only used once in Hyprland. So either remove it or just pass pAnimationManager as a param.
-            CAnimationManager*                   m_pAnimationManager = nullptr;
+            bool                                           m_bRemoveEndAfterRan   = true;
+            bool                                           m_bRemoveBeginAfterRan = true;
 
-            Memory::CWeakPointer<SAnimVarEvents> m_events;
-
-            bool                                 m_bRemoveEndAfterRan   = true;
-            bool                                 m_bRemoveBeginAfterRan = true;
-
-            CallbackFun                          m_fEndCallback;
-            CallbackFun                          m_fBeginCallback;
-            CallbackFun                          m_fUpdateCallback;
+            CallbackFun                                    m_fEndCallback;
+            CallbackFun                                    m_fBeginCallback;
+            CallbackFun                                    m_fUpdateCallback;
         };
 
         /* This concept represents the minimum requirement for a type to be used with CGenericAnimatedVariable */
@@ -140,13 +137,13 @@ namespace Hyprutils {
           public:
             CGenericAnimatedVariable() = default;
 
-            void create(const int typeInfo, CAnimationManager* pAnimationManager, Memory::CSharedPointer<CGenericAnimatedVariable<VarType, AnimationContext>> pSelf,
+            void create(const int typeInfo, Memory::CSharedPointer<CGenericAnimatedVariable<VarType, AnimationContext>> pSelf, Memory::CSharedPointer<SAnimVarEvents> events,
                         const VarType& initialValue) {
                 m_Begun = initialValue;
                 m_Value = initialValue;
                 m_Goal  = initialValue;
 
-                CBaseAnimatedVariable::create(pAnimationManager, typeInfo, pSelf);
+                CBaseAnimatedVariable::create(typeInfo, pSelf, events);
             }
 
             CGenericAnimatedVariable(const CGenericAnimatedVariable&)            = delete;
@@ -154,7 +151,7 @@ namespace Hyprutils {
             CGenericAnimatedVariable& operator=(const CGenericAnimatedVariable&) = delete;
             CGenericAnimatedVariable& operator=(CGenericAnimatedVariable&&)      = delete;
 
-            virtual void              warp(bool endCallback = true) {
+            virtual void              warp(bool endCallback = true, bool forceDisconnect = true) {
                 if (!m_bIsBeingAnimated)
                     return;
 
@@ -166,6 +163,11 @@ namespace Hyprutils {
 
                 if (endCallback)
                     onAnimationEnd();
+
+                if (forceDisconnect) {
+                    if (const auto PEVENTS = m_events.lock())
+                        PEVENTS->forceDisconnect.emit(static_cast<void*>(this));
+                }
             }
 
             const VarType& value() const {

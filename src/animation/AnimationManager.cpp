@@ -18,7 +18,6 @@ CAnimationManager::CAnimationManager() {
 
     m_sListeners.connect         = m_events->connect.registerListener([this](std::any data) { connectListener(data); });
     m_sListeners.forceDisconnect = m_events->forceDisconnect.registerListener([this](std::any data) { forceDisconnectListener(data); });
-    m_sListeners.lazyDisconnect  = m_events->lazyDisconnect.registerListener([this](std::any data) { lazyDisconnectListener(data); });
 }
 
 void CAnimationManager::connectListener(std::any data) {
@@ -32,12 +31,6 @@ void CAnimationManager::connectListener(std::any data) {
 
         m_vActiveAnimatedVariables.emplace_back(PAV);
     } catch (const std::bad_any_cast&) { return; }
-
-    // When the animation manager ticks, it will cleanup the active list.
-    // If for some reason we don't tick for a while, but vars get warped a lot, we could end up with a lot of pending disconnects.
-    // So we rorate here, since we don't want the vector to grow too big for no reason.
-    if (m_pendingDisconnects > 100)
-        rotateActive();
 }
 
 void CAnimationManager::forceDisconnectListener(std::any data) {
@@ -48,10 +41,6 @@ void CAnimationManager::forceDisconnectListener(std::any data) {
 
         std::erase_if(m_vActiveAnimatedVariables, [&](const auto& other) { return other.get() == PAV; });
     } catch (const std::bad_any_cast&) { return; }
-}
-
-void CAnimationManager::lazyDisconnectListener(std::any data) {
-    m_pendingDisconnects++;
 }
 
 void CAnimationManager::removeAllBeziers() {
@@ -95,7 +84,6 @@ void CAnimationManager::rotateActive() {
     }
 
     m_vActiveAnimatedVariables = std::move(active);
-    m_pendingDisconnects       = 0;
 }
 
 bool CAnimationManager::bezierExists(const std::string& bezier) {

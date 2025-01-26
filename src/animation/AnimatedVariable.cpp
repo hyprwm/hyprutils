@@ -8,13 +8,11 @@ using namespace Hyprutils::Memory;
 #define SP CSharedPointer
 #define WP CWeakPointer
 
-void CBaseAnimatedVariable::create(Hyprutils::Animation::CAnimationManager* pAnimationManager, int typeInfo, SP<CBaseAnimatedVariable> pSelf) {
-    m_pAnimationManager = pAnimationManager;
-    m_Type              = typeInfo;
-    m_pSelf             = pSelf;
+void CBaseAnimatedVariable::create(int typeInfo, SP<CBaseAnimatedVariable> pSelf, SP<SAnimVarEvents> events) {
+    m_Type  = typeInfo;
+    m_pSelf = pSelf;
 
-    m_events = pAnimationManager->m_events;
-
+    m_events = events;
     m_bDummy = false;
 }
 
@@ -77,15 +75,9 @@ float CBaseAnimatedVariable::getPercent() const {
     return 1.f;
 }
 
-float CBaseAnimatedVariable::getCurveValue() const {
-    if (!m_bIsBeingAnimated || !m_pAnimationManager)
+float CBaseAnimatedVariable::getCurveValue(CAnimationManager* pAnimationManager) const {
+    if (!m_bIsBeingAnimated || !pAnimationManager)
         return 1.f;
-
-    // Guard against m_pAnimationManager being deleted
-    // TODO: Remove this and m_pAnimationManager
-    if (m_events.expired()) {
-        return 1.f;
-    }
 
     std::string bezierName = "";
     if (const auto PCONFIG = m_pConfig.lock()) {
@@ -94,7 +86,7 @@ float CBaseAnimatedVariable::getCurveValue() const {
             bezierName = PVALUES->internalBezier;
     }
 
-    const auto BEZIER = m_pAnimationManager->getBezier(bezierName);
+    const auto BEZIER = pAnimationManager->getBezier(bezierName);
     if (!BEZIER)
         return 1.f;
 

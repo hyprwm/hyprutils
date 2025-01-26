@@ -33,25 +33,23 @@ namespace Hyprutils {
 
             const std::unordered_map<std::string, Memory::CSharedPointer<CBezierCurve>>& getAllBeziers();
 
+            Memory::CSharedPointer<SAnimVarEvents>                                       getEvents() const;
+
             std::vector<Memory::CWeakPointer<CBaseAnimatedVariable>>                     m_vActiveAnimatedVariables;
+            Memory::CSharedPointer<SAnimVarEvents>                                       m_events;
 
           private:
             std::unordered_map<std::string, Memory::CSharedPointer<CBezierCurve>> m_mBezierCurves;
 
-            bool                                                                  m_bTickScheduled     = false;
-            uint32_t                                                              m_pendingDisconnects = 0;
+            bool                                                                  m_bTickScheduled = false;
 
             void                                                                  connectListener(std::any data);
-            void                                                                  lazyDisconnectListener(std::any data);
             void                                                                  forceDisconnectListener(std::any data);
 
             struct {
                 Signal::CHyprSignalListener connect;
                 Signal::CHyprSignalListener forceDisconnect;
-                Signal::CHyprSignalListener lazyDisconnect;
             } m_sListeners;
-
-            Memory::CSharedPointer<SAnimVarEvents> m_events;
 
             friend class CBaseAnimatedVariable;
         };
