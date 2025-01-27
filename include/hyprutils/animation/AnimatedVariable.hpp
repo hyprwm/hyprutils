@@ -2,14 +2,15 @@
 
 #include "AnimationConfig.hpp"
 #include "../memory/WeakPtr.hpp"
-#include "hyprutils/memory/SharedPtr.hpp"
+#include "../memory/SharedPtr.hpp"
+#include "../signal/Signal.hpp"
+#include "AnimationManager.hpp"
 
 #include <functional>
 #include <chrono>
 
 namespace Hyprutils {
     namespace Animation {
-        class CAnimationManager;
 
         /* A base class for animated variables. */
         class CBaseAnimatedVariable {
@@ -29,14 +30,15 @@ namespace Hyprutils {
                 disconnectFromActive();
             };
 
-            virtual void warp(bool endCallback = true) = 0;
+            virtual void warp(bool endCallback = true, bool forceDisconnect = true) = 0;
 
             CBaseAnimatedVariable(const CBaseAnimatedVariable&)            = delete;
             CBaseAnimatedVariable(CBaseAnimatedVariable&&)                 = delete;
             CBaseAnimatedVariable& operator=(const CBaseAnimatedVariable&) = delete;
             CBaseAnimatedVariable& operator=(CBaseAnimatedVariable&&)      = delete;
 
-            void                   setConfig(Memory::CSharedPointer<SAnimationPropertyConfig> pConfig) {
+            //
+            void setConfig(Memory::CSharedPointer<SAnimationPropertyConfig> pConfig) {
                 m_pConfig = pConfig;
             }
 
@@ -51,7 +53,7 @@ namespace Hyprutils {
             /* returns the spent (completion) % */
             float getPercent() const;
 
-            /* returns the current curve value */
+            /* returns the current curve value. */
             float getCurveValue() const;
 
             /* checks if an animation is in progress */
@@ -83,15 +85,22 @@ namespace Hyprutils {
             void onAnimationEnd();
             void onAnimationBegin();
 
+            /* returns whether the parent CAnimationManager is dead */
+            bool isAnimationManagerDead() const;
+
             int  m_Type = -1;
 
           protected:
             friend class CAnimationManager;
 
-            bool                                        m_bIsConnectedToActive = false;
-            bool                                        m_bIsBeingAnimated     = false;
+            CAnimationManager*                                                m_pAnimationManager = nullptr;
 
-            Memory::CWeakPointer<CBaseAnimatedVariable> m_pSelf;
+            bool                                                              m_bIsConnectedToActive = false;
+            bool                                                              m_bIsBeingAnimated     = false;
+
+            Memory::CWeakPointer<CBaseAnimatedVariable>                       m_pSelf;
+
+            Memory::CWeakPointer<CAnimationManager::SAnimationManagerSignals> m_pSignals;
 
           private:
             Memory::CWeakPointer<SAnimationPropertyConfig> m_pConfig;
@@ -100,7 +109,6 @@ namespace Hyprutils {
 
             bool                                           m_bDummy = true;
 
-            CAnimationManager*                             m_pAnimationManager    = nullptr;
             bool                                           m_bRemoveEndAfterRan   = true;
             bool                                           m_bRemoveBeginAfterRan = true;
 
@@ -142,7 +150,7 @@ namespace Hyprutils {
             CGenericAnimatedVariable& operator=(const CGenericAnimatedVariable&) = delete;
             CGenericAnimatedVariable& operator=(CGenericAnimatedVariable&&)      = delete;
 
-            virtual void              warp(bool endCallback = true) {
+            virtual void              warp(bool endCallback = true, bool forceDisconnect = true) {
                 if (!m_bIsBeingAnimated)
                     return;
 
@@ -154,6 +162,9 @@ namespace Hyprutils {
 
                 if (endCallback)
                     onAnimationEnd();
+
+                if (forceDisconnect)
+                    disconnectFromActive();
             }
 
             const VarType& value() const {

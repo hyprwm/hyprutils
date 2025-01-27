@@ -8,29 +8,28 @@ using namespace Hyprutils::Memory;
 #define SP CSharedPointer
 #define WP CWeakPointer
 
-void CBaseAnimatedVariable::create(Hyprutils::Animation::CAnimationManager* pAnimationManager, int typeInfo, SP<CBaseAnimatedVariable> pSelf) {
-    m_pAnimationManager = pAnimationManager;
-    m_Type              = typeInfo;
-    m_pSelf             = pSelf;
+void CBaseAnimatedVariable::create(CAnimationManager* pManager, int typeInfo, SP<CBaseAnimatedVariable> pSelf) {
+    m_Type  = typeInfo;
+    m_pSelf = pSelf;
 
-    m_bDummy = false;
+    m_pAnimationManager = pManager;
+    m_pSignals = pManager->getSignals();
+    m_bDummy   = false;
 }
 
 void CBaseAnimatedVariable::connectToActive() {
-    if (!m_pAnimationManager || m_bDummy)
+    if (m_bDummy || m_bIsConnectedToActive || isAnimationManagerDead())
         return;
 
-    m_pAnimationManager->scheduleTick(); // otherwise the animation manager will never pick this up
-    if (!m_bIsConnectedToActive)
-        m_pAnimationManager->m_vActiveAnimatedVariables.push_back(m_pSelf);
+    m_pSignals->connect.emit(m_pSelf);
     m_bIsConnectedToActive = true;
 }
 
 void CBaseAnimatedVariable::disconnectFromActive() {
-    if (!m_pAnimationManager)
+    if (isAnimationManagerDead())
         return;
 
-    std::erase_if(m_pAnimationManager->m_vActiveAnimatedVariables, [&](const auto& other) { return other == m_pSelf; });
+    m_pSignals->disconnect.emit(m_pSelf);
     m_bIsConnectedToActive = false;
 }
 
@@ -77,7 +76,7 @@ float CBaseAnimatedVariable::getPercent() const {
 }
 
 float CBaseAnimatedVariable::getCurveValue() const {
-    if (!m_bIsBeingAnimated || !m_pAnimationManager)
+    if (!m_bIsBeingAnimated || isAnimationManagerDead())
         return 1.f;
 
     std::string bezierName = "";
@@ -99,7 +98,7 @@ float CBaseAnimatedVariable::getCurveValue() const {
 }
 
 bool CBaseAnimatedVariable::ok() const {
-    return m_pConfig && m_pAnimationManager;
+    return m_pConfig && !m_bDummy && !isAnimationManagerDead();
 }
 
 void CBaseAnimatedVariable::onUpdate() {
@@ -155,4 +154,8 @@ void CBaseAnimatedVariable::onAnimationBegin() {
         if (m_bRemoveBeginAfterRan)
             m_fBeginCallback = nullptr; // reset
     }
+}
+
+bool CBaseAnimatedVariable::isAnimationManagerDead() const {
+    return m_pSignals.expired();
 }
