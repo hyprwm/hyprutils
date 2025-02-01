@@ -13,8 +13,8 @@ void CBaseAnimatedVariable::create(CAnimationManager* pManager, int typeInfo, SP
     m_pSelf = pSelf;
 
     m_pAnimationManager = pManager;
-    m_pSignals = pManager->getSignals();
-    m_bDummy   = false;
+    m_pSignals          = pManager->getSignals();
+    m_bDummy            = false;
 }
 
 void CBaseAnimatedVariable::connectToActive() {
@@ -136,11 +136,12 @@ void CBaseAnimatedVariable::onAnimationEnd() {
     /* We do not call disconnectFromActive here. The animation manager will remove it on a call to tickDone. */
 
     if (m_fEndCallback) {
-        /* loading m_bRemoveEndAfterRan before calling the callback allows the callback to delete this animation safely if it is false. */
-        auto removeEndCallback = m_bRemoveEndAfterRan;
-        m_fEndCallback(m_pSelf);
-        if (removeEndCallback)
-            m_fEndCallback = nullptr; // reset
+        CallbackFun cb = nullptr;
+        m_fEndCallback.swap(cb);
+
+        cb(m_pSelf);
+        if (!m_bRemoveEndAfterRan && /* callback did not set a new one by itself */ !m_fEndCallback)
+            m_fEndCallback = cb; // restore
     }
 }
 

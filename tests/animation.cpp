@@ -344,6 +344,23 @@ int main(int argc, char** argv, char** envp) {
     EXPECT(s.m_iA->getCurveValue(), 1.f);
     EXPECT(endCallbackRan, 6);
 
+    // test end callback readding the var
+    *s.m_iA = 5;
+    s.m_iA->setCallbackOnEnd([&endCallbackRan](WP<CBaseAnimatedVariable> v) {
+        endCallbackRan++;
+        const auto PAV = dynamic_cast<CAnimatedVariable<int>*>(v.lock().get());
+
+        *PAV = 10;
+        PAV->setCallbackOnEnd([&endCallbackRan](WP<CBaseAnimatedVariable> v) { endCallbackRan++; });
+    });
+
+    while (pAnimationManager->shouldTickForNext()) {
+        pAnimationManager->tick();
+    }
+
+    EXPECT(endCallbackRan, 8);
+    EXPECT(s.m_iA->value(), 10);
+
     // Test duplicate active anim vars are not allowed
     {
         EXPECT(pAnimationManager->m_vActiveAnimatedVariables.size(), 0);
