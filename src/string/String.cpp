@@ -6,12 +6,12 @@ using namespace Hyprutils::String;
 std::string Hyprutils::String::trim(const std::string& in) {
     if (in.empty())
         return in;
-    //Wsign-compare
+
     size_t countBefore = 0;
     while (countBefore < in.length() && std::isspace(in.at(countBefore))) {
         countBefore++;
     }
-    //Wsign-compare
+
     size_t countAfter = 0;
     while (countAfter < in.length() - countBefore && std::isspace(in.at(in.length() - countAfter - 1))) {
         countAfter++;

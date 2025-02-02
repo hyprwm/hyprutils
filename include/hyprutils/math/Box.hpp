@@ -73,7 +73,6 @@ namespace Hyprutils::Math {
             * @brief Constructs a CBox with uniform dimensions.
             * @param d Dimensions to apply uniformly (x, y, width, height).
             */
-        // XD. This comment will be deleted before MR, but it'll be saved in the history. Sometimes it's nice to be an idiot.
         CBox(const double d) : x(d), y(d) {
             w = d;
             h = d;

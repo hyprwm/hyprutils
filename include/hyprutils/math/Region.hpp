@@ -30,7 +30,7 @@ namespace Hyprutils::Math {
             return *this;
         }
 
-        // CRegion&& will shit-talkin you about being non-redeclarable and CRegion const&... pixman moment.
+        // I guess it is correct...
         CRegion& operator=(CRegion other) {
             pixman_region32_copy(&m_rRegion, other.pixman());
             return *this;

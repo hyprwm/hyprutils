@@ -2,7 +2,6 @@
 
 //NOLINTNEXTLINE
 namespace Hyprutils::Math {
-    // Welcome nahui
     enum eTransform : unsigned char {
         HYPRUTILS_TRANSFORM_NORMAL      = 0,
         HYPRUTILS_TRANSFORM_90          = 1,
