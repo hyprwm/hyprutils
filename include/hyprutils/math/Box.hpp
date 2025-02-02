@@ -18,14 +18,14 @@ namespace Hyprutils::Math {
             * @return Scaled SBoxExtents.
             */
         SBoxExtents operator*(const double& scale) const {
-            return SBoxExtents{topLeft * scale, bottomRight * scale};
+            return SBoxExtents{.topLeft = topLeft * scale, .bottomRight = bottomRight * scale};
         }
         /**
             * @brief Rounds the coordinates of the extents.
             * @return Rounded SBoxExtents.
             */
         SBoxExtents round() {
-            return {topLeft.round(), bottomRight.round()};
+            return {.topLeft = topLeft.round(), .bottomRight = bottomRight.round()};
         }
         /**
             * @brief Checks equality between two SBoxExtents objects.
@@ -58,9 +58,7 @@ namespace Hyprutils::Math {
             * @param w_ Width of the box.
             * @param h_ Height of the box.
             */
-        CBox(double x_, double y_, double w_, double h_) {
-            x = x_;
-            y = y_;
+        CBox(double x_, double y_, double w_, double h_) : x(x_), y(y_) {
             w = w_;
             h = h_;
         }
@@ -75,9 +73,8 @@ namespace Hyprutils::Math {
             * @brief Constructs a CBox with uniform dimensions.
             * @param d Dimensions to apply uniformly (x, y, width, height).
             */
-        CBox(const double d) {
-            x = d;
-            y = d;
+        // XD. This comment will be deleted before MR, but it'll be saved in the history. Sometimes it's nice to be an idiot.
+        CBox(const double d) : x(d), y(d) {
             w = d;
             h = d;
         }
@@ -86,9 +83,7 @@ namespace Hyprutils::Math {
             * @param pos Position vector representing the top-left corner.
             * @param size Size vector representing width and height.
             */
-        CBox(const Vector2D& pos, const Vector2D& size) {
-            x = pos.x;
-            y = pos.y;
+        CBox(const Vector2D& pos, const Vector2D& size) : x(pos.x), y(pos.y) {
             w = size.x;
             h = size.y;
         }

@@ -1,6 +1,5 @@
 #include <hyprutils/signal/Signal.hpp>
 #include <hyprutils/memory/WeakPtr.hpp>
-#include <algorithm>
 
 using namespace Hyprutils::Signal;
 using namespace Hyprutils::Memory;
@@ -18,6 +17,7 @@ void Hyprutils::Signal::CSignal::emit(std::any data) {
     }
 
     std::vector<CStaticSignalListener*> statics;
+    statics.reserve(m_vStaticListeners.size());
     for (auto& l : m_vStaticListeners) {
         statics.emplace_back(l.get());
     }

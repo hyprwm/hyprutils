@@ -35,14 +35,14 @@ float CBezierCurve::getXForT(float const& t) const {
     float t2 = t * t;
     float t3 = t2 * t;
 
-    return 3 * t * (1 - t) * (1 - t) * m_vPoints[1].x + 3 * t2 * (1 - t) * m_vPoints[2].x + t3 * m_vPoints[3].x;
+    return (3 * t * (1 - t) * (1 - t) * m_vPoints[1].x) + (3 * t2 * (1 - t) * m_vPoints[2].x) + (t3 * m_vPoints[3].x);
 }
 
 float CBezierCurve::getYForT(float const& t) const {
     float t2 = t * t;
     float t3 = t2 * t;
 
-    return 3 * t * (1 - t) * (1 - t) * m_vPoints[1].y + 3 * t2 * (1 - t) * m_vPoints[2].y + t3 * m_vPoints[3].y;
+    return (3 * t * (1 - t) * (1 - t) * m_vPoints[1].y) + (3 * t2 * (1 - t) * m_vPoints[2].y) + (t3 * m_vPoints[3].y);
 }
 
 // Todo: this probably can be done better and faster
@@ -74,5 +74,5 @@ float CBezierCurve::getYForPoint(float const& x) const {
     if (std::isnan(PERCINDELTA) || std::isinf(PERCINDELTA)) // can sometimes happen for VERY small x
         return 0.f;
 
-    return LOWERPOINT->y + (UPPERPOINT->y - LOWERPOINT->y) * PERCINDELTA;
+    return LOWERPOINT->y + ((UPPERPOINT->y - LOWERPOINT->y) * PERCINDELTA);
 }

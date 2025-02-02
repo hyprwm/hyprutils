@@ -26,12 +26,13 @@ Hyprutils::Math::CRegion::CRegion(pixman_box32_t* box) {
     pixman_region32_init_rect(&m_rRegion, box->x1, box->y1, box->x2 - box->x1, box->y2 - box->y1);
 }
 
+// What to do with const_cast?
 Hyprutils::Math::CRegion::CRegion(const CRegion& other) {
     pixman_region32_init(&m_rRegion);
     pixman_region32_copy(&m_rRegion, const_cast<CRegion*>(&other)->pixman());
 }
 
-Hyprutils::Math::CRegion::CRegion(CRegion&& other) {
+Hyprutils::Math::CRegion::CRegion(CRegion&& other) noexcept {
     pixman_region32_init(&m_rRegion);
     pixman_region32_copy(&m_rRegion, other.pixman());
 }
@@ -86,7 +87,7 @@ CRegion& Hyprutils::Math::CRegion::invert(pixman_box32_t* box) {
 }
 
 CRegion& Hyprutils::Math::CRegion::invert(const CBox& box) {
-    pixman_box32 pixmanBox = {(int32_t)box.x, (int32_t)box.y, (int32_t)box.w + (int32_t)box.x, (int32_t)box.h + (int32_t)box.y};
+    pixman_box32 pixmanBox = {.x1 = (int32_t)box.x, .y1 = (int32_t)box.y, .x2 = (int32_t)box.w + (int32_t)box.x, .y2 = (int32_t)box.h + (int32_t)box.y};
     return this->invert(&pixmanBox);
 }
 
@@ -118,7 +119,7 @@ CRegion& Hyprutils::Math::CRegion::expand(double units) {
     clear();
 
     for (auto& r : rects) {
-        CBox b{(double)r.x1 - units, (double)r.y1 - units, (double)r.x2 - r.x1 + units * 2, (double)r.y2 - r.y1 + units * 2};
+        CBox b{(double)r.x1 - units, (double)r.y1 - units, (double)r.x2 - r.x1 + (units * 2), (double)r.y2 - r.y1 + (units * 2)};
         add(b);
     }
 

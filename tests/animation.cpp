@@ -4,6 +4,7 @@
 #include <hyprutils/memory/WeakPtr.hpp>
 #include <hyprutils/memory/UniquePtr.hpp>
 #include "shared.hpp"
+#include <cstdint>
 
 #define SP CSharedPointer
 #define WP CWeakPointer
@@ -24,7 +25,7 @@ using PANIMVAR = SP<CAnimatedVariable<VarType>>;
 template <typename VarType>
 using PANIMVARREF = WP<CAnimatedVariable<VarType>>;
 
-enum eAVTypes {
+enum eAVTypes : uint8_t {
     INT = 1,
     TEST,
 };
@@ -34,12 +35,13 @@ struct SomeTestType {
     bool operator==(const SomeTestType& other) const {
         return done == other.done;
     }
+    // Trivial copy assignment?
     SomeTestType& operator=(const SomeTestType& other) {
         done = other.done;
         return *this;
     }
 };
-
+// Do this static?
 CAnimationConfigTree animationTree;
 
 class CMyAnimationManager : public CAnimationManager {
@@ -106,7 +108,7 @@ class CMyAnimationManager : public CAnimationManager {
         ;
     }
 };
-
+// Same
 UP<CMyAnimationManager> pAnimationManager;
 
 class Subject {
@@ -120,7 +122,7 @@ class Subject {
     PANIMVAR<int>          m_iB;
     PANIMVAR<SomeTestType> m_iC;
 };
-
+// Same
 int config() {
     pAnimationManager = makeUnique<CMyAnimationManager>();
 
@@ -299,7 +301,7 @@ int main(int argc, char** argv, char** envp) {
         if (v.lock() != vars.back())
             vars.back()->warp();
     });
-    s.m_iA->setCallbackOnEnd([&s, &vars](auto) {
+    s.m_iA->setCallbackOnEnd([&vars](auto) {
         vars.resize(vars.size() + 1);
         pAnimationManager->createAnimation(1, vars.back(), "default");
         *vars.back() = 1337;
@@ -313,7 +315,7 @@ int main(int argc, char** argv, char** envp) {
 
     EXPECT(s.m_iA->value(), 1000000);
     // all vars should be set to 1337
-    EXPECT(std::find_if(vars.begin(), vars.end(), [](const auto& v) { return v->value() != 1337; }) == vars.end(), true);
+    EXPECT(std::ranges::find_if(vars, [](const auto& v) { return v->value() != 1337; }) == vars.end(), true);
 
     // test one-time callbacks
     s.m_iA->resetAllCallbacks();

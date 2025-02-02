@@ -9,9 +9,9 @@ using namespace Hyprutils::OS;
 
 CFileDescriptor::CFileDescriptor(int const fd) : m_fd(fd) {}
 
-CFileDescriptor::CFileDescriptor(CFileDescriptor&& other) : m_fd(std::exchange(other.m_fd, -1)) {}
+CFileDescriptor::CFileDescriptor(CFileDescriptor&& other) noexcept : m_fd(std::exchange(other.m_fd, -1)) {}
 
-CFileDescriptor& CFileDescriptor::operator=(CFileDescriptor&& other) {
+CFileDescriptor& CFileDescriptor::operator=(CFileDescriptor&& other) noexcept {
     if (this == &other) // Shit will go haywire if there is duplicate ownership
         abort();
 
@@ -37,10 +37,7 @@ int CFileDescriptor::getFlags() const {
 }
 
 bool CFileDescriptor::setFlags(int flags) {
-    if (fcntl(m_fd, F_SETFD, flags) == -1)
-        return false;
-
-    return true;
+    return fcntl(m_fd, F_SETFD, flags) != -1;
 }
 
 int CFileDescriptor::take() {

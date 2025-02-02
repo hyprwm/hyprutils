@@ -13,8 +13,8 @@ void CBaseAnimatedVariable::create(CAnimationManager* pManager, int typeInfo, SP
     m_pSelf = pSelf;
 
     m_pAnimationManager = pManager;
-    m_pSignals = pManager->getSignals();
-    m_bDummy   = false;
+    m_pSignals          = pManager->getSignals();
+    m_bDummy            = false;
 }
 
 void CBaseAnimatedVariable::connectToActive() {

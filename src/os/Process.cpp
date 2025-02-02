@@ -6,7 +6,6 @@ using namespace Hyprutils::OS;
 #include <unistd.h>
 #include <cstring>
 #include <array>
-#include <thread>
 
 #include <sys/fcntl.h>
 #include <sys/wait.h>
@@ -89,7 +88,7 @@ bool Hyprutils::OS::CProcess::runSync() {
             {.fd = outPipe[0], .events = POLLIN, .revents = 0},
             {.fd = errPipe[0], .events = POLLIN, .revents = 0},
         };
-
+        // Maybe bool or just leave it as it is?
         while (1337) {
             int ret = poll(pollfds, 2, 5000);
 
@@ -171,7 +170,7 @@ bool Hyprutils::OS::CProcess::runAsync() {
         // run in child
         sigset_t set;
         sigemptyset(&set);
-        sigprocmask(SIG_SETMASK, &set, NULL);
+        sigprocmask(SIG_SETMASK, &set, nullptr);
 
         grandchild = fork();
         if (grandchild == 0) {
@@ -225,6 +224,6 @@ const std::string& Hyprutils::OS::CProcess::stdErr() {
     return err;
 }
 
-const pid_t Hyprutils::OS::CProcess::pid() {
+pid_t Hyprutils::OS::CProcess::pid() {
     return grandchildPid;
 }

@@ -3,102 +3,102 @@
 #include <format>
 #include <string>
 
-namespace Hyprutils {
-    namespace Math {
-        class Vector2D {
-          public:
-            Vector2D(double, double);
-            Vector2D(int, int);
-            Vector2D();
-            ~Vector2D();
+//NOLINTNEXTLINE
+namespace Hyprutils::Math {
+    //NOLINTNEXTLINE
+    class Vector2D {
+      public:
+        Vector2D(double, double);
+        Vector2D(int, int);
+        Vector2D();
+        ~Vector2D();
 
-            double x = 0;
-            double y = 0;
+        double x = 0;
+        double y = 0;
 
-            // returns the scale
-            double   normalize();
+        // returns the scale
+        double   normalize();
 
-            Vector2D operator+(const Vector2D& a) const {
-                return Vector2D(this->x + a.x, this->y + a.y);
-            }
-            Vector2D operator-(const Vector2D& a) const {
-                return Vector2D(this->x - a.x, this->y - a.y);
-            }
-            Vector2D operator-() const {
-                return Vector2D(-this->x, -this->y);
-            }
-            Vector2D operator*(const double& a) const {
-                return Vector2D(this->x * a, this->y * a);
-            }
-            Vector2D operator/(const double& a) const {
-                return Vector2D(this->x / a, this->y / a);
-            }
+        Vector2D operator+(const Vector2D& a) const {
+            return Vector2D(this->x + a.x, this->y + a.y);
+        }
+        Vector2D operator-(const Vector2D& a) const {
+            return Vector2D(this->x - a.x, this->y - a.y);
+        }
+        Vector2D operator-() const {
+            return Vector2D(-this->x, -this->y);
+        }
+        Vector2D operator*(const double& a) const {
+            return Vector2D(this->x * a, this->y * a);
+        }
+        Vector2D operator/(const double& a) const {
+            return Vector2D(this->x / a, this->y / a);
+        }
 
-            bool operator==(const Vector2D& a) const {
-                return a.x == x && a.y == y;
-            }
+        bool operator==(const Vector2D& a) const {
+            return a.x == x && a.y == y;
+        }
 
-            bool operator!=(const Vector2D& a) const {
-                return a.x != x || a.y != y;
-            }
+        bool operator!=(const Vector2D& a) const {
+            return a.x != x || a.y != y;
+        }
 
-            Vector2D operator*(const Vector2D& a) const {
-                return Vector2D(this->x * a.x, this->y * a.y);
-            }
+        Vector2D operator*(const Vector2D& a) const {
+            return Vector2D(this->x * a.x, this->y * a.y);
+        }
 
-            Vector2D operator/(const Vector2D& a) const {
-                return Vector2D(this->x / a.x, this->y / a.y);
-            }
+        Vector2D operator/(const Vector2D& a) const {
+            return Vector2D(this->x / a.x, this->y / a.y);
+        }
 
-            bool operator>(const Vector2D& a) const {
-                return this->x > a.x && this->y > a.y;
-            }
+        bool operator>(const Vector2D& a) const {
+            return this->x > a.x && this->y > a.y;
+        }
 
-            bool operator<(const Vector2D& a) const {
-                return this->x < a.x && this->y < a.y;
-            }
-            Vector2D& operator+=(const Vector2D& a) {
-                this->x += a.x;
-                this->y += a.y;
-                return *this;
-            }
-            Vector2D& operator-=(const Vector2D& a) {
-                this->x -= a.x;
-                this->y -= a.y;
-                return *this;
-            }
-            Vector2D& operator*=(const Vector2D& a) {
-                this->x *= a.x;
-                this->y *= a.y;
-                return *this;
-            }
-            Vector2D& operator/=(const Vector2D& a) {
-                this->x /= a.x;
-                this->y /= a.y;
-                return *this;
-            }
-            Vector2D& operator*=(const double& a) {
-                this->x *= a;
-                this->y *= a;
-                return *this;
-            }
-            Vector2D& operator/=(const double& a) {
-                this->x /= a;
-                this->y /= a;
-                return *this;
-            }
+        bool operator<(const Vector2D& a) const {
+            return this->x < a.x && this->y < a.y;
+        }
+        Vector2D& operator+=(const Vector2D& a) {
+            this->x += a.x;
+            this->y += a.y;
+            return *this;
+        }
+        Vector2D& operator-=(const Vector2D& a) {
+            this->x -= a.x;
+            this->y -= a.y;
+            return *this;
+        }
+        Vector2D& operator*=(const Vector2D& a) {
+            this->x *= a.x;
+            this->y *= a.y;
+            return *this;
+        }
+        Vector2D& operator/=(const Vector2D& a) {
+            this->x /= a.x;
+            this->y /= a.y;
+            return *this;
+        }
+        Vector2D& operator*=(const double& a) {
+            this->x *= a;
+            this->y *= a;
+            return *this;
+        }
+        Vector2D& operator/=(const double& a) {
+            this->x /= a;
+            this->y /= a;
+            return *this;
+        }
 
-            double   distance(const Vector2D& other) const;
-            double   distanceSq(const Vector2D& other) const;
-            double   size() const;
-            Vector2D clamp(const Vector2D& min, const Vector2D& max = Vector2D{-1, -1}) const;
+        double   distance(const Vector2D& other) const;
+        double   distanceSq(const Vector2D& other) const;
+        double   size() const;
+        Vector2D clamp(const Vector2D& min, const Vector2D& max = Vector2D{-1, -1}) const;
 
-            Vector2D floor() const;
-            Vector2D round() const;
+        Vector2D floor() const;
+        Vector2D round() const;
 
-            Vector2D getComponentMax(const Vector2D& other) const;
-        };
-    }
+        Vector2D getComponentMax(const Vector2D& other) const;
+    };
 }
 
 // absolutely ridiculous formatter spec parsing

@@ -5,33 +5,32 @@
 #include <utility>
 #include <sys/types.h>
 
-namespace Hyprutils {
-    namespace OS {
-        class CProcess {
-          public:
-            /* Creates a process object, doesn't run yet */
-            CProcess(const std::string& binary_, const std::vector<std::string>& args_);
+//NOLINTNEXTLINE
+namespace Hyprutils::OS {
+    class CProcess {
+      public:
+        /* Creates a process object, doesn't run yet */
+        CProcess(const std::string& binary_, const std::vector<std::string>& args_);
 
-            void addEnv(const std::string& name, const std::string& value);
+        void addEnv(const std::string& name, const std::string& value);
 
-            /* Run the process, synchronously, get the stdout and stderr. False on fail */
-            bool runSync();
+        /* Run the process, synchronously, get the stdout and stderr. False on fail */
+        bool runSync();
 
-            /* Run the process, asynchronously. This will detach the process from this object (and process) and let it live a happy life. False on fail. */
-            bool runAsync();
+        /* Run the process, asynchronously. This will detach the process from this object (and process) and let it live a happy life. False on fail. */
+        bool runAsync();
 
-            // only populated when ran sync
-            const std::string& stdOut();
-            const std::string& stdErr();
+        // only populated when ran sync
+        const std::string& stdOut();
+        const std::string& stdErr();
 
-            // only populated when ran async
-            const pid_t pid();
+        // only populated when ran async
+        pid_t pid();
 
-          private:
-            std::string                                      binary, out, err;
-            std::vector<std::string>                         args;
-            std::vector<std::pair<std::string, std::string>> env;
-            pid_t                                            grandchildPid = 0;
-        };
-    }
+      private:
+        std::string                                      binary, out, err;
+        std::vector<std::string>                         args;
+        std::vector<std::pair<std::string, std::string>> env;
+        pid_t                                            grandchildPid = 0;
+    };
 }

@@ -19,6 +19,14 @@ set(LIBDIR ${CMAKE_INSTALL_FULL_LIBDIR})
 configure_file(hyprutils.pc.in hyprutils.pc @ONLY)
 
 set(CMAKE_CXX_STANDARD 23)
+add_compile_options(
+  -Wall
+  -Wextra
+  -Wpedantic
+  -Wno-unused-parameter
+  -Wno-unused-value
+  -Wno-missing-field-initializers)
+set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 if(CMAKE_BUILD_TYPE MATCHES Debug OR CMAKE_BUILD_TYPE MATCHES DEBUG)
   message(STATUS "Configuring hyprutils in Debug")

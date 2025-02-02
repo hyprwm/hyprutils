@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 
+//NOLINTNEXTLINE
 namespace Hyprutils::Math {
 
     /**

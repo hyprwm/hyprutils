@@ -93,6 +93,7 @@ Mat3x3& Mat3x3::transform(eTransform transform) {
 }
 
 Mat3x3& Mat3x3::rotate(float rot) {
+    //no lint or maybe do something?
     multiply(std::array<float, 9>{(float)cos(rot), (float)-sin(rot), 0.0f, (float)sin(rot), (float)cos(rot), 0.0f, 0.0f, 0.0f, 1.0f});
     return *this;
 }
