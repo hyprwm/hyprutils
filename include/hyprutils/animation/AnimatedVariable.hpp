@@ -160,11 +160,11 @@ namespace Hyprutils {
 
                 m_bIsBeingAnimated = false;
 
-                if (endCallback)
-                    onAnimationEnd();
-
                 if (forceDisconnect)
                     disconnectFromActive();
+
+                if (endCallback)
+                    onAnimationEnd();
             }
 
             const VarType& value() const {
