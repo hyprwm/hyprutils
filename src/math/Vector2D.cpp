@@ -12,10 +12,6 @@ Hyprutils::Math::Vector2D::Vector2D(int xx, int yy) : x((double)xx), y((double)y
     ;
 }
 
-Hyprutils::Math::Vector2D::Vector2D() {
-    ;
-}
-
 double Hyprutils::Math::Vector2D::normalize() {
     // get max abs
     const auto max = std::abs(x) > std::abs(y) ? std::abs(x) : std::abs(y);

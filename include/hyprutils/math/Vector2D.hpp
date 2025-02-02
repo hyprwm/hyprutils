@@ -10,7 +10,7 @@ namespace Hyprutils::Math {
       public:
         Vector2D(double, double);
         Vector2D(int, int);
-        Vector2D();
+        Vector2D() = default;
         ~Vector2D();
 
         double x = 0;

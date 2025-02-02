@@ -1,4 +1,3 @@
-#include <algorithm>
 #include <hyprutils/string/String.hpp>
 
 using namespace Hyprutils::String;
