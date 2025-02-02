@@ -37,7 +37,7 @@ CBox& Hyprutils::Math::CBox::translate(const Vector2D& vec) {
 }
 
 Vector2D Hyprutils::Math::CBox::middle() const {
-    return Vector2D{x + w * HALF, y + h * HALF};
+    return Vector2D{x + (w * HALF), y + (h * HALF)};
 }
 
 bool Hyprutils::Math::CBox::containsPoint(const Vector2D& vec) const {
@@ -233,5 +233,5 @@ Vector2D Hyprutils::Math::CBox::closestPoint(const Vector2D& vec) const {
 }
 
 SBoxExtents Hyprutils::Math::CBox::extentsFrom(const CBox& small) {
-    return {{small.x - x, small.y - y}, {w - small.w - (small.x - x), h - small.h - (small.y - y)}};
+    return {.topLeft = {small.x - x, small.y - y}, .bottomRight = {w - small.w - (small.x - x), h - small.h - (small.y - y)}};
 }

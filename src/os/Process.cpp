@@ -171,7 +171,7 @@ bool Hyprutils::OS::CProcess::runAsync() {
         // run in child
         sigset_t set;
         sigemptyset(&set);
-        sigprocmask(SIG_SETMASK, &set, NULL);
+        sigprocmask(SIG_SETMASK, &set, nullptr);
 
         grandchild = fork();
         if (grandchild == 0) {

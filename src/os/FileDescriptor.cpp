@@ -37,10 +37,7 @@ int CFileDescriptor::getFlags() const {
 }
 
 bool CFileDescriptor::setFlags(int flags) {
-    if (fcntl(m_fd, F_SETFD, flags) == -1)
-        return false;
-
-    return true;
+    return fcntl(m_fd, F_SETFD, flags) != -1;
 }
 
 int CFileDescriptor::take() {

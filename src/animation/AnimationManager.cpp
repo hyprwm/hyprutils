@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <hyprutils/animation/AnimationManager.hpp>
 #include <hyprutils/animation/AnimatedVariable.hpp>
 
@@ -99,7 +100,7 @@ bool CAnimationManager::bezierExists(const std::string& bezier) {
 }
 
 SP<CBezierCurve> CAnimationManager::getBezier(const std::string& name) {
-    const auto BEZIER = std::find_if(m_mBezierCurves.begin(), m_mBezierCurves.end(), [&](const auto& other) { return other.first == name; });
+    const auto BEZIER = std::ranges::find_if(m_mBezierCurves, [&](const auto& other) { return other.first == name; });
 
     return BEZIER == m_mBezierCurves.end() ? m_mBezierCurves["default"] : BEZIER->second;
 }
