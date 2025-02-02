@@ -86,7 +86,7 @@ CRegion& Hyprutils::Math::CRegion::invert(pixman_box32_t* box) {
 }
 
 CRegion& Hyprutils::Math::CRegion::invert(const CBox& box) {
-    pixman_box32 pixmanBox = {(int32_t)box.x, (int32_t)box.y, (int32_t)box.w + (int32_t)box.x, (int32_t)box.h + (int32_t)box.y};
+    pixman_box32 pixmanBox = {.x1 = (int32_t)box.x, .y1 = (int32_t)box.y, .x2 = (int32_t)box.w + (int32_t)box.x, .y2 = (int32_t)box.h + (int32_t)box.y};
     return this->invert(&pixmanBox);
 }
 
@@ -118,7 +118,7 @@ CRegion& Hyprutils::Math::CRegion::expand(double units) {
     clear();
 
     for (auto& r : rects) {
-        CBox b{(double)r.x1 - units, (double)r.y1 - units, (double)r.x2 - r.x1 + units * 2, (double)r.y2 - r.y1 + units * 2};
+        CBox b{(double)r.x1 - units, (double)r.y1 - units, (double)r.x2 - r.x1 + (units * 2), (double)r.y2 - r.y1 + (units * 2)};
         add(b);
     }
 

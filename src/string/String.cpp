@@ -7,12 +7,12 @@ std::string Hyprutils::String::trim(const std::string& in) {
     if (in.empty())
         return in;
 
-    int countBefore = 0;
+    size_t countBefore = 0;
     while (countBefore < in.length() && std::isspace(in.at(countBefore))) {
         countBefore++;
     }
 
-    int countAfter = 0;
+    size_t countAfter = 0;
     while (countAfter < in.length() - countBefore && std::isspace(in.at(in.length() - countAfter - 1))) {
         countAfter++;
     }
@@ -55,10 +55,7 @@ bool Hyprutils::String::isNumber(const std::string& str, bool allowfloat) {
         }
     }
 
-    if (!isdigit(str.back()))
-        return false;
-
-    return true;
+    return isdigit(str.back()) != 0;
 }
 
 void Hyprutils::String::replaceInString(std::string& string, const std::string& what, const std::string& to) {

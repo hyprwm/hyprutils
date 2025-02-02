@@ -62,7 +62,7 @@ namespace Hyprutils::Path {
 
         static const auto xdgConfigDirs = getXdgConfigDirs();
         if (xdgConfigDirs.has_value()) {
-            for (auto dir : xdgConfigDirs.value()) {
+            for (auto &dir : xdgConfigDirs.value()) {
                 if (checkConfigExists(dir, programName))
                     return std::make_pair(fullConfigPath(dir, programName), std::nullopt);
             }

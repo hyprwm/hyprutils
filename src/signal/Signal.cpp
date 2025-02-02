@@ -18,6 +18,7 @@ void Hyprutils::Signal::CSignal::emit(std::any data) {
     }
 
     std::vector<CStaticSignalListener*> statics;
+    statics.reserve(m_vStaticListeners.size());
     for (auto& l : m_vStaticListeners) {
         statics.emplace_back(l.get());
     }

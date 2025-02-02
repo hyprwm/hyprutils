@@ -22,7 +22,7 @@ Hyprutils::String::CVarList::CVarList(const std::string& in, const size_t lastAr
             break;
         }
         pos += s.size() + 1;
-        m_vArgs.emplace_back(trim(std::string_view{s}.data()));
+        m_vArgs.emplace_back(trim(s.data()));
     }
 }
 
