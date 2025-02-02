@@ -11,7 +11,7 @@ namespace Hyprutils::Math {
         Vector2D(double, double);
         Vector2D(int, int);
         Vector2D() = default;
-        ~Vector2D();
+        ~Vector2D() = default;
 
         double x = 0;
         double y = 0;
