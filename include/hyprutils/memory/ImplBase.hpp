@@ -25,7 +25,7 @@ namespace Hyprutils {
             template <typename T>
             class impl : public impl_base {
               public:
-                impl(T* data, bool lock = true) noexcept : _data(data), _lockable(lock) {
+                impl(T* data, bool lock = true) noexcept : _lockable(lock), _data(data) {
                     ;
                 }
 
