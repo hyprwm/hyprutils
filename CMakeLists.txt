@@ -27,8 +27,7 @@ add_compile_options(
   -Wno-unused-value
   -Wno-missing-field-initializers
   -Wno-narrowing
-  -Wno-pointer-arith
-  -Wno-reorder)
+  -Wno-pointer-arith)
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 if(CMAKE_BUILD_TYPE MATCHES Debug OR CMAKE_BUILD_TYPE MATCHES DEBUG)
