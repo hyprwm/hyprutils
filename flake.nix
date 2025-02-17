@@ -18,28 +18,12 @@
         localSystem.system = system;
         overlays = with self.overlays; [hyprutils];
       });
-    mkDate = longDate: (lib.concatStringsSep "-" [
-      (builtins.substring 0 4 longDate)
-      (builtins.substring 4 2 longDate)
-      (builtins.substring 6 2 longDate)
-    ]);
-
-    version = lib.removeSuffix "\n" (builtins.readFile ./VERSION);
   in {
-    overlays = {
-      default = self.overlays.hyprutils;
-      hyprutils = final: prev: {
-        hyprutils = final.callPackage ./nix/default.nix {
-          stdenv = final.gcc15Stdenv;
-          version = version + "+date=" + (mkDate (self.lastModifiedDate or "19700101")) + "_" + (self.shortRev or "dirty");
-        };
-        hyprutils-with-tests = final.hyprutils.override {doCheck = true;};
-      };
-    };
+    overlays = import ./nix/overlays.nix {inherit self lib;};
 
     packages = eachSystem (system: {
       default = self.packages.${system}.hyprutils;
-      inherit (pkgsFor.${system}) hyprutils hyprutils-with-tests;
+      inherit (pkgsFor.${system}) hyprutils hyprutils-debug hyprutils-with-tests;
     });
 
     formatter = eachSystem (system: pkgsFor.${system}.alejandra);

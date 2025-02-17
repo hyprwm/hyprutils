@@ -11,6 +11,7 @@
 }: let
   inherit (builtins) foldl';
   inherit (lib.lists) flatten;
+  inherit (lib.strings) optionalString;
 
   adapters = flatten [
     stdenvAdapters.useMoldLinker
@@ -20,7 +21,7 @@
   customStdenv = foldl' (acc: adapter: adapter acc) stdenv adapters;
 in
   customStdenv.mkDerivation {
-    pname = "hyprutils";
+    pname = "hyprutils" + optionalString debug "-debug";
     inherit version doCheck;
     src = ../.;
 
