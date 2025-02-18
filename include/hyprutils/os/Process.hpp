@@ -24,8 +24,7 @@ namespace Hyprutils {
             const std::string& stdOut();
             const std::string& stdErr();
 
-            // only populated when ran async
-            const pid_t pid();
+            const pid_t        pid();
 
           private:
             std::string                                      binary, out, err;

@@ -72,6 +72,8 @@ bool Hyprutils::OS::CProcess::runSync() {
         out = "";
         err = "";
 
+        grandchildPid = pid;
+
         std::array<char, 1024> buf;
         buf.fill(0);
 
