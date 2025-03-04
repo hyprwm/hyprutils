@@ -16,6 +16,12 @@
 namespace Hyprutils {
     namespace Memory {
 
+        struct SForceReinterpret {
+            explicit SForceReinterpret() = default;
+        };
+
+        constexpr SForceReinterpret FORCE_REINTERPRET = SForceReinterpret();
+
         template <typename T>
         class CSharedPointer {
           public:
@@ -34,6 +40,12 @@ namespace Hyprutils {
             /* creates a shared pointer from a reference */
             template <typename U, typename = isConstructible<U>>
             CSharedPointer(const CSharedPointer<U>& ref) noexcept {
+                impl_ = ref.impl_;
+                increment();
+            }
+
+            template <typename U>
+            CSharedPointer(const CSharedPointer<U>& ref, SForceReinterpret) noexcept {
                 impl_ = ref.impl_;
                 increment();
             }
@@ -144,7 +156,7 @@ namespace Hyprutils {
             Impl_::impl_base* impl_ = nullptr;
 
           private:
-            /* 
+            /*
                 no-op if there is no impl_
                 may delete the stored object if ref == 0
                 may delete and reset impl_ if ref == 0 and weak == 0
@@ -167,7 +179,7 @@ namespace Hyprutils {
                 impl_->inc();
             }
 
-            /* destroy the pointed-to object 
+            /* destroy the pointed-to object
                if able, will also destroy impl */
             void destroyImpl() {
                 // destroy the impl contents
