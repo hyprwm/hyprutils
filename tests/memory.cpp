@@ -11,7 +11,7 @@ using namespace Hyprutils::Memory;
 
 int main(int argc, char** argv, char** envp) {
     SP<int> intPtr    = makeShared<int>(10);
-    SP<int> intPtr2   = makeShared<int>(1337);
+    SP<int> intPtr2   = makeShared<int>(-1337);
     UP<int> intUnique = makeUnique<int>(420);
 
     int     ret = 0;
@@ -51,6 +51,16 @@ int main(int argc, char** argv, char** envp) {
 
     EXPECT(weak.expired(), true);
     EXPECT(weakUnique.expired(), true);
+
+    auto intPtr2AsUint = reinterpretPointerCast<unsigned int>(intPtr2);
+    EXPECT(intPtr2.strongRef(), 4);
+    EXPECT(intPtr2AsUint.strongRef(), 4);
+
+    EXPECT(*intPtr2AsUint > 0, true);
+    EXPECT(*intPtr2AsUint, (unsigned int)(int)-1337);
+    *intPtr2AsUint = 10;
+    EXPECT(*intPtr2AsUint, 10);
+    EXPECT(*intPtr2, 10);
 
     return ret;
 }
