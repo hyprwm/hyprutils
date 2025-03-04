@@ -144,7 +144,7 @@ namespace Hyprutils {
             Impl_::impl_base* impl_ = nullptr;
 
           private:
-            /* 
+            /*
                 no-op if there is no impl_
                 may delete the stored object if ref == 0
                 may delete and reset impl_ if ref == 0 and weak == 0
@@ -167,7 +167,7 @@ namespace Hyprutils {
                 impl_->inc();
             }
 
-            /* destroy the pointed-to object 
+            /* destroy the pointed-to object
                if able, will also destroy impl */
             void destroyImpl() {
                 // destroy the impl contents
@@ -184,6 +184,11 @@ namespace Hyprutils {
         template <typename U, typename... Args>
         static CSharedPointer<U> makeShared(Args&&... args) {
             return CSharedPointer<U>(new U(std::forward<Args>(args)...));
+        }
+
+        template <typename T, typename U>
+        CSharedPointer<T> reinterpretPointerCast(const CSharedPointer<U>& ref) {
+            return CSharedPointer<T>(ref.impl_);
         }
     }
 }
