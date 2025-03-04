@@ -16,12 +16,6 @@
 namespace Hyprutils {
     namespace Memory {
 
-        struct SForceReinterpret {
-            explicit SForceReinterpret() = default;
-        };
-
-        constexpr SForceReinterpret FORCE_REINTERPRET = SForceReinterpret();
-
         template <typename T>
         class CSharedPointer {
           public:
@@ -40,12 +34,6 @@ namespace Hyprutils {
             /* creates a shared pointer from a reference */
             template <typename U, typename = isConstructible<U>>
             CSharedPointer(const CSharedPointer<U>& ref) noexcept {
-                impl_ = ref.impl_;
-                increment();
-            }
-
-            template <typename U>
-            CSharedPointer(const CSharedPointer<U>& ref, SForceReinterpret) noexcept {
                 impl_ = ref.impl_;
                 increment();
             }
@@ -196,6 +184,11 @@ namespace Hyprutils {
         template <typename U, typename... Args>
         static CSharedPointer<U> makeShared(Args&&... args) {
             return CSharedPointer<U>(new U(std::forward<Args>(args)...));
+        }
+
+        template <typename T, typename U>
+        CSharedPointer<T> reinterpretPointerCast(const CSharedPointer<U>& ref) {
+            return CSharedPointer<T>(ref.impl_);
         }
     }
 }
