@@ -5,6 +5,8 @@
 using namespace Hyprutils::Animation;
 using namespace Hyprutils::Memory;
 
+static const std::string DEFAULTBEZIERNAME = "default";
+
 #define SP CSharedPointer
 #define WP CWeakPointer
 
@@ -43,8 +45,6 @@ bool Hyprutils::Animation::CBaseAnimatedVariable::enabled() const {
 }
 
 const std::string& CBaseAnimatedVariable::getBezierName() const {
-    static constexpr const std::string DEFAULTBEZIERNAME = "default";
-
     if (const auto PCONFIG = m_pConfig.lock()) {
         const auto PVALUES = PCONFIG->pValues.lock();
         return PVALUES ? PVALUES->internalBezier : DEFAULTBEZIERNAME;
