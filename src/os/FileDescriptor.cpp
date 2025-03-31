@@ -55,7 +55,14 @@ CFileDescriptor CFileDescriptor::duplicate(int flags) const {
     if (m_fd == -1)
         return {};
 
-    return CFileDescriptor{fcntl(m_fd, flags, 0)};
+    int new_fd;
+#ifdef F_DUPFD_CLOEXEC
+    new_fd = fcntl(m_fd, flags, 0);
+#else
+    new_fd = fcntl(m_fd, flags | FD_CLOEXEC, 0);
+#endif
+
+    return CFileDescriptor{new_fd};
 }
 
 bool CFileDescriptor::isClosed() const {

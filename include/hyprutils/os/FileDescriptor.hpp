@@ -1,6 +1,11 @@
 #pragma once
 
 #include <fcntl.h>
+
+#ifndef F_DUPFD_CLOEXEC
+#define F_DUPFD_CLOEXEC F_DUPFD
+#endif
+
 namespace Hyprutils {
     namespace OS {
         class CFileDescriptor {
