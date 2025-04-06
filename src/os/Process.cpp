@@ -189,6 +189,11 @@ bool Hyprutils::OS::CProcess::runAsync() {
 
             argsC.emplace_back(nullptr);
 
+            if (stdoutFD != -1)
+                dup2(stdoutFD, 1);
+            if (stderrFD != -1)
+                dup2(stderrFD, 2);
+
             execvp(binary.c_str(), (char* const*)argsC.data());
             _exit(0);
         }
@@ -229,4 +234,12 @@ const std::string& Hyprutils::OS::CProcess::stdErr() {
 
 const pid_t Hyprutils::OS::CProcess::pid() {
     return grandchildPid;
+}
+
+void Hyprutils::OS::CProcess::setStdoutFD(int fd) {
+    stdoutFD = fd;
+}
+
+void Hyprutils::OS::CProcess::setStderrFD(int fd) {
+    stderrFD = fd;
 }

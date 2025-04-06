@@ -14,6 +14,11 @@ namespace Hyprutils {
 
             void addEnv(const std::string& name, const std::string& value);
 
+            // only for async, sync doesn't make sense
+            void setStdoutFD(int fd);
+            // only for async, sync doesn't make sense
+            void setStderrFD(int fd);
+
             /* Run the process, synchronously, get the stdout and stderr. False on fail */
             bool runSync();
 
@@ -31,6 +36,7 @@ namespace Hyprutils {
             std::vector<std::string>                         args;
             std::vector<std::pair<std::string, std::string>> env;
             pid_t                                            grandchildPid = 0;
+            int                                              stdoutFD = -1, stderrFD = -1;
         };
     }
 }
