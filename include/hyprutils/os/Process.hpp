@@ -11,6 +11,7 @@ namespace Hyprutils {
           public:
             /* Creates a process object, doesn't run yet */
             CProcess(const std::string& binary_, const std::vector<std::string>& args_);
+            ~CProcess();
 
             void addEnv(const std::string& name, const std::string& value);
 
@@ -29,14 +30,14 @@ namespace Hyprutils {
             const std::string& stdOut();
             const std::string& stdErr();
 
-            const pid_t        pid();
+            pid_t              pid();
+
+            // only for sync
+            int exitCode();
 
           private:
-            std::string                                      binary, out, err;
-            std::vector<std::string>                         args;
-            std::vector<std::pair<std::string, std::string>> env;
-            pid_t                                            grandchildPid = 0;
-            int                                              stdoutFD = -1, stderrFD = -1;
+            struct impl;
+            impl* m_impl;
         };
     }
 }

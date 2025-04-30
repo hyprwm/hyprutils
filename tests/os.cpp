@@ -18,6 +18,7 @@ int main(int argc, char** argv, char** envp) {
 
     EXPECT(process.stdOut(), std::string{"Hello World!\n"});
     EXPECT(process.stdErr(), std::string{""});
+    EXPECT(process.exitCode(), 0);
 
     CProcess process2("sh", {"-c", "while true; do sleep 1; done;"});
 
@@ -25,6 +26,10 @@ int main(int argc, char** argv, char** envp) {
     EXPECT(getpgid(process2.pid()) >= 0, true);
 
     kill(process2.pid(), SIGKILL);
+
+    CProcess process3("sh", {"-c", "cat /geryueruggbuergheruger/reugiheruygyuerghuryeghyer/eruihgyuerguyerghyuerghuyergerguyer/NON_EXISTENT"});
+    EXPECT(process3.runSync(), true);
+    EXPECT(process3.exitCode(), 1);
 
     return ret;
 }

@@ -12,12 +12,25 @@ using namespace Hyprutils::OS;
 #include <sys/wait.h>
 #include <sys/poll.h>
 
-Hyprutils::OS::CProcess::CProcess(const std::string& binary_, const std::vector<std::string>& args_) : binary(binary_), args(args_) {
-    ;
+struct Hyprutils::OS::CProcess::impl {
+    std::string                                      binary, out, err;
+    std::vector<std::string>                         args;
+    std::vector<std::pair<std::string, std::string>> env;
+    pid_t                                            grandchildPid = 0;
+    int                                              stdoutFD = -1, stderrFD = -1, exitCode = 0;
+};
+
+Hyprutils::OS::CProcess::CProcess(const std::string& binary, const std::vector<std::string>& args) : m_impl(new impl()) {
+    m_impl->binary = binary;
+    m_impl->args   = args;
+}
+
+Hyprutils::OS::CProcess::~CProcess() {
+    delete m_impl;
 }
 
 void Hyprutils::OS::CProcess::addEnv(const std::string& name, const std::string& value) {
-    env.emplace_back(std::make_pair<>(name, value));
+    m_impl->env.emplace_back(std::make_pair<>(name, value));
 }
 
 bool Hyprutils::OS::CProcess::runSync() {
@@ -49,8 +62,8 @@ bool Hyprutils::OS::CProcess::runSync() {
 
         // build argv
         std::vector<const char*> argsC;
-        argsC.emplace_back(strdup(binary.c_str()));
-        for (auto& arg : args) {
+        argsC.emplace_back(strdup(m_impl->binary.c_str()));
+        for (auto& arg : m_impl->args) {
             // TODO: does this leak? Can we just pipe c_str() as the strings won't be realloc'd?
             argsC.emplace_back(strdup(arg.c_str()));
         }
@@ -58,21 +71,21 @@ bool Hyprutils::OS::CProcess::runSync() {
         argsC.emplace_back(nullptr);
 
         // pass env
-        for (auto& [n, v] : env) {
+        for (auto& [n, v] : m_impl->env) {
             setenv(n.c_str(), v.c_str(), 1);
         }
 
-        execvp(binary.c_str(), (char* const*)argsC.data());
+        execvp(m_impl->binary.c_str(), (char* const*)argsC.data());
         exit(1);
     } else {
         // parent
         close(outPipe[1]);
         close(errPipe[1]);
 
-        out = "";
-        err = "";
+        m_impl->out = "";
+        m_impl->err = "";
 
-        grandchildPid = pid;
+        m_impl->grandchildPid = pid;
 
         std::array<char, 1024> buf;
         buf.fill(0);
@@ -116,7 +129,7 @@ bool Hyprutils::OS::CProcess::runSync() {
 
             if (pollfds[0].revents & POLLIN) {
                 while ((ret = read(outPipe[0], buf.data(), 1023)) > 0) {
-                    out += std::string_view{(char*)buf.data(), (size_t)ret};
+                    m_impl->out += std::string_view{(char*)buf.data(), (size_t)ret};
                 }
 
                 buf.fill(0);
@@ -124,7 +137,7 @@ bool Hyprutils::OS::CProcess::runSync() {
 
             if (pollfds[1].revents & POLLIN) {
                 while ((ret = read(errPipe[0], buf.data(), 1023)) > 0) {
-                    err += std::string_view{(char*)buf.data(), (size_t)ret};
+                    m_impl->err += std::string_view{(char*)buf.data(), (size_t)ret};
                 }
 
                 buf.fill(0);
@@ -133,13 +146,13 @@ bool Hyprutils::OS::CProcess::runSync() {
 
         // Final reads. Nonblock, so its ok.
         while ((ret = read(outPipe[0], buf.data(), 1023)) > 0) {
-            out += std::string_view{(char*)buf.data(), (size_t)ret};
+            m_impl->out += std::string_view{(char*)buf.data(), (size_t)ret};
         }
 
         buf.fill(0);
 
         while ((ret = read(errPipe[0], buf.data(), 1023)) > 0) {
-            err += std::string_view{(char*)buf.data(), (size_t)ret};
+            m_impl->err += std::string_view{(char*)buf.data(), (size_t)ret};
         }
 
         buf.fill(0);
@@ -148,7 +161,11 @@ bool Hyprutils::OS::CProcess::runSync() {
         close(errPipe[0]);
 
         // reap child
-        waitpid(pid, nullptr, 0);
+        int status = 0;
+        waitpid(pid, &status, 0);
+
+        if (WIFEXITED(status))
+            m_impl->exitCode = WEXITSTATUS(status);
 
         return true;
     }
@@ -182,19 +199,19 @@ bool Hyprutils::OS::CProcess::runAsync() {
             close(socket[1]);
             // build argv
             std::vector<const char*> argsC;
-            argsC.emplace_back(strdup(binary.c_str()));
-            for (auto& arg : args) {
+            argsC.emplace_back(strdup(m_impl->binary.c_str()));
+            for (auto& arg : m_impl->args) {
                 argsC.emplace_back(strdup(arg.c_str()));
             }
 
             argsC.emplace_back(nullptr);
 
-            if (stdoutFD != -1)
-                dup2(stdoutFD, 1);
-            if (stderrFD != -1)
-                dup2(stderrFD, 2);
+            if (m_impl->stdoutFD != -1)
+                dup2(m_impl->stdoutFD, 1);
+            if (m_impl->stderrFD != -1)
+                dup2(m_impl->stderrFD, 2);
 
-            execvp(binary.c_str(), (char* const*)argsC.data());
+            execvp(m_impl->binary.c_str(), (char* const*)argsC.data());
             _exit(0);
         }
         close(socket[0]);
@@ -219,27 +236,31 @@ bool Hyprutils::OS::CProcess::runAsync() {
     // clear child and leave grandchild to init
     waitpid(child, nullptr, 0);
 
-    grandchildPid = grandchild;
+    m_impl->grandchildPid = grandchild;
 
     return true;
 }
 
 const std::string& Hyprutils::OS::CProcess::stdOut() {
-    return out;
+    return m_impl->out;
 }
 
 const std::string& Hyprutils::OS::CProcess::stdErr() {
-    return err;
+    return m_impl->err;
 }
 
-const pid_t Hyprutils::OS::CProcess::pid() {
-    return grandchildPid;
+pid_t Hyprutils::OS::CProcess::pid() {
+    return m_impl->grandchildPid;
+}
+
+int Hyprutils::OS::CProcess::exitCode() {
+    return m_impl->exitCode;
 }
 
 void Hyprutils::OS::CProcess::setStdoutFD(int fd) {
-    stdoutFD = fd;
+    m_impl->stdoutFD = fd;
 }
 
 void Hyprutils::OS::CProcess::setStderrFD(int fd) {
-    stderrFD = fd;
+    m_impl->stderrFD = fd;
 }
