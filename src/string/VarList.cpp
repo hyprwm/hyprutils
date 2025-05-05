@@ -6,23 +6,49 @@
 using namespace Hyprutils::String;
 
 Hyprutils::String::CVarList::CVarList(const std::string& in, const size_t lastArgNo, const char delim, const bool removeEmpty) {
-    if (!removeEmpty && in.empty())
+    if (!removeEmpty && in.empty()) {
         m_vArgs.emplace_back("");
+        return;
+    }
 
-    std::string args{in};
-    size_t      idx = 0;
-    size_t      pos = 0;
-    std::ranges::replace_if(args, [&](const char& c) { return delim == 's' ? std::isspace(c) : c == delim; }, 0);
+    std::string currentArg;
+    bool        escaped = false;
+    size_t      idx     = 0;
 
-    for (const auto& s : args | std::views::split(0)) {
-        if (removeEmpty && s.empty())
+    for (size_t i = 0; i < in.length(); ++i) {
+        char c = in[i];
+
+        // Handle escape character
+        if (c == '\\' && !escaped) {
+            escaped = true;
             continue;
-        if (++idx == lastArgNo) {
-            m_vArgs.emplace_back(trim(in.substr(pos)));
-            break;
         }
-        pos += s.size() + 1;
-        m_vArgs.emplace_back(trim(s.data()));
+
+        // Check if we've hit a delimiter that's not escaped
+        bool isDelim = (delim == 's' ? std::isspace(c) : c == delim) && !escaped;
+
+        if (isDelim) {
+            if (!removeEmpty || !currentArg.empty()) {
+                m_vArgs.emplace_back(trim(currentArg));
+                currentArg.clear();
+                idx++;
+            }
+
+            // If this is the last argument we want to parse separately
+            if (idx == lastArgNo - 1) {
+                m_vArgs.emplace_back(trim(in.substr(i + 1)));
+                return;
+            }
+        } else {
+            currentArg += c;
+        }
+
+        escaped = false;
+    }
+
+    // Add the last argument if there is one
+    if (!removeEmpty || !currentArg.empty()) {
+        m_vArgs.emplace_back(trim(currentArg));
     }
 }
 

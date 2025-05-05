@@ -38,6 +38,10 @@ int main(int argc, char** argv, char** envp) {
     EXPECT(list[0], "hello");
     EXPECT(list[1], "world!");
 
+    CVarList list2("test:test\\:test", 0, ':', true);
+    EXPECT(list2[0], "test");
+    EXPECT(list2[1], "test:test");
+
     std::string hello = "hello world!";
     replaceInString(hello, "hello", "hi");
     EXPECT(hello, "hi world!");
