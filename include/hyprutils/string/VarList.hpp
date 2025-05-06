@@ -8,11 +8,13 @@ namespace Hyprutils {
         class CVarList {
           public:
             /** Split string into arg list
-                @param lastArgNo stop splitting after argv reaches maximum size, last arg will contain rest of unsplit args
-                @param delim if delimiter is 's', use std::isspace
-                @param removeEmpty remove empty args from argv
+                * @param in The string to split
+                * @param lastArgNo The number of arguments to split into
+                * @param delim The delimiter to use for splitting
+                * @param removeEmpty Whether to remove empty arguments
+                * @param handleEscape Whether to handle escape characters
             */
-            CVarList(const std::string& in, const size_t lastArgNo = 0, const char delim = ',', const bool removeEmpty = false);
+            CVarList(const std::string& in, const size_t lastArgNo = 0, const char delim = ',', const bool removeEmpty = false, const bool handleEscape = false);
 
             ~CVarList() = default;
 

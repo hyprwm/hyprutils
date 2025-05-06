@@ -5,7 +5,7 @@
 
 using namespace Hyprutils::String;
 
-Hyprutils::String::CVarList::CVarList(const std::string& in, const size_t lastArgNo, const char delim, const bool removeEmpty) {
+Hyprutils::String::CVarList::CVarList(const std::string& in, const size_t lastArgNo, const char delim, const bool removeEmpty, const bool handleEscape) {
     if (!removeEmpty && in.empty()) {
         m_vArgs.emplace_back("");
         return;
@@ -18,14 +18,14 @@ Hyprutils::String::CVarList::CVarList(const std::string& in, const size_t lastAr
     for (size_t i = 0; i < in.length(); ++i) {
         char c = in[i];
 
-        // Handle escape character
-        if (c == '\\' && !escaped) {
+        // Handle escape character if enabled
+        if (handleEscape && c == '\\' && !escaped) {
             escaped = true;
             continue;
         }
 
-        // Check if we've hit a delimiter that's not escaped
-        bool isDelim = (delim == 's' ? std::isspace(c) : c == delim) && !escaped;
+        // Determine if this char is a delimiter (respect escape setting)
+        bool isDelim = (delim == 's' ? std::isspace(c) : c == delim) && !(handleEscape && escaped);
 
         if (isDelim) {
             if (!removeEmpty || !currentArg.empty()) {
@@ -34,7 +34,6 @@ Hyprutils::String::CVarList::CVarList(const std::string& in, const size_t lastAr
                 idx++;
             }
 
-            // If this is the last argument we want to parse separately
             if (idx == lastArgNo - 1) {
                 m_vArgs.emplace_back(trim(in.substr(i + 1)));
                 return;
@@ -43,10 +42,10 @@ Hyprutils::String::CVarList::CVarList(const std::string& in, const size_t lastAr
             currentArg += c;
         }
 
-        escaped = false;
+        if (handleEscape)
+            escaped = false;
     }
 
-    // Add the last argument if there is one
     if (!removeEmpty || !currentArg.empty()) {
         m_vArgs.emplace_back(trim(currentArg));
     }
