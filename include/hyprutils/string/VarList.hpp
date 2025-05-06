@@ -12,9 +12,17 @@ namespace Hyprutils {
                 * @param lastArgNo The number of arguments to split into
                 * @param delim The delimiter to use for splitting
                 * @param removeEmpty Whether to remove empty arguments
+            */
+            CVarList(const std::string& in, const size_t lastArgNo = 0, const char delim = ',', const bool removeEmpty = false);
+
+            /** Split string into arg list with escape handling
+                * @param in The string to split
+                * @param lastArgNo The number of arguments to split into
+                * @param delim The delimiter to use for splitting
+                * @param removeEmpty Whether to remove empty arguments
                 * @param handleEscape Whether to handle escape characters
             */
-            CVarList(const std::string& in, const size_t lastArgNo = 0, const char delim = ',', const bool removeEmpty = false, const bool handleEscape = false);
+            CVarList(const std::string& in, const size_t lastArgNo, const char delim, const bool removeEmpty, const bool handleEscape);
 
             ~CVarList() = default;
 

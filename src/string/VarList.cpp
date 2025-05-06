@@ -5,6 +5,11 @@
 
 using namespace Hyprutils::String;
 
+// Original constructor calls the extended one with handleEscape = false
+Hyprutils::String::CVarList::CVarList(const std::string& in, const size_t lastArgNo, const char delim, const bool removeEmpty) :
+    CVarList(in, lastArgNo, delim, removeEmpty, false) {}
+
+// Extended constructor with escape handling parameter
 Hyprutils::String::CVarList::CVarList(const std::string& in, const size_t lastArgNo, const char delim, const bool removeEmpty, const bool handleEscape) {
     if (!removeEmpty && in.empty()) {
         m_vArgs.emplace_back("");
