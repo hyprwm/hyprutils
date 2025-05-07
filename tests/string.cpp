@@ -1,5 +1,6 @@
 #include <hyprutils/string/String.hpp>
 #include <hyprutils/string/VarList.hpp>
+#include <hyprutils/string/ConstVarList.hpp>
 #include "shared.hpp"
 
 using namespace Hyprutils::String;
@@ -37,6 +38,10 @@ int main(int argc, char** argv, char** envp) {
     CVarList list("hello    world!", 0, 's', true);
     EXPECT(list[0], "hello");
     EXPECT(list[1], "world!");
+
+    CConstVarList listConst("hello    world!", 0, 's', true);
+    EXPECT(listConst[0], "hello");
+    EXPECT(listConst[1], "world!");
 
     std::string hello = "hello world!";
     replaceInString(hello, "hello", "hi");
