@@ -21,16 +21,17 @@ Hyprutils::String::CVarList::CVarList(const std::string& in, const size_t lastAr
     size_t      idx     = 0;
 
     for (size_t i = 0; i < in.length(); ++i) {
-        char c = in[i];
 
         // Handle escape character if enabled
-        if (handleEscape && c == '\\' && !escaped) {
+        if (handleEscape && in[i] == '\\') {
             escaped = true;
-            continue;
+            i++;
         }
 
+        char c = in[i];
+
         // Determine if this char is a delimiter (respect escape setting)
-        bool isDelim = (delim == 's' ? std::isspace(c) : c == delim) && !(handleEscape && escaped);
+        const bool isDelim = (delim == 's' ? std::isspace(c) : c == delim) && !(handleEscape && escaped);
 
         if (isDelim) {
             if (!removeEmpty || !currentArg.empty()) {
@@ -43,17 +44,15 @@ Hyprutils::String::CVarList::CVarList(const std::string& in, const size_t lastAr
                 m_vArgs.emplace_back(trim(in.substr(i + 1)));
                 return;
             }
-        } else {
+        } else
             currentArg += c;
-        }
 
         if (handleEscape)
             escaped = false;
     }
 
-    if (!removeEmpty || !currentArg.empty()) {
+    if (!removeEmpty || !currentArg.empty())
         m_vArgs.emplace_back(trim(currentArg));
-    }
 }
 
 std::string Hyprutils::String::CVarList::join(const std::string& joiner, size_t from, size_t to) const {
