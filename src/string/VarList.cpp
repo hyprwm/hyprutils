@@ -16,43 +16,54 @@ Hyprutils::String::CVarList::CVarList(const std::string& in, const size_t lastAr
         return;
     }
 
-    std::string currentArg;
-    bool        escaped = false;
-    size_t      idx     = 0;
+    std::vector<std::pair<size_t, size_t>> argIndices;
+    size_t                                 currentStart = 0;
+    size_t                                 idx          = 0;
 
     for (size_t i = 0; i < in.length(); ++i) {
-
-        // Handle escape character if enabled
-        if (handleEscape && in[i] == '\\') {
-            escaped = true;
+        if (handleEscape && in[i] == '\\' && i + 1 < in.length()) {
             i++;
+            continue;
         }
 
-        char c = in[i];
-
-        // Determine if this char is a delimiter (respect escape setting)
-        const bool isDelim = (delim == 's' ? std::isspace(c) : c == delim) && !(handleEscape && escaped);
+        const char c       = in[i];
+        const bool isDelim = (delim == 's' ? std::isspace(c) : c == delim);
 
         if (isDelim) {
-            if (!removeEmpty || !currentArg.empty()) {
-                m_vArgs.emplace_back(trim(currentArg));
-                currentArg.clear();
+            if (!removeEmpty || i > currentStart) {
+                argIndices.emplace_back(currentStart, i);
                 idx++;
             }
 
-            if (idx == lastArgNo - 1) {
-                m_vArgs.emplace_back(trim(in.substr(i + 1)));
-                return;
-            }
-        } else
-            currentArg += c;
+            currentStart = i + 1;
 
-        if (handleEscape)
-            escaped = false;
+            if (idx == lastArgNo - 1) {
+                argIndices.emplace_back(i + 1, in.length());
+                break;
+            }
+        }
     }
 
-    if (!removeEmpty || !currentArg.empty())
-        m_vArgs.emplace_back(trim(currentArg));
+    if (currentStart < in.length() && (!removeEmpty || currentStart < in.length())) {
+        argIndices.emplace_back(currentStart, in.length());
+    }
+
+    m_vArgs.reserve(argIndices.size());
+    for (const auto& [start, end] : argIndices) {
+        if (handleEscape) {
+            std::string unescaped;
+            for (size_t i = start; i < end; ++i) {
+                if (in[i] == '\\' && i + 1 < end) {
+                    unescaped += in[++i]; // Add the character being escaped
+                } else {
+                    unescaped += in[i];
+                }
+            }
+            m_vArgs.emplace_back(trim(unescaped));
+        } else {
+            m_vArgs.emplace_back(trim(in.substr(start, end - start)));
+        }
+    }
 }
 
 std::string Hyprutils::String::CVarList::join(const std::string& joiner, size_t from, size_t to) const {
