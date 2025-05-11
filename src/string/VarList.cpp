@@ -44,25 +44,17 @@ Hyprutils::String::CVarList::CVarList(const std::string& in, const size_t lastAr
         }
     }
 
-    if (currentStart < in.length() && (!removeEmpty || currentStart < in.length())) {
+    if (currentStart < in.length() && (!removeEmpty || currentStart < in.length()))
         argIndices.emplace_back(currentStart, in.length());
-    }
 
     m_vArgs.reserve(argIndices.size());
     for (const auto& [start, end] : argIndices) {
         if (handleEscape) {
-            std::string unescaped;
-            for (size_t i = start; i < end; ++i) {
-                if (in[i] == '\\' && i + 1 < end) {
-                    unescaped += in[++i]; // Add the character being escaped
-                } else {
-                    unescaped += in[i];
-                }
-            }
-            m_vArgs.emplace_back(trim(unescaped));
-        } else {
+            std::string segment = in.substr(start, end - start);
+            replaceInString(segment, "\\", "");
+            m_vArgs.emplace_back(trim(segment));
+        } else
             m_vArgs.emplace_back(trim(in.substr(start, end - start)));
-        }
     }
 }
 
