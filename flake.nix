@@ -30,7 +30,7 @@
       default = self.overlays.hyprutils;
       hyprutils = final: prev: {
         hyprutils = final.callPackage ./nix/default.nix {
-          stdenv = final.gcc14Stdenv;
+          stdenv = final.gcc15Stdenv;
           version = version + "+date=" + (mkDate (self.lastModifiedDate or "19700101")) + "_" + (self.shortRev or "dirty");
         };
         hyprutils-with-tests = final.hyprutils.override {doCheck = true;};
