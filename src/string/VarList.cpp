@@ -5,24 +5,56 @@
 
 using namespace Hyprutils::String;
 
-Hyprutils::String::CVarList::CVarList(const std::string& in, const size_t lastArgNo, const char delim, const bool removeEmpty) {
-    if (!removeEmpty && in.empty())
+// Original constructor calls the extended one with handleEscape = false
+Hyprutils::String::CVarList::CVarList(const std::string& in, const size_t lastArgNo, const char delim, const bool removeEmpty) :
+    CVarList(in, lastArgNo, delim, removeEmpty, false) {}
+
+// Extended constructor with escape handling parameter
+Hyprutils::String::CVarList::CVarList(const std::string& in, const size_t lastArgNo, const char delim, const bool removeEmpty, const bool handleEscape) {
+    if (!removeEmpty && in.empty()) {
         m_vArgs.emplace_back("");
+        return;
+    }
 
-    std::string args{in};
-    size_t      idx = 0;
-    size_t      pos = 0;
-    std::ranges::replace_if(args, [&](const char& c) { return delim == 's' ? std::isspace(c) : c == delim; }, 0);
+    std::vector<std::pair<size_t, size_t>> argIndices;
+    size_t                                 currentStart = 0;
+    size_t                                 idx          = 0;
 
-    for (const auto& s : args | std::views::split(0)) {
-        if (removeEmpty && s.empty())
+    for (size_t i = 0; i < in.length(); ++i) {
+        if (handleEscape && in[i] == '\\' && i + 1 < in.length()) {
+            i++;
             continue;
-        if (++idx == lastArgNo) {
-            m_vArgs.emplace_back(trim(in.substr(pos)));
-            break;
         }
-        pos += s.size() + 1;
-        m_vArgs.emplace_back(trim(s.data()));
+
+        const char c       = in[i];
+        const bool isDelim = (delim == 's' ? std::isspace(c) : c == delim);
+
+        if (isDelim) {
+            if (!removeEmpty || i > currentStart) {
+                argIndices.emplace_back(currentStart, i);
+                idx++;
+            }
+
+            currentStart = i + 1;
+
+            if (idx == lastArgNo - 1) {
+                argIndices.emplace_back(i + 1, in.length());
+                break;
+            }
+        }
+    }
+
+    if (currentStart < in.length() && (!removeEmpty || currentStart < in.length()))
+        argIndices.emplace_back(currentStart, in.length());
+
+    m_vArgs.reserve(argIndices.size());
+    for (const auto& [start, end] : argIndices) {
+        if (handleEscape) {
+            std::string segment = in.substr(start, end - start);
+            replaceInString(segment, "\\", "");
+            m_vArgs.emplace_back(trim(segment));
+        } else
+            m_vArgs.emplace_back(trim(in.substr(start, end - start)));
     }
 }
 
