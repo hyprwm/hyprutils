@@ -13,7 +13,14 @@ namespace Hyprutils {
             CProcess(const std::string& binary_, const std::vector<std::string>& args_);
             ~CProcess();
 
-            void addEnv(const std::string& name, const std::string& value);
+            CProcess(CProcess&)                  = delete;
+            CProcess(CProcess&&)                 = delete;
+            CProcess(const CProcess&&)           = delete;
+            CProcess(const CProcess&)            = delete;
+            CProcess& operator=(const CProcess&) = delete;
+            CProcess& operator=(CProcess&&)      = delete;
+
+            void      addEnv(const std::string& name, const std::string& value);
 
             // only for async, sync doesn't make sense
             void setStdoutFD(int fd);
