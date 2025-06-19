@@ -34,6 +34,7 @@
 build/
 .vscode/
 .cache/
+.direnv/
 
 .cmake/
 CMakeCache.txt
@@ -44,3 +45,4 @@ Makefile
 cmake_install.cmake
 compile_commands.json
 hyprutils.pc
+.envrc

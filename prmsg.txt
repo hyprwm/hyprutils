@@ -1,0 +1,17 @@
+
+This PR was motivated by https://github.com/hyprwm/hyprlock/pull/799.
+
+It's goal is to get a thread-safe smart pointer implementation into Hyprutils.
+
+Vaxry suggested the following:
+> No. Instead, make hyprutils pointers thread safe. Wrap a shared ptr into an ARC (just dont name it that cuz rust cring) and make it thread safe with a simple std::mutex
+
+I first tried to wrap a shared pointer. I have an implementation with a global mutex where that works ok, but it really wasn't ideal and a bit messy. I also never figured out how to not make it a recursive_mutex in that case.
+
+I experimented with different ways of wrapping the shared pointer, but i wasn't able to come up with a decent implementation.
+Then I decided to try to rework the interface to the control block slightly, such that thread safety could be achieved by using a different implementation for the controlblock.
+I liked that idea, because it would allow to share the interface for shared and weak pointers for default ones and thread-safe ones.
+
+First I experimented with atomic counters, but I ditched that and just added a std::mutex to the thread-safe control block implementation.
+
+

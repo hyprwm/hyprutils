@@ -5,14 +5,23 @@
 namespace Hyprutils {
     namespace Memory {
         namespace Impl_ {
+            // Control block implementation interface for hyprutils smart pointers.
             class impl_base {
               public:
-                virtual ~impl_base() {};
+                virtual ~impl_base() = default;
 
-                virtual void         inc() noexcept         = 0;
-                virtual void         dec() noexcept         = 0;
-                virtual void         incWeak() noexcept     = 0;
-                virtual void         decWeak() noexcept     = 0;
+                // If inc returns false, remove the pointer to this impl (but don't delete).
+                virtual bool inc() = 0;
+                // If dec returns true, the callee owned the last reference (strong and weak).
+                // Thus the impl must be deleted and any reference to it must be invalidated.
+                virtual bool dec() = 0;
+
+                // If incWeak returns false, remove the pointer to this impl (but don't delete).
+                virtual bool incWeak() = 0;
+                // If dec returns true, there is no strong ref and the callee owned the last weak reference.
+                // Thus the impl must be deleted and any reference to it must be invalidated.
+                virtual bool         decWeak() = 0;
+
                 virtual unsigned int ref() noexcept         = 0;
                 virtual unsigned int wref() noexcept        = 0;
                 virtual void         destroy() noexcept     = 0;
@@ -29,8 +38,11 @@ namespace Hyprutils {
                     ;
                 }
 
+                impl(const impl&) = delete;
+                impl(impl&&)      = delete;
+
                 /* strong refcount */
-                unsigned int _ref = 0;
+                unsigned int _ref = 1;
                 /* weak refcount */
                 unsigned int _weak = 0;
                 /* if this is lockable (shared) */
@@ -38,7 +50,7 @@ namespace Hyprutils {
 
                 T*          _data = nullptr;
 
-                friend void swap(impl*& a, impl*& b) {
+                friend void swap(impl*& a, impl*& b) noexcept {
                     impl* tmp = a;
                     a         = b;
                     b         = tmp;
@@ -65,20 +77,43 @@ namespace Hyprutils {
                 std::default_delete<T> __deleter{};
 
                 //
-                virtual void inc() noexcept {
+                virtual bool inc() {
+                    if (_ref == 0)
+                        return false;
+
                     _ref++;
+                    return true;
                 }
 
-                virtual void dec() noexcept {
+                virtual bool dec() {
                     _ref--;
+
+                    if (_ref == 0) {
+                        // if ref == 0, we can destroy impl
+                        destroy();
+                        // if weak == 0, we tell the actual impl to delete this
+                        return _weak == 0;
+                    }
+
+                    return false;
                 }
 
-                virtual void incWeak() noexcept {
+                virtual bool incWeak() {
+                    if (_ref == 0)
+                        return false;
+
                     _weak++;
+                    return true;
                 }
 
-                virtual void decWeak() noexcept {
+                virtual bool decWeak() {
                     _weak--;
+
+                    // we need to check for _destroying,
+                    // because otherwise we could destroy here
+                    // and have a shared_ptr destroy the same thing
+                    // later (in situations where we have a weak_ptr to self)
+                    return _ref == 0 && _weak == 0 && !_destroying;
                 }
 
                 virtual unsigned int ref() noexcept {
@@ -110,7 +145,7 @@ namespace Hyprutils {
                 }
 
                 virtual ~impl() {
-                    destroy();
+                    _destroy();
                 }
             };
         }

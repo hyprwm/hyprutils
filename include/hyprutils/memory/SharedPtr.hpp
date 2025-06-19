@@ -2,16 +2,19 @@
 #include <cstdint>
 
 #include "ImplBase.hpp"
+#include "ImplAtomic.hpp"
 
 /*
     This is a custom impl of std::shared_ptr.
-    It is not thread-safe like the STL one,
-    but Hyprland is single-threaded anyways.
 
     It differs a bit from how the STL one works,
     namely in the fact that it keeps the T* inside the
     control block, and that you can still make a CWeakPtr
     or deref an existing one inside the destructor.
+
+    Hyprutils comes with two different control block implementations.
+    The default one you get via makeShared is not thread-safe like STL shared pointers.
+    Use makeAtomicShared get a SharedPointer using a thread-safe control block.
 */
 
 namespace Hyprutils {
@@ -27,20 +30,15 @@ namespace Hyprutils {
 
             /* creates a new shared pointer managing a resource
                avoid calling. Could duplicate ownership. Prefer makeShared */
-            explicit CSharedPointer(T* object) noexcept {
-                impl_ = new Impl_::impl<T>(object);
-                increment();
-            }
+            explicit CSharedPointer(T* object) noexcept : impl_(new Impl_::impl<T>(object)) {}
 
             /* creates a shared pointer from a reference */
             template <typename U, typename = isConstructible<U>>
-            CSharedPointer(const CSharedPointer<U>& ref) noexcept {
-                impl_ = ref.impl_;
+            CSharedPointer(const CSharedPointer<U>& ref) noexcept : impl_(ref.impl_) {
                 increment();
             }
 
-            CSharedPointer(const CSharedPointer& ref) noexcept {
-                impl_ = ref.impl_;
+            CSharedPointer(const CSharedPointer& ref) noexcept : impl_(ref.impl_) {
                 increment();
             }
 
@@ -53,11 +51,8 @@ namespace Hyprutils {
                 std::swap(impl_, ref.impl_);
             }
 
-            /* allows weakPointer to create from an impl */
-            CSharedPointer(Impl_::impl_base* implementation) noexcept {
-                impl_ = implementation;
-                increment();
-            }
+            /* allows weakPointer to create from an impl; impl_->inc() must be called before using it*/
+            explicit CSharedPointer(Impl_::impl_base* implementation) noexcept : impl_(implementation) {}
 
             /* creates an empty shared pointer with no implementation */
             CSharedPointer() noexcept {
@@ -154,31 +149,18 @@ namespace Hyprutils {
                 if (!impl_)
                     return;
 
-                impl_->dec();
-
-                // if ref == 0, we can destroy impl
-                if (impl_->ref() == 0)
-                    destroyImpl();
+                if (impl_->dec()) {
+                    delete impl_;
+                    impl_ = nullptr;
+                }
             }
             /* no-op if there is no impl_ */
             void increment() {
                 if (!impl_)
                     return;
 
-                impl_->inc();
-            }
-
-            /* destroy the pointed-to object
-               if able, will also destroy impl */
-            void destroyImpl() {
-                // destroy the impl contents
-                impl_->destroy();
-
-                // check for weak refs, if zero, we can also delete impl_
-                if (impl_->wref() == 0) {
-                    delete impl_;
+                if (!impl_->inc())
                     impl_ = nullptr;
-                }
             }
         };
 
@@ -187,8 +169,17 @@ namespace Hyprutils {
             return CSharedPointer<U>(new U(std::forward<Args>(args)...));
         }
 
+        // Use instead of makeShared if thread-safe refcounting is desired.
+        template <typename U, typename... Args>
+        static CSharedPointer<U> makeAtomicShared(Args&&... args) {
+            return CSharedPointer<U>(new Impl_::CAtomicImpl<U>(new U(std::forward<Args>(args)...)));
+        }
+
         template <typename T, typename U>
         CSharedPointer<T> reinterpretPointerCast(const CSharedPointer<U>& ref) {
+            if (!ref.impl_->inc())
+                return {};
+
             return CSharedPointer<T>(ref.impl_);
         }
     }

@@ -1,6 +1,10 @@
-#include <hyprutils/memory/WeakPtr.hpp>
 #include <hyprutils/memory/UniquePtr.hpp>
+#include <hyprutils/memory/SharedPtr.hpp>
+#include <hyprutils/memory/WeakPtr.hpp>
 #include "shared.hpp"
+#include <chrono>
+#include <print>
+#include <thread>
 #include <vector>
 
 using namespace Hyprutils::Memory;
@@ -8,6 +12,75 @@ using namespace Hyprutils::Memory;
 #define SP CSharedPointer
 #define WP CWeakPointer
 #define UP CUniquePointer
+
+#define NTHREADS   8
+#define ITERATIONS 10000
+
+static int testAtomicity() {
+    int ret = 0;
+
+    {
+        // Using makeShared here could lead to invalid refcounts.
+        SP<int>                  shared = makeAtomicShared<int>(0);
+        std::vector<std::thread> threads;
+
+        threads.reserve(NTHREADS);
+        for (size_t i = 0; i < NTHREADS; i++) {
+            threads.emplace_back([shared]() {
+                for (size_t j = 0; j < ITERATIONS; j++) {
+                    SP<int> strongRef = shared;
+                    (*shared)++;
+                    strongRef.reset();
+                }
+            });
+        }
+
+        for (auto& thread : threads) {
+            thread.join();
+        }
+
+        // Actual count is not incremented in a thread-safe manner here, so we can't check it.
+        // We just want to check that the concurent refcounting doesn't cause any memory corruption.
+        shared.reset();
+        EXPECT(shared, false);
+    }
+
+    {
+        SP<int>                  shared = makeAtomicShared<int>(0);
+        WP<int>                  ref    = shared;
+        std::vector<std::thread> threads;
+
+        threads.reserve(NTHREADS);
+        for (size_t i = 0; i < NTHREADS; i++) {
+            threads.emplace_back([ref]() {
+                for (size_t j = 0; j < ITERATIONS; j++) {
+                    if (auto s = ref.lock(); s) {
+                        (*s)++;
+                    }
+                }
+            });
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        shared.reset();
+
+        for (auto& thread : threads) {
+            thread.join();
+        }
+
+        EXPECT(shared.strongRef(), 0);
+        EXPECT(ref.valid(), false);
+
+        auto shared2 = ref.lock();
+        EXPECT(shared, false);
+        EXPECT(shared2.get(), nullptr);
+        EXPECT(shared.strongRef(), 0);
+        EXPECT(ref.valid(), false);
+        EXPECT(ref.expired(), true);
+    }
+
+    return ret;
+}
 
 int main(int argc, char** argv, char** envp) {
     SP<int> intPtr    = makeShared<int>(10);
@@ -61,6 +134,8 @@ int main(int argc, char** argv, char** envp) {
     *intPtr2AsUint = 10;
     EXPECT(*intPtr2AsUint, 10);
     EXPECT(*intPtr2, 10);
+
+    EXPECT(testAtomicity(), 0);
 
     return ret;
 }

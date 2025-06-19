@@ -21,39 +21,23 @@ namespace Hyprutils {
 
             /* create a weak ptr from a reference */
             template <typename U, typename = isConstructible<U>>
-            CWeakPointer(const CSharedPointer<U>& ref) noexcept {
-                if (!ref.impl_)
-                    return;
-
-                impl_ = ref.impl_;
+            CWeakPointer(const CSharedPointer<U>& ref) noexcept : impl_(ref.impl_) {
                 incrementWeak();
             }
 
             /* create a weak ptr from a reference */
             template <typename U, typename = isConstructible<U>>
-            CWeakPointer(const CUniquePointer<U>& ref) noexcept {
-                if (!ref.impl_)
-                    return;
-
-                impl_ = ref.impl_;
+            CWeakPointer(const CUniquePointer<U>& ref) noexcept : impl_(ref.impl_) {
                 incrementWeak();
             }
 
             /* create a weak ptr from another weak ptr */
             template <typename U, typename = isConstructible<U>>
-            CWeakPointer(const CWeakPointer<U>& ref) noexcept {
-                if (!ref.impl_)
-                    return;
-
-                impl_ = ref.impl_;
+            CWeakPointer(const CWeakPointer<U>& ref) noexcept : impl_(ref.impl_) {
                 incrementWeak();
             }
 
-            CWeakPointer(const CWeakPointer& ref) noexcept {
-                if (!ref.impl_)
-                    return;
-
-                impl_ = ref.impl_;
+            CWeakPointer(const CWeakPointer& ref) noexcept : impl_(ref.impl_) {
                 incrementWeak();
             }
 
@@ -130,7 +114,10 @@ namespace Hyprutils {
             }
 
             CSharedPointer<T> lock() const {
-                if (!impl_ || !impl_->dataNonNull() || impl_->destroying() || !impl_->lockable())
+                if (!impl_ || !impl_->lockable())
+                    return {};
+
+                if (!impl_->inc())
                     return {};
 
                 return CSharedPointer<T>(impl_);
@@ -189,13 +176,7 @@ namespace Hyprutils {
                 if (!impl_)
                     return;
 
-                impl_->decWeak();
-
-                // we need to check for ->destroying,
-                // because otherwise we could destroy here
-                // and have a shared_ptr destroy the same thing
-                // later (in situations where we have a weak_ptr to self)
-                if (impl_->wref() == 0 && impl_->ref() == 0 && !impl_->destroying()) {
+                if (impl_->decWeak()) {
                     delete impl_;
                     impl_ = nullptr;
                 }
@@ -205,7 +186,8 @@ namespace Hyprutils {
                 if (!impl_)
                     return;
 
-                impl_->incWeak();
+                if (!impl_->incWeak())
+                    impl_ = nullptr;
             }
         };
     }

@@ -21,10 +21,7 @@ namespace Hyprutils {
 
             /* creates a new unique pointer managing a resource
                avoid calling. Could duplicate ownership. Prefer makeUnique */
-            explicit CUniquePointer(T* object) noexcept {
-                impl_ = new Impl_::impl<T>(object, false);
-                increment();
-            }
+            explicit CUniquePointer(T* object) : impl_(new Impl_::impl<T>(object, false)) {}
 
             /* creates a shared pointer from a reference */
             template <typename U, typename = isConstructible<U>>
@@ -106,31 +103,18 @@ namespace Hyprutils {
                 if (!impl_)
                     return;
 
-                impl_->dec();
-
-                // if ref == 0, we can destroy impl
-                if (impl_->ref() == 0)
-                    destroyImpl();
+                if (impl_->dec()) {
+                    delete impl_;
+                    impl_ = nullptr;
+                }
             }
             /* no-op if there is no impl_ */
             void increment() {
                 if (!impl_)
                     return;
 
-                impl_->inc();
-            }
-
-            /* destroy the pointed-to object 
-               if able, will also destroy impl */
-            void destroyImpl() {
-                // destroy the impl contents
-                impl_->destroy();
-
-                // check for weak refs, if zero, we can also delete impl_
-                if (impl_->wref() == 0) {
-                    delete impl_;
+                if (!impl_->inc())
                     impl_ = nullptr;
-                }
             }
         };
 
