@@ -91,7 +91,7 @@ namespace Hyprutils::Memory::Impl_ {
 
         virtual bool incWeak() {
             std::lock_guard<std::mutex> lg(_mtx);
-            if (_ref == 0)
+            if (_ref == 0 && _weak == 0)
                 return false;
 
             _weak++;
