@@ -99,7 +99,7 @@ namespace Hyprutils {
                 }
 
                 virtual bool incWeak() {
-                    if (_ref == 0)
+                    if (_ref == 0 && _weak == 0)
                         return false;
 
                     _weak++;
