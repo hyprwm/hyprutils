@@ -55,7 +55,11 @@ namespace Hyprutils::Memory::Impl_ {
             // this way, weak pointers will still be able to
             // reference and use, but no longer create shared ones.
             _destroying = true;
+
+            _mtx.unlock();
             __deleter(_data);
+            _mtx.lock();
+
             // now, we can reset the data and call it a day.
             _data       = nullptr;
             _destroying = false;
@@ -79,9 +83,7 @@ namespace Hyprutils::Memory::Impl_ {
 
             if (_ref == 0) {
                 // if ref == 0, we can destroy impl
-                _mtx.unlock();
                 destroy();
-                _mtx.lock();
                 // if weak == 0, we tell the actual impl to delete this
                 return _weak == 0;
             }

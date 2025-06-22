@@ -16,7 +16,7 @@ using namespace Hyprutils::Memory;
 #define NTHREADS   8
 #define ITERATIONS 10000
 
-static int testAtomicity() {
+static int testAtomicImpl() {
     int ret = 0;
 
     {
@@ -47,14 +47,14 @@ static int testAtomicity() {
 
     {
         SP<int>                  shared = makeAtomicShared<int>(0);
-        WP<int>                  ref    = shared;
+        WP<int>                  weak   = shared;
         std::vector<std::thread> threads;
 
         threads.reserve(NTHREADS);
         for (size_t i = 0; i < NTHREADS; i++) {
-            threads.emplace_back([ref]() {
+            threads.emplace_back([weak]() {
                 for (size_t j = 0; j < ITERATIONS; j++) {
-                    if (auto s = ref.lock(); s) {
+                    if (auto s = weak.lock(); s) {
                         (*s)++;
                     }
                 }
@@ -69,14 +69,14 @@ static int testAtomicity() {
         }
 
         EXPECT(shared.strongRef(), 0);
-        EXPECT(ref.valid(), false);
+        EXPECT(weak.valid(), false);
 
-        auto shared2 = ref.lock();
+        auto shared2 = weak.lock();
         EXPECT(shared, false);
         EXPECT(shared2.get(), nullptr);
         EXPECT(shared.strongRef(), 0);
-        EXPECT(ref.valid(), false);
-        EXPECT(ref.expired(), true);
+        EXPECT(weak.valid(), false);
+        EXPECT(weak.expired(), true);
     }
 
     return ret;
@@ -135,7 +135,7 @@ int main(int argc, char** argv, char** envp) {
     EXPECT(*intPtr2AsUint, 10);
     EXPECT(*intPtr2, 10);
 
-    EXPECT(testAtomicity(), 0);
+    EXPECT(testAtomicImpl(), 0);
 
     return ret;
 }
