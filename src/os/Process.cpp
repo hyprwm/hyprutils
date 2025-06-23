@@ -206,6 +206,11 @@ bool Hyprutils::OS::CProcess::runAsync() {
 
             argsC.emplace_back(nullptr);
 
+            // pass env
+            for (auto& [n, v] : m_impl->env) {
+                setenv(n.c_str(), v.c_str(), 1);
+            }
+
             if (m_impl->stdoutFD != -1)
                 dup2(m_impl->stdoutFD, 1);
             if (m_impl->stderrFD != -1)
