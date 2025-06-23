@@ -12,14 +12,15 @@ namespace Hyprutils {
     namespace Signal {
         class CUntypedSignal {
           protected:
-            CHyprSignalListener                                           registerListenerInternal(std::function<void(void*)> handler);
-            void                                                          registerStaticListenerInternal(std::function<void(void*)> handler);
-            void                                                          emitInternal(void* args);
+            CHyprSignalListener     registerListenerInternal(std::function<void(void*)> handler);
+            void                    registerStaticListenerInternal(std::function<void(void*)> handler);
+            void                    emitInternal(void* args);
 
-            std::vector<Hyprutils::Memory::CWeakPointer<CSignalListener>> m_vListeners;
-            std::vector<std::unique_ptr<CSignalListener>>                 m_vStaticListeners;
+            CSignalListenerListHead m_listeners{false};
+            CSignalListenerListHead m_staticListeners{true};
         };
 
+        // Note: Signals are NOT re-entrant.
         template <typename... Args>
         class CSignalT : public CUntypedSignal {
           public:
