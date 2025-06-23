@@ -6,39 +6,27 @@
 
 namespace Hyprutils {
     namespace Signal {
-        class CSignal;
+        class CUntypedSignal;
 
         class CSignalListener {
           public:
-            CSignalListener(std::function<void(std::any)> handler);
-
             CSignalListener(CSignalListener&&)       = delete;
             CSignalListener(CSignalListener&)        = delete;
             CSignalListener(const CSignalListener&)  = delete;
             CSignalListener(const CSignalListener&&) = delete;
 
-            void emit(std::any data);
+            [[deprecated("Relic of the legacy untyped signal API. Using this with CSignalT is undefined behavior.")]] void emit(std::any data);
 
           private:
-            std::function<void(std::any)> m_fHandler;
+            CSignalListener(std::function<void(void*)> handler);
+
+            void                       emitInternal(void* args);
+
+            std::function<void(void*)> m_fHandler;
+
+            friend class CUntypedSignal;
         };
 
         typedef Hyprutils::Memory::CSharedPointer<CSignalListener> CHyprSignalListener;
-
-        class CStaticSignalListener {
-          public:
-            CStaticSignalListener(std::function<void(void*, std::any)> handler, void* owner);
-
-            CStaticSignalListener(CStaticSignalListener&&)       = delete;
-            CStaticSignalListener(CStaticSignalListener&)        = delete;
-            CStaticSignalListener(const CStaticSignalListener&)  = delete;
-            CStaticSignalListener(const CStaticSignalListener&&) = delete;
-
-            void emit(std::any data);
-
-          private:
-            void*                                m_pOwner = nullptr;
-            std::function<void(void*, std::any)> m_fHandler;
-        };
     }
 }
