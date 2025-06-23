@@ -1,6 +1,11 @@
-#include <hyprutils/memory/WeakPtr.hpp>
 #include <hyprutils/memory/UniquePtr.hpp>
+#include <hyprutils/memory/SharedPtr.hpp>
+#include <hyprutils/memory/WeakPtr.hpp>
+#include <hyprutils/memory/Atomic.hpp>
 #include "shared.hpp"
+#include <chrono>
+#include <print>
+#include <thread>
 #include <vector>
 
 using namespace Hyprutils::Memory;
@@ -8,6 +13,87 @@ using namespace Hyprutils::Memory;
 #define SP CSharedPointer
 #define WP CWeakPointer
 #define UP CUniquePointer
+
+#define ASP        CAtomicSharedPointer
+#define AWP        CAtomicWeakPointer
+#define NTHREADS   8
+#define ITERATIONS 10000
+
+static int testAtomicImpl() {
+    int ret = 0;
+
+    {
+        // Using makeShared here could lead to invalid refcounts.
+        ASP<int>                 shared = makeAtomicShared<int>(0);
+        std::vector<std::thread> threads;
+
+        threads.reserve(NTHREADS);
+        for (size_t i = 0; i < NTHREADS; i++) {
+            threads.emplace_back([shared]() {
+                for (size_t j = 0; j < ITERATIONS; j++) {
+                    ASP<int> strongRef = shared;
+                    (*shared)++;
+                    strongRef.reset();
+                }
+            });
+        }
+
+        for (auto& thread : threads) {
+            thread.join();
+        }
+
+        // Actual count is not incremented in a thread-safe manner here, so we can't check it.
+        // We just want to check that the concurent refcounting doesn't cause any memory corruption.
+        shared.reset();
+        EXPECT(shared, false);
+    }
+
+    {
+        ASP<int>                 shared = makeAtomicShared<int>(0);
+        AWP<int>                 weak   = shared;
+        std::vector<std::thread> threads;
+
+        threads.reserve(NTHREADS);
+        for (size_t i = 0; i < NTHREADS; i++) {
+            threads.emplace_back([weak]() {
+                for (size_t j = 0; j < ITERATIONS; j++) {
+                    if (auto s = weak.lock(); s) {
+                        (*s)++;
+                    }
+                }
+            });
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        shared.reset();
+
+        for (auto& thread : threads) {
+            thread.join();
+        }
+
+        EXPECT(shared.strongRef(), 0);
+        EXPECT(weak.valid(), false);
+
+        auto shared2 = weak.lock();
+        EXPECT(shared, false);
+        EXPECT(shared2.get(), nullptr);
+        EXPECT(shared.strongRef(), 0);
+        EXPECT(weak.valid(), false);
+        EXPECT(weak.expired(), true);
+    }
+
+    { // This tests recursive deletion. When foo will be deleted, bar will be deleted within the foo dtor.
+        class CFoo {
+          public:
+            AWP<CFoo> bar;
+        };
+
+        ASP<CFoo> foo = makeAtomicShared<CFoo>();
+        foo->bar      = foo;
+    }
+
+    return ret;
+}
 
 int main(int argc, char** argv, char** envp) {
     SP<int> intPtr    = makeShared<int>(10);
@@ -61,6 +147,8 @@ int main(int argc, char** argv, char** envp) {
     *intPtr2AsUint = 10;
     EXPECT(*intPtr2AsUint, 10);
     EXPECT(*intPtr2, 10);
+
+    EXPECT(testAtomicImpl(), 0);
 
     return ret;
 }
