@@ -170,6 +170,8 @@ namespace Hyprutils::Memory {
 
         template <typename U>
         friend class CAtomicWeakPointer;
+        template <typename U>
+        friend class CAtomicSharedPointer;
     };
 
     template <typename T>
@@ -334,6 +336,11 @@ namespace Hyprutils::Memory {
         }
 
         CWeakPointer<T> m_ptr;
+
+        template <typename U>
+        friend class CAtomicWeakPointer;
+        template <typename U>
+        friend class CAtomicSharedPointer;
     };
 
     template <typename U, typename... Args>
