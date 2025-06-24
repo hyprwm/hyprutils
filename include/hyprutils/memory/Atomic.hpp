@@ -22,6 +22,10 @@ namespace Hyprutils::Memory {
         };
     }
 
+    // Forward declaration for friend
+    template <typename T>
+    class CAtomicWeakPointer;
+
     template <typename T>
     class CAtomicSharedPointer {
         template <typename X>
@@ -157,11 +161,15 @@ namespace Hyprutils::Memory {
             return m_ptr.impl_ ? m_ptr.impl_->ref() : 0;
         }
 
+      private:
         std::lock_guard<std::recursive_mutex> implLockGuard() const {
             return ((Atomic_::impl<T>*)m_ptr.impl_)->lockGuard();
         }
 
         CSharedPointer<T> m_ptr;
+
+        template <typename U>
+        friend class CAtomicWeakPointer;
     };
 
     template <typename T>
@@ -320,6 +328,7 @@ namespace Hyprutils::Memory {
             return CAtomicSharedPointer<T>(m_ptr.impl_);
         }
 
+      private:
         std::lock_guard<std::recursive_mutex> implLockGuard() const {
             return ((Atomic_::impl<T>*)m_ptr.impl_)->lockGuard();
         }
