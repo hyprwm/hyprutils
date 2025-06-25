@@ -5,6 +5,22 @@
 #include "./WeakPtr.hpp"
 #include <mutex>
 
+/*
+    This header provides a thread-safe wrapper for Hyprutils shared pointer implementations.
+    Like with STL shared pointers, that does not mean that individual SP/WP objects can be shared across threads without synchronization.
+    It only means that the refcounting of the data is thread-safe.
+
+    Should an Atomic SP/WP be shared across threads, calling a non-const member leads to a data race.
+    To avoid that, each thread should have thread-local SP/WP objects.
+
+    Example:
+      We have a CAtomicSharedPointer member in a class. Suppose this member is accessed by multiple threads and is not constant.
+      In such a case we need external synchronization to ensure valid data access.
+      However, if we create a copy of this CAtomicWeakPointer member for each thread that accesses it,
+      then the references to the object will be counted in a thread-safe manner and it will be safe to lock a WP and to access the data in case of an SP.
+      In such an example, the inner data would need its own synchronization mechanism if it isn't constant itself.
+*/
+
 namespace Hyprutils::Memory {
     namespace Atomic_ {
         template <typename T>
@@ -66,7 +82,6 @@ namespace Hyprutils::Memory {
             ; // empty
         }
 
-        /* creates an empty shared pointer with no implementation */
         CAtomicSharedPointer(std::nullptr_t) noexcept {
             ; // empty
         }
@@ -221,7 +236,6 @@ namespace Hyprutils::Memory {
             ; // empty
         }
 
-        /* creates an empty shared pointer with no implementation */
         CAtomicWeakPointer(std::nullptr_t) noexcept {
             ; // empty
         }
