@@ -6,7 +6,7 @@
 
 namespace Hyprutils {
     namespace Signal {
-        class CUntypedSignal;
+        class CSignalBase;
 
         class CSignalListener {
           public:
@@ -24,7 +24,7 @@ namespace Hyprutils {
 
             std::function<void(void*)> m_fHandler;
 
-            friend class CUntypedSignal;
+            friend class CSignalBase;
         };
 
         typedef Hyprutils::Memory::CSharedPointer<CSignalListener> CHyprSignalListener;
