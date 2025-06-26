@@ -178,6 +178,24 @@ void autoRefTypes(int& ret) {
     EXPECT(destroyCount, 1);
 }
 
+void forward(int& ret) {
+    int           count = 0;
+
+    CSignalT<int> sig;
+    CSignalT<int> connected1;
+    CSignalT<>    connected2;
+
+    auto          conn1 = sig.forward(connected1);
+    auto          conn2 = sig.forward(connected2);
+
+    auto          listener1 = connected1.listen([&](int v) { count += v; });
+    auto          listener2 = connected2.listen([&] { count += 1; });
+
+    sig.emit(2);
+
+    EXPECT(count, 3);
+}
+
 void listenerAdded(int& ret) {
     int                 count = 0;
 
@@ -337,6 +355,7 @@ int main(int argc, char** argv, char** envp) {
     ref(ret);
     refMany(ret);
     autoRefTypes(ret);
+    forward(ret);
     listenerAdded(ret);
     lastListenerSwapped(ret);
     signalDestroyed(ret);

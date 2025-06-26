@@ -53,6 +53,14 @@ namespace Hyprutils {
                 return listen([handler](RefArg<Args>... args) { handler(); });
             }
 
+            template <typename... OtherArgs>
+            [[nodiscard("Listener is unregistered when the ptr is lost")]] CHyprSignalListener forward(CSignalT<OtherArgs...>& signal) {
+                if constexpr (sizeof...(OtherArgs) == 0)
+                    return listen([&signal](RefArg<Args>... args) { signal.emit(); });
+                else
+                    return listen([&signal](RefArg<Args>... args) { signal.emit(args...); });
+            }
+
             [[deprecated("Use listener()")]] CHyprSignalListener registerListener(std::function<void(std::any d)> handler) {
                 return listen([handler](const Args&... args) {
                     constexpr auto mkAny = [](std::any d = {}) { return d; };
