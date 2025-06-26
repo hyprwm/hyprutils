@@ -76,3 +76,7 @@ float CBezierCurve::getYForPoint(float const& x) const {
 
     return LOWERPOINT->y + ((UPPERPOINT->y - LOWERPOINT->y) * PERCINDELTA);
 }
+
+const std::vector<Hyprutils::Math::Vector2D>& CBezierCurve::getControlPoints() const {
+    return m_vPoints;
+}
