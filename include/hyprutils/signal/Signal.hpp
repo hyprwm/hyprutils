@@ -101,8 +101,8 @@ namespace Hyprutils {
             }
         };
 
-        // compat
-        class [[deprecated("Use CSignalT")]] CSignal : public CSignalT<std::any> {
+        // compat. Deprecated.
+        class CSignal : public CSignalT<std::any> {
           public:
             void emit(std::any data = {});
         };
