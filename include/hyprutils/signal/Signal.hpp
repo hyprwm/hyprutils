@@ -61,7 +61,8 @@ namespace Hyprutils {
                     return listen([&signal](RefArg<Args>... args) { signal.emit(args...); });
             }
 
-            [[deprecated("Use listener()")]] CHyprSignalListener registerListener(std::function<void(std::any d)> handler) {
+            // deprecated, use listen()
+            CHyprSignalListener registerListener(std::function<void(std::any d)> handler) {
                 return listen([handler](const Args&... args) {
                     constexpr auto mkAny = [](std::any d = {}) { return d; };
                     handler(mkAny(args...));
@@ -79,7 +80,8 @@ namespace Hyprutils {
                 return listenStatic([handler](RefArg<Args>... args) { handler(); });
             }
 
-            [[deprecated("Use staticListener()")]] void registerStaticListener(std::function<void(void*, std::any)> handler, void* owner) {
+            // Deprecated: use listenStatic()
+            void registerStaticListener(std::function<void(void*, std::any)> handler, void* owner) {
                 return listenStatic([handler, owner](const RefArg<Args>&... args) {
                     constexpr auto mkAny = [](std::any d = {}) { return d; };
                     handler(owner, mkAny(args...));
