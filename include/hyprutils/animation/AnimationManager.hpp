@@ -35,8 +35,8 @@ namespace Hyprutils {
             const std::unordered_map<std::string, Memory::CSharedPointer<CBezierCurve>>& getAllBeziers();
 
             struct SAnimationManagerSignals {
-                Signal::CSignalT<const Memory::CWeakPointer<CBaseAnimatedVariable>&> connect;
-                Signal::CSignalT<const Memory::CWeakPointer<CBaseAnimatedVariable>&> disconnect;
+                Signal::CSignalT<Memory::CWeakPointer<CBaseAnimatedVariable>> connect;
+                Signal::CSignalT<Memory::CWeakPointer<CBaseAnimatedVariable>> disconnect;
             };
 
             Memory::CWeakPointer<SAnimationManagerSignals>           getSignals() const;

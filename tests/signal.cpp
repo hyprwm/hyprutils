@@ -136,6 +136,36 @@ void refMany(int& ret) {
     EXPECT(count, 11);
 }
 
+void autoRefTypes(int& ret) {
+    class CCopyCounter {
+      public:
+        CCopyCounter(int& createCount, int& destroyCount) : createCount(createCount), destroyCount(destroyCount) {
+            createCount += 1;
+        }
+
+        CCopyCounter(CCopyCounter&& other) noexcept : CCopyCounter(other.createCount, other.destroyCount) {}
+        CCopyCounter(const CCopyCounter& other) noexcept : CCopyCounter(other.createCount, other.destroyCount) {}
+
+        ~CCopyCounter() {
+            destroyCount += 1;
+        }
+
+      private:
+        int& createCount;
+        int& destroyCount;
+    };
+
+    auto                   createCount  = 0;
+    auto                   destroyCount = 0;
+
+    CSignalT<CCopyCounter> signal;
+    auto                   listener = signal.listen([](const CCopyCounter& counter) {});
+
+    signal.emit(CCopyCounter(createCount, destroyCount));
+    EXPECT(createCount, 1);
+    EXPECT(destroyCount, 1);
+}
+
 void listenerAdded(int& ret) {
     int                 count = 0;
 
@@ -293,6 +323,7 @@ int main(int argc, char** argv, char** envp) {
     typedMany(ret);
     ref(ret);
     refMany(ret);
+    autoRefTypes(ret);
     listenerAdded(ret);
     lastListenerSwapped(ret);
     signalDestroyed(ret);
