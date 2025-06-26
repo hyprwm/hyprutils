@@ -86,6 +86,18 @@ void typed(int& ret) {
     EXPECT(data, 1);
 }
 
+void ignoreParams(int& ret) {
+    int           data = 0;
+
+    CSignalT<int> signal;
+    auto          listener = signal.listen([&] { data += 1; });
+
+    signal.listenStatic([&] { data += 1; });
+
+    signal.emit(2);
+    EXPECT(data, 2);
+}
+
 void typedMany(int& ret) {
     int                     data1 = 0;
     int                     data2 = 0;
@@ -320,6 +332,7 @@ int main(int argc, char** argv, char** envp) {
     legacyListeners(ret);
     empty(ret);
     typed(ret);
+    ignoreParams(ret);
     typedMany(ret);
     ref(ret);
     refMany(ret);

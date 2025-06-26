@@ -47,6 +47,12 @@ namespace Hyprutils {
                 return registerListenerInternal(mkHandler(handler));
             }
 
+            [[nodiscard("Listener is unregistered when the ptr is lost")]] CHyprSignalListener listen(std::function<void()> handler)
+                requires(sizeof...(Args) != 0)
+            {
+                return listen([handler](RefArg<Args>... args) { handler(); });
+            }
+
             [[deprecated("Use listener()")]] CHyprSignalListener registerListener(std::function<void(std::any d)> handler) {
                 return listen([handler](const Args&... args) {
                     constexpr auto mkAny = [](std::any d = {}) { return d; };
@@ -57,6 +63,12 @@ namespace Hyprutils {
             // this is for static listeners. They die with this signal.
             void listenStatic(std::function<void(RefArg<Args>...)> handler) {
                 registerStaticListenerInternal(mkHandler(handler));
+            }
+
+            void listenStatic(std::function<void()> handler)
+                requires(sizeof...(Args) != 0)
+            {
+                return listenStatic([handler](RefArg<Args>... args) { handler(); });
             }
 
             [[deprecated("Use staticListener()")]] void registerStaticListener(std::function<void(void*, std::any)> handler, void* owner) {
