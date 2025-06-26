@@ -20,31 +20,18 @@ CAnimationManager::CAnimationManager() {
     m_events    = makeUnique<SAnimationManagerSignals>();
     m_listeners = makeUnique<SAnimVarListeners>();
 
-    m_listeners->connect    = m_events->connect.registerListener([this](std::any data) { onConnect(data); });
-    m_listeners->disconnect = m_events->disconnect.registerListener([this](std::any data) { onDisconnect(data); });
-}
+    m_listeners->connect = m_events->connect.listen([this](const WP<CBaseAnimatedVariable>& animVar) {
+        if (!m_bTickScheduled)
+            scheduleTick();
 
-void CAnimationManager::onConnect(std::any data) {
-    if (!m_bTickScheduled)
-        scheduleTick();
+        if (animVar)
+            m_vActiveAnimatedVariables.emplace_back(animVar);
+    });
 
-    try {
-        const auto PAV = std::any_cast<WP<CBaseAnimatedVariable>>(data);
-        if (!PAV)
-            return;
-
-        m_vActiveAnimatedVariables.emplace_back(PAV);
-    } catch (const std::bad_any_cast&) { return; }
-}
-
-void CAnimationManager::onDisconnect(std::any data) {
-    try {
-        const auto PAV = std::any_cast<WP<CBaseAnimatedVariable>>(data);
-        if (!PAV)
-            return;
-
-        std::erase_if(m_vActiveAnimatedVariables, [&](const auto& other) { return !other || other == PAV; });
-    } catch (const std::bad_any_cast&) { return; }
+    m_listeners->disconnect = m_events->disconnect.listen([this](const WP<CBaseAnimatedVariable>& animVar) {
+        if (animVar)
+            std::erase_if(m_vActiveAnimatedVariables, [&](const auto& other) { return !other || other == animVar; });
+    });
 }
 
 void CAnimationManager::removeAllBeziers() {
