@@ -1,3 +1,4 @@
+#include "hyprutils/memory/SharedPtr.hpp"
 #include <hyprutils/signal/Signal.hpp>
 #include <hyprutils/memory/WeakPtr.hpp>
 #include <algorithm>
@@ -8,7 +9,7 @@ using namespace Hyprutils::Memory;
 #define SP CSharedPointer
 #define WP CWeakPointer
 
-void Hyprutils::Signal::CUntypedSignal::emitInternal(void* args) {
+void Hyprutils::Signal::CSignalBase::emitInternal(void* args) {
     std::vector<SP<CSignalListener>> listeners;
     for (auto& l : m_vListeners) {
         if (l.expired())
@@ -17,11 +18,7 @@ void Hyprutils::Signal::CUntypedSignal::emitInternal(void* args) {
         listeners.emplace_back(l.lock());
     }
 
-    std::vector<CSignalListener*> statics;
-    statics.reserve(m_vStaticListeners.size());
-    for (auto& l : m_vStaticListeners) {
-        statics.emplace_back(l.get());
-    }
+    auto statics = m_vStaticListeners;
 
     for (auto& l : listeners) {
         // if there is only one lock, it means the event is only held by the listeners
@@ -43,7 +40,7 @@ void Hyprutils::Signal::CUntypedSignal::emitInternal(void* args) {
     // as such we'd be doing a UAF
 }
 
-CHyprSignalListener Hyprutils::Signal::CUntypedSignal::registerListenerInternal(std::function<void(void*)> handler) {
+CHyprSignalListener Hyprutils::Signal::CSignalBase::registerListenerInternal(std::function<void(void*)> handler) {
     CHyprSignalListener listener = SP<CSignalListener>(new CSignalListener(handler));
     m_vListeners.emplace_back(listener);
 
@@ -53,18 +50,10 @@ CHyprSignalListener Hyprutils::Signal::CUntypedSignal::registerListenerInternal(
     return listener;
 }
 
-void Hyprutils::Signal::CUntypedSignal::registerStaticListenerInternal(std::function<void(void*)> handler) {
-    m_vStaticListeners.emplace_back(std::unique_ptr<CSignalListener>(new CSignalListener(handler)));
+void Hyprutils::Signal::CSignalBase::registerStaticListenerInternal(std::function<void(void*)> handler) {
+    m_vStaticListeners.emplace_back(SP<CSignalListener>(new CSignalListener(handler)));
 }
 
 void Hyprutils::Signal::CSignal::emit(std::any data) {
     CSignalT::emit(data);
-}
-
-CHyprSignalListener Hyprutils::Signal::CSignal::registerListener(std::function<void(std::any)> handler) {
-    return CSignalT::registerListener(handler);
-}
-
-void Hyprutils::Signal::CSignal::registerStaticListener(std::function<void(void*, std::any)> handler, void* owner) {
-    CSignalT<std::any>::registerStaticListener<void>(handler, owner);
 }
