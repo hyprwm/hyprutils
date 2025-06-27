@@ -20,6 +20,9 @@ namespace Hyprutils {
             float getXForT(float const& t) const;
             float getYForPoint(float const& x) const;
 
+            /* this INCLUDES the 0,0 and 1,1 points. */
+            const std::vector<Hyprutils::Math::Vector2D>& getControlPoints() const;
+
           private:
             /* this INCLUDES the 0,0 and 1,1 points. */
             std::vector<Hyprutils::Math::Vector2D>             m_vPoints;
