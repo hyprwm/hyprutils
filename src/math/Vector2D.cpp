@@ -57,7 +57,7 @@ Vector2D Hyprutils::Math::Vector2D::getComponentMax(const Vector2D& other) const
     return Vector2D(std::max(this->x, other.x), std::max(this->y, other.y));
 }
 
-Vector2D Hyprutils::Math::Vector2D::transform(eTransform transform, Vector2D monitorSize) const {
+Vector2D Hyprutils::Math::Vector2D::transform(eTransform transform, const Vector2D& monitorSize) const {
     switch (transform) {
         case HYPRUTILS_TRANSFORM_NORMAL:
             return *this;

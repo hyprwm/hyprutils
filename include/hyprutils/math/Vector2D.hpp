@@ -100,7 +100,7 @@ namespace Hyprutils {
 
             Vector2D getComponentMax(const Vector2D& other) const;
 
-            Vector2D transform(eTransform transform, Vector2D monitorSize) const;
+            Vector2D transform(eTransform transform, const Vector2D& monitorSize) const;
         };
     }
 }
