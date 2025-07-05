@@ -62,19 +62,19 @@ Vector2D Hyprutils::Math::Vector2D::transform(eTransform transform, const Vector
         case HYPRUTILS_TRANSFORM_NORMAL:
             return *this;
         case HYPRUTILS_TRANSFORM_90:
-            return Vector2D(this->y, monitorSize.y - this->x);
+            return Vector2D(y, monitorSize.y - x);
         case HYPRUTILS_TRANSFORM_180:
-            return Vector2D(monitorSize.x - this->x, monitorSize.y - this->y);
+            return Vector2D(monitorSize.x - x, monitorSize.y - y);
         case HYPRUTILS_TRANSFORM_270:
-            return Vector2D(monitorSize.x - this->y, this->x);
+            return Vector2D(monitorSize.x - y, x);
         case HYPRUTILS_TRANSFORM_FLIPPED:
-            return Vector2D(monitorSize.x - this->x, this->y);
+            return Vector2D(monitorSize.x - x, y);
         case HYPRUTILS_TRANSFORM_FLIPPED_90:
-            return Vector2D(this->y, this->x);
+            return Vector2D(y, x);
         case HYPRUTILS_TRANSFORM_FLIPPED_180:
-            return Vector2D(this->x, monitorSize.y - this->y);
+            return Vector2D(x, monitorSize.y - y);
         case HYPRUTILS_TRANSFORM_FLIPPED_270:
-            return Vector2D(monitorSize.x - this->y, monitorSize.y - this->x);
+            return Vector2D(monitorSize.x - y, monitorSize.y - x);
         default:
             return *this;
     }

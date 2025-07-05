@@ -104,5 +104,19 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(std::abs(expected.getMatrix().at(8) - matrixBox.getMatrix().at(8)) < 0.1, true);
     }
 
+    {
+        Vector2D original(30, 40);
+        Vector2D monitorSize(100, 200);
+
+        EXPECT_VECTOR2D(original.transform(HYPRUTILS_TRANSFORM_NORMAL,      monitorSize), Vector2D(30,       40      ));
+        EXPECT_VECTOR2D(original.transform(HYPRUTILS_TRANSFORM_90,          monitorSize), Vector2D(40,       200 - 30));
+        EXPECT_VECTOR2D(original.transform(HYPRUTILS_TRANSFORM_180,         monitorSize), Vector2D(100 - 30, 200 - 40));
+        EXPECT_VECTOR2D(original.transform(HYPRUTILS_TRANSFORM_270,         monitorSize), Vector2D(100 - 40, 30      ));
+        EXPECT_VECTOR2D(original.transform(HYPRUTILS_TRANSFORM_FLIPPED,     monitorSize), Vector2D(100 - 30, 40      ));
+        EXPECT_VECTOR2D(original.transform(HYPRUTILS_TRANSFORM_FLIPPED_90,  monitorSize), Vector2D(40,       30      ));
+        EXPECT_VECTOR2D(original.transform(HYPRUTILS_TRANSFORM_FLIPPED_180, monitorSize), Vector2D(30,       200 - 40));
+        EXPECT_VECTOR2D(original.transform(HYPRUTILS_TRANSFORM_FLIPPED_270, monitorSize), Vector2D(100 - 40, 200 - 30));
+    }
+
     return ret;
 }
