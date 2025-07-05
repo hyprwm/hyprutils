@@ -1,4 +1,5 @@
 #include <hyprutils/math/Vector2D.hpp>
+#include <hyprutils/math/Misc.hpp>
 #include <algorithm>
 #include <cmath>
 
@@ -54,4 +55,27 @@ double Hyprutils::Math::Vector2D::size() const {
 
 Vector2D Hyprutils::Math::Vector2D::getComponentMax(const Vector2D& other) const {
     return Vector2D(std::max(this->x, other.x), std::max(this->y, other.y));
+}
+
+Vector2D Hyprutils::Math::Vector2D::transform(eTransform transform, Vector2D monitorSize) const {
+    switch (transform) {
+        case HYPRUTILS_TRANSFORM_NORMAL:
+            return *this;
+        case HYPRUTILS_TRANSFORM_90:
+            return Vector2D(this->y, monitorSize.y - this->x);
+        case HYPRUTILS_TRANSFORM_180:
+            return Vector2D(monitorSize.x - this->x, monitorSize.y - this->y);
+        case HYPRUTILS_TRANSFORM_270:
+            return Vector2D(monitorSize.x - this->y, this->x);
+        case HYPRUTILS_TRANSFORM_FLIPPED:
+            return Vector2D(monitorSize.x - this->x, this->y);
+        case HYPRUTILS_TRANSFORM_FLIPPED_90:
+            return Vector2D(this->y, this->x);
+        case HYPRUTILS_TRANSFORM_FLIPPED_180:
+            return Vector2D(this->x, monitorSize.y - this->y);
+        case HYPRUTILS_TRANSFORM_FLIPPED_270:
+            return Vector2D(monitorSize.x - this->y, monitorSize.y - this->x);
+        default:
+            return *this;
+    }
 }

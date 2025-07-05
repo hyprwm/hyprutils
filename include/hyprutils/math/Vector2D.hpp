@@ -1,5 +1,7 @@
 #pragma once
 
+#include <hyprutils/math/Misc.hpp>
+
 #include <format>
 #include <string>
 
@@ -97,6 +99,8 @@ namespace Hyprutils {
             Vector2D round() const;
 
             Vector2D getComponentMax(const Vector2D& other) const;
+
+            Vector2D transform(eTransform transform, Vector2D monitorSize) const;
         };
     }
 }
