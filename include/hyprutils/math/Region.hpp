@@ -58,6 +58,14 @@ namespace Hyprutils {
             CRegion                     copy() const;
 
             std::vector<pixman_box32_t> getRects() const;
+            template <typename T>
+            void forEachRect(T&& cb) const {
+                int         rectsNum = 0;
+                const auto* rects    = pixman_region32_rectangles(&m_rRegion, &rectsNum);
+                for (int i = 0; i < rectsNum; ++i) {
+                    std::forward<T>(cb)(rects[i]);
+                }
+            }
 
             //
             pixman_region32_t* pixman() {
