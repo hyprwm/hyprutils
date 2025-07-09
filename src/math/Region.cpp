@@ -28,10 +28,10 @@ Hyprutils::Math::CRegion::CRegion(pixman_box32_t* box) {
 
 Hyprutils::Math::CRegion::CRegion(const CRegion& other) {
     pixman_region32_init(&m_rRegion);
-    pixman_region32_copy(&m_rRegion, const_cast<CRegion*>(&other)->pixman());
+    pixman_region32_copy(&m_rRegion, other.pixman());
 }
 
-Hyprutils::Math::CRegion::CRegion(CRegion&& other) {
+Hyprutils::Math::CRegion::CRegion(CRegion&& other) noexcept {
     pixman_region32_init(&m_rRegion);
     pixman_region32_copy(&m_rRegion, other.pixman());
 }
@@ -46,12 +46,12 @@ CRegion& Hyprutils::Math::CRegion::clear() {
 }
 
 CRegion& Hyprutils::Math::CRegion::set(const CRegion& other) {
-    pixman_region32_copy(&m_rRegion, const_cast<CRegion*>(&other)->pixman());
+    pixman_region32_copy(&m_rRegion, other.pixman());
     return *this;
 }
 
 CRegion& Hyprutils::Math::CRegion::add(const CRegion& other) {
-    pixman_region32_union(&m_rRegion, &m_rRegion, const_cast<CRegion*>(&other)->pixman());
+    pixman_region32_union(&m_rRegion, &m_rRegion, other.pixman());
     return *this;
 }
 
@@ -66,12 +66,12 @@ CRegion& Hyprutils::Math::CRegion::add(const CBox& other) {
 }
 
 CRegion& Hyprutils::Math::CRegion::subtract(const CRegion& other) {
-    pixman_region32_subtract(&m_rRegion, &m_rRegion, const_cast<CRegion*>(&other)->pixman());
+    pixman_region32_subtract(&m_rRegion, &m_rRegion, other.pixman());
     return *this;
 }
 
 CRegion& Hyprutils::Math::CRegion::intersect(const CRegion& other) {
-    pixman_region32_intersect(&m_rRegion, &m_rRegion, const_cast<CRegion*>(&other)->pixman());
+    pixman_region32_intersect(&m_rRegion, &m_rRegion, other.pixman());
     return *this;
 }
 
