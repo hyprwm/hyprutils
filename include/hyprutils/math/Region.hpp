@@ -21,17 +21,21 @@ namespace Hyprutils {
             CRegion(pixman_box32_t* box);
 
             CRegion(const CRegion&);
-            CRegion(CRegion&&);
+            CRegion(CRegion&&) noexcept;
 
             ~CRegion();
 
-            CRegion& operator=(CRegion&& other) {
-                pixman_region32_copy(&m_rRegion, other.pixman());
+            CRegion& operator=(CRegion&& other) noexcept {
+                if (this != &other)
+                    pixman_region32_copy(&m_rRegion, other.pixman());
+
                 return *this;
             }
 
-            CRegion& operator=(CRegion& other) {
-                pixman_region32_copy(&m_rRegion, other.pixman());
+            CRegion& operator=(const CRegion& other) {
+                if (this != &other)
+                    pixman_region32_copy(&m_rRegion, other.pixman());
+
                 return *this;
             }
 
@@ -58,9 +62,21 @@ namespace Hyprutils {
             CRegion                     copy() const;
 
             std::vector<pixman_box32_t> getRects() const;
+            template <typename T>
+            void forEachRect(T&& cb) const {
+                int         rectsNum = 0;
+                const auto* rects    = pixman_region32_rectangles(&m_rRegion, &rectsNum);
+                for (int i = 0; i < rectsNum; ++i) {
+                    std::forward<T>(cb)(rects[i]);
+                }
+            }
 
             //
             pixman_region32_t* pixman() {
+                return &m_rRegion;
+            }
+
+            const pixman_region32_t* pixman() const {
                 return &m_rRegion;
             }
 
