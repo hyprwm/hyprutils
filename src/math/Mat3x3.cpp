@@ -93,7 +93,7 @@ Mat3x3& Mat3x3::transform(eTransform transform) {
 }
 
 Mat3x3& Mat3x3::rotate(float rot) {
-    multiply(std::array<float, 9>{(float)cos(rot), (float)-sin(rot), 0.0f, (float)sin(rot), (float)cos(rot), 0.0f, 0.0f, 0.0f, 1.0f});
+    multiply(std::array<float, 9>{cosf(rot), -sinf(rot), 0.0f, sinf(rot), cosf(rot), 0.0f, 0.0f, 0.0f, 1.0f});
     return *this;
 }
 
@@ -117,19 +117,22 @@ Mat3x3& Mat3x3::transpose() {
 }
 
 Mat3x3& Mat3x3::multiply(const Mat3x3& other) {
+    const float*         m1 = matrix.data();       // Pointer to current matrix
+    const float*         m2 = other.matrix.data(); // Pointer to the other matrix
+
     std::array<float, 9> product;
 
-    product[0] = matrix[0] * other.matrix[0] + matrix[1] * other.matrix[3] + matrix[2] * other.matrix[6];
-    product[1] = matrix[0] * other.matrix[1] + matrix[1] * other.matrix[4] + matrix[2] * other.matrix[7];
-    product[2] = matrix[0] * other.matrix[2] + matrix[1] * other.matrix[5] + matrix[2] * other.matrix[8];
+    product[0] = m1[0] * m2[0] + m1[1] * m2[3] + m1[2] * m2[6];
+    product[1] = m1[0] * m2[1] + m1[1] * m2[4] + m1[2] * m2[7];
+    product[2] = m1[0] * m2[2] + m1[1] * m2[5] + m1[2] * m2[8];
 
-    product[3] = matrix[3] * other.matrix[0] + matrix[4] * other.matrix[3] + matrix[5] * other.matrix[6];
-    product[4] = matrix[3] * other.matrix[1] + matrix[4] * other.matrix[4] + matrix[5] * other.matrix[7];
-    product[5] = matrix[3] * other.matrix[2] + matrix[4] * other.matrix[5] + matrix[5] * other.matrix[8];
+    product[3] = m1[3] * m2[0] + m1[4] * m2[3] + m1[5] * m2[6];
+    product[4] = m1[3] * m2[1] + m1[4] * m2[4] + m1[5] * m2[7];
+    product[5] = m1[3] * m2[2] + m1[4] * m2[5] + m1[5] * m2[8];
 
-    product[6] = matrix[6] * other.matrix[0] + matrix[7] * other.matrix[3] + matrix[8] * other.matrix[6];
-    product[7] = matrix[6] * other.matrix[1] + matrix[7] * other.matrix[4] + matrix[8] * other.matrix[7];
-    product[8] = matrix[6] * other.matrix[2] + matrix[7] * other.matrix[5] + matrix[8] * other.matrix[8];
+    product[6] = m1[6] * m2[0] + m1[7] * m2[3] + m1[8] * m2[6];
+    product[7] = m1[6] * m2[1] + m1[7] * m2[4] + m1[8] * m2[7];
+    product[8] = m1[6] * m2[2] + m1[7] * m2[5] + m1[8] * m2[8];
 
     matrix = product;
     return *this;
