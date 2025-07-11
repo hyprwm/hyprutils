@@ -11,6 +11,7 @@ using namespace Hyprutils::Memory;
 
 void Hyprutils::Signal::CSignalBase::emitInternal(void* args) {
     std::vector<SP<CSignalListener>> listeners;
+    listeners.reserve(m_vListeners.size());
     for (auto& l : m_vListeners) {
         if (l.expired())
             continue;
