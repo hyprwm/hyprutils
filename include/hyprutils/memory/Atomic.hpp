@@ -23,27 +23,6 @@
 
 namespace Hyprutils::Memory {
     namespace Atomic_ {
-        // Lock guard with the option to unlock early
-        class CCLockGuard {
-            std::recursive_mutex* m_mutex;
-
-          public:
-            CCLockGuard(std::recursive_mutex* mutex) : m_mutex(mutex) {
-                m_mutex->lock();
-            }
-
-            ~CCLockGuard() {
-                unlockDrop();
-            };
-
-            void unlockDrop() {
-                if (m_mutex)
-                    m_mutex->unlock();
-
-                m_mutex = nullptr;
-            }
-        };
-
         template <typename T>
         class impl : public Impl_::impl<T> {
             std::recursive_mutex m_mutex;
@@ -53,8 +32,13 @@ namespace Hyprutils::Memory {
                 ;
             }
 
-            CCLockGuard lockGuard() {
-                return CCLockGuard(&m_mutex);
+            std::lock_guard<std::recursive_mutex> lockGuard() {
+                return std::lock_guard<std::recursive_mutex>(m_mutex);
+            }
+
+            // Needed when unlock order or mutex lifetime matters.
+            std::recursive_mutex& getMutex() {
+                return m_mutex;
             }
         };
     }
@@ -155,33 +139,43 @@ namespace Hyprutils::Memory {
             if (!m_ptr.impl_)
                 return;
 
-            auto lg = implLockGuard();
+            // last ref and last wref?
+            // -> must unlock BEFORE reset
+            // not last ref?
+            // -> must unlock AFTER reset
+            auto& mutex = ((Atomic_::impl<T>*)m_ptr.impl_)->getMutex();
+            mutex.lock();
+
             if (m_ptr.impl_->ref() > 1) {
                 m_ptr.reset();
+                mutex.unlock();
                 return;
             }
 
             if (m_ptr.impl_->wref() == 0) {
-                lg.unlockDrop(); // Don't hold the mutex when destroying it
-
+                mutex.unlock(); // Don't hold the mutex when destroying it
                 m_ptr.reset();
+                // mutex invalid
                 return;
+            } else {
+                // When the control block gets destroyed, the mutex is destroyed with it.
+                // Thus we must avoid attempting an unlock after impl_ has been destroyed.
+                // Without the workaround is no safe way of checking whether it has been destroyed or not.
+                //
+                // To avoid this altogether, keep a weak pointer here.
+                // This guarantees that impl_ is still valid after the reset.
+                CWeakPointer<T> guard = m_ptr;
+                m_ptr.reset();
+
+                // Now we can safely check if guard is the last wref.
+                if (guard.impl_->wref() == 1) {
+                    mutex.unlock();
+                    return; // ~guard destroys impl_ and mutex
+                }
+
+                guard.reset();
+                mutex.unlock();
             }
-
-            // When the control block gets destroyed, the mutex is destroyed with it.
-            // Thus we must avoid attempting an unlock after impl_ has been destroyed.
-            // There is no safe way of checking whether it has been destroyed or not.
-            //
-            // To avoid this altogether, keep a weak pointer here.
-            // This guarantees that impl_ is still valid after the reset.
-            CWeakPointer<T> guard = m_ptr;
-            m_ptr.reset();
-
-            // Now we can safely check if guard is the last wref.
-            if (guard.impl_->wref() == 1)
-                lg.unlockDrop();
-
-            // guard.reset()
         }
 
         T& operator*() const {
@@ -213,7 +207,7 @@ namespace Hyprutils::Memory {
         }
 
       private:
-        Atomic_::CCLockGuard implLockGuard() const {
+        std::lock_guard<std::recursive_mutex> implLockGuard() const {
             return ((Atomic_::impl<T>*)m_ptr.impl_)->lockGuard();
         }
 
@@ -318,11 +312,20 @@ namespace Hyprutils::Memory {
             if (!m_ptr.impl_)
                 return;
 
-            auto lg = implLockGuard();
-            if (m_ptr.impl_->ref() == 0 && m_ptr.impl_->wref() == 1)
-                lg.unlockDrop();
+            // last ref and last wref?
+            // -> must unlock BEFORE reset
+            // not last ref?
+            // -> must unlock AFTER reset
+            auto& mutex = ((Atomic_::impl<T>*)m_ptr.impl_)->getMutex();
+            if (m_ptr.impl_->ref() == 0 && m_ptr.impl_->wref() == 1) {
+                mutex.unlock();
+                m_ptr.reset();
+                // mutex invalid
+                return;
+            }
 
             m_ptr.reset();
+            mutex.unlock();
         }
 
         T& operator*() const {
@@ -374,7 +377,7 @@ namespace Hyprutils::Memory {
         }
 
       private:
-        Atomic_::CCLockGuard implLockGuard() const {
+        std::lock_guard<std::recursive_mutex> implLockGuard() const {
             return ((Atomic_::impl<T>*)m_ptr.impl_)->lockGuard();
         }
 
