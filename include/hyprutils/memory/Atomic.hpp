@@ -317,6 +317,7 @@ namespace Hyprutils::Memory {
             // not last ref?
             // -> must unlock AFTER reset
             auto& mutex = ((Atomic_::impl<T>*)m_ptr.impl_)->getMutex();
+            mutex.lock();
             if (m_ptr.impl_->ref() == 0 && m_ptr.impl_->wref() == 1) {
                 mutex.unlock();
                 m_ptr.reset();
