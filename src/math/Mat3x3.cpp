@@ -143,6 +143,11 @@ Mat3x3 Mat3x3::copy() const {
 }
 
 std::string Mat3x3::toString() const {
+    for (const auto& m : matrix) {
+        if (!std::isfinite(m))
+            return "[mat3x3: invalid values]";
+    }
+
     return std::format("[mat3x3: {}, {}, {}, {}, {}, {}, {}, {}, {}]", matrix.at(0), matrix.at(1), matrix.at(2), matrix.at(3), matrix.at(4), matrix.at(5), matrix.at(6),
                        matrix.at(7), matrix.at(8));
 }
