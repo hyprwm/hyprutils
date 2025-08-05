@@ -16,5 +16,5 @@ void Hyprutils::Signal::CSignalListener::emitInternal(void* data) {
 
 void Hyprutils::Signal::CSignalListener::emit(std::any data) {
     auto dataTuple = std::tuple<std::any>(data);
-    emitInternal(static_cast<void*>(&dataTuple));
+    emitInternal(&dataTuple);
 }

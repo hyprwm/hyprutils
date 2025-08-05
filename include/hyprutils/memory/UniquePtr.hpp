@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ImplBase.hpp"
+#include "Casts.hpp"
 
 /*
     This is a custom impl of std::unique_ptr.
@@ -74,7 +75,7 @@ namespace Hyprutils {
             }
 
             bool operator()(const CUniquePointer& lhs, const CUniquePointer& rhs) const {
-                return reinterpret_cast<uintptr_t>(lhs.impl_) < reinterpret_cast<uintptr_t>(rhs.impl_);
+                return rc<uintptr_t>(lhs.impl_) < rc<uintptr_t>(rhs.impl_);
             }
 
             T* operator->() const {
@@ -91,7 +92,7 @@ namespace Hyprutils {
             }
 
             T* get() const {
-                return impl_ ? static_cast<T*>(impl_->getData()) : nullptr;
+                return impl_ ? sc<T*>(impl_->getData()) : nullptr;
             }
 
             Impl_::impl_base* impl_ = nullptr;

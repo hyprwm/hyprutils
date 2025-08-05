@@ -37,7 +37,7 @@ namespace Hyprutils {
 
                     if constexpr (sizeof...(Args) == 1)
                         // NOLINTNEXTLINE: const is reapplied by handler invocation if required
-                        emitInternal(const_cast<void*>(static_cast<const void*>(&std::get<0>(argsTuple))));
+                        emitInternal(cc<void*>(sc<const void*>(&std::get<0>(argsTuple))));
                     else
                         emitInternal(&argsTuple);
                 }
@@ -94,9 +94,9 @@ namespace Hyprutils {
                     if constexpr (sizeof...(Args) == 0)
                         handler();
                     else if constexpr (sizeof...(Args) == 1)
-                        handler(*static_cast<std::remove_reference_t<std::tuple_element_t<0, std::tuple<RefArg<Args>...>>>*>(args));
+                        handler(*sc<std::remove_reference_t<std::tuple_element_t<0, std::tuple<RefArg<Args>...>>>*>(args));
                     else
-                        std::apply(handler, *static_cast<std::tuple<RefArg<Args>...>*>(args));
+                        std::apply(handler, *sc<std::tuple<RefArg<Args>...>*>(args));
                 };
             }
         };

@@ -1,4 +1,5 @@
 #include <hyprutils/animation/BezierCurve.hpp>
+#include <hyprutils/memory/Casts.hpp>
 
 #include <array>
 #include <cmath>
@@ -21,7 +22,7 @@ void CBezierCurve::setup(const std::array<Vector2D, 2>& pVec) {
     // bake BAKEDPOINTS points for faster lookups
     // T -> X ( / BAKEDPOINTS )
     for (int i = 0; i < BAKEDPOINTS; ++i) {
-        float const t     = (i + 1) / (float)BAKEDPOINTS;
+        float const t     = (i + 1) / sc<float>(BAKEDPOINTS);
         m_aPointsBaked[i] = Vector2D(getXForT(t), getYForT(t));
     }
 

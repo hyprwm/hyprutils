@@ -1,6 +1,7 @@
 #include <hyprutils/math/Mat3x3.hpp>
 #include <hyprutils/math/Vector2D.hpp>
 #include <hyprutils/math/Box.hpp>
+#include <hyprutils/memory/Casts.hpp>
 #include <cmath>
 #include <unordered_map>
 #include <format>
@@ -98,7 +99,7 @@ Mat3x3& Mat3x3::rotate(float rot) {
 }
 
 Mat3x3& Mat3x3::scale(const Vector2D& scale_) {
-    multiply(std::array<float, 9>{(float)scale_.x, 0.0f, 0.0f, 0.0f, (float)scale_.y, 0.0f, 0.0f, 0.0f, 1.0f});
+    multiply(std::array<float, 9>{sc<float>(scale_.x), 0.0f, 0.0f, 0.0f, sc<float>(scale_.y), 0.0f, 0.0f, 0.0f, 1.0f});
     return *this;
 }
 
@@ -107,7 +108,7 @@ Mat3x3& Mat3x3::scale(const float scale_) {
 }
 
 Mat3x3& Mat3x3::translate(const Vector2D& offset) {
-    multiply(std::array<float, 9>{1.0f, 0.0f, (float)offset.x, 0.0f, 1.0f, (float)offset.y, 0.0f, 0.0f, 1.0f});
+    multiply(std::array<float, 9>{1.0f, 0.0f, sc<float>(offset.x), 0.0f, 1.0f, sc<float>(offset.y), 0.0f, 0.0f, 1.0f});
     return *this;
 }
 
