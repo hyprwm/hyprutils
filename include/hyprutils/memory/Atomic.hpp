@@ -143,7 +143,7 @@ namespace Hyprutils::Memory {
             // -> must unlock BEFORE reset
             // not last ref?
             // -> must unlock AFTER reset
-            auto& mutex = ((Atomic_::impl<T>*)m_ptr.impl_)->getMutex();
+            auto& mutex = sc<Atomic_::impl<T>*>(m_ptr.impl_)->getMutex();
             mutex.lock();
 
             if (m_ptr.impl_->ref() > 1) {
@@ -208,7 +208,7 @@ namespace Hyprutils::Memory {
 
       private:
         std::lock_guard<std::recursive_mutex> implLockGuard() const {
-            return ((Atomic_::impl<T>*)m_ptr.impl_)->lockGuard();
+            return sc<Atomic_::impl<T>*>(m_ptr.impl_)->lockGuard();
         }
 
         CSharedPointer<T> m_ptr;
@@ -316,7 +316,7 @@ namespace Hyprutils::Memory {
             // -> must unlock BEFORE reset
             // not last ref?
             // -> must unlock AFTER reset
-            auto& mutex = ((Atomic_::impl<T>*)m_ptr.impl_)->getMutex();
+            auto& mutex = sc<Atomic_::impl<T>*>(m_ptr.impl_)->getMutex();
             mutex.lock();
             if (m_ptr.impl_->ref() == 0 && m_ptr.impl_->wref() == 1) {
                 mutex.unlock();
@@ -379,7 +379,7 @@ namespace Hyprutils::Memory {
 
       private:
         std::lock_guard<std::recursive_mutex> implLockGuard() const {
-            return ((Atomic_::impl<T>*)m_ptr.impl_)->lockGuard();
+            return sc<Atomic_::impl<T>*>(m_ptr.impl_)->lockGuard();
         }
 
         CWeakPointer<T> m_ptr;

@@ -62,7 +62,7 @@ class CMyAnimationManager : public CAnimationManager {
 
             switch (PAV->m_Type) {
                 case eAVTypes::INT: {
-                    auto avInt = dynamic_cast<CAnimatedVariable<int>*>(PAV.get());
+                    auto avInt = dc<CAnimatedVariable<int>*>(PAV.get());
                     if (!avInt)
                         std::cout << Colors::RED << "Dynamic cast upcast failed" << Colors::RESET;
 
@@ -70,7 +70,7 @@ class CMyAnimationManager : public CAnimationManager {
                     avInt->value()   = avInt->begun() + (DELTA * POINTY);
                 } break;
                 case eAVTypes::TEST: {
-                    auto avCustom = dynamic_cast<CAnimatedVariable<SomeTestType>*>(PAV.get());
+                    auto avCustom = dc<CAnimatedVariable<SomeTestType>*>(PAV.get());
                     if (!avCustom)
                         std::cout << Colors::RED << "Dynamic cast upcast failed" << Colors::RESET;
 
@@ -93,7 +93,7 @@ class CMyAnimationManager : public CAnimationManager {
         constexpr const eAVTypes EAVTYPE = std::is_same_v<VarType, int> ? eAVTypes::INT : eAVTypes::TEST;
         const auto               PAV     = makeShared<CGenericAnimatedVariable<VarType, EmtpyContext>>();
 
-        PAV->create(EAVTYPE, static_cast<CAnimationManager*>(this), PAV, v);
+        PAV->create(EAVTYPE, sc<CAnimationManager*>(this), PAV, v);
         PAV->setConfig(animationTree.getConfig(animationConfigName));
         av = std::move(PAV);
     }
@@ -348,7 +348,7 @@ int main(int argc, char** argv, char** envp) {
     *s.m_iA = 5;
     s.m_iA->setCallbackOnEnd([&endCallbackRan](WP<CBaseAnimatedVariable> v) {
         endCallbackRan++;
-        const auto PAV = dynamic_cast<CAnimatedVariable<int>*>(v.lock().get());
+        const auto PAV = dc<CAnimatedVariable<int>*>(v.lock().get());
 
         *PAV = 10;
         PAV->setCallbackOnEnd([&endCallbackRan](WP<CBaseAnimatedVariable> v) { endCallbackRan++; });

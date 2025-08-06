@@ -1,4 +1,6 @@
 #pragma once
+#include "hyprutils/memory/Casts.hpp"
+
 #include <cstdint>
 
 namespace Hyprutils::Math {
@@ -18,7 +20,7 @@ namespace Hyprutils::Math {
 
         CEdges() = default;
         CEdges(eEdges edges) : m_edges(edges) {}
-        CEdges(uint8_t edges) : m_edges(static_cast<eEdges>(edges)) {}
+        CEdges(uint8_t edges) : m_edges(Memory::sc<eEdges>(edges)) {}
 
         bool operator==(const CEdges& other) {
             return m_edges == other.m_edges;
@@ -80,28 +82,28 @@ namespace Hyprutils::Math {
             * @param top The state the top edge should be set to.
             */
         void setTop(bool top) {
-            m_edges = static_cast<eEdges>((m_edges & ~TOP) | (TOP * top));
+            m_edges = Memory::sc<eEdges>((m_edges & ~TOP) | (TOP * top));
         }
 
         /**
             * @param left The state the left edge should be set to.
             */
         void setLeft(bool left) {
-            m_edges = static_cast<eEdges>((m_edges & ~LEFT) | (LEFT * left));
+            m_edges = Memory::sc<eEdges>((m_edges & ~LEFT) | (LEFT * left));
         }
 
         /**
             * @param bottom The state the bottom edge should be set to.
             */
         void setBottom(bool bottom) {
-            m_edges = static_cast<eEdges>((m_edges & ~BOTTOM) | (BOTTOM * bottom));
+            m_edges = Memory::sc<eEdges>((m_edges & ~BOTTOM) | (BOTTOM * bottom));
         }
 
         /**
             * @param right The state the right edge should be set to.
             */
         void setRight(bool right) {
-            m_edges = static_cast<eEdges>((m_edges & ~RIGHT) | (RIGHT * right));
+            m_edges = Memory::sc<eEdges>((m_edges & ~RIGHT) | (RIGHT * right));
         }
 
         eEdges m_edges = NONE;

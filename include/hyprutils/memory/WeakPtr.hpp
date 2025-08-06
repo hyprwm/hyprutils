@@ -2,6 +2,7 @@
 
 #include "./SharedPtr.hpp"
 #include "./UniquePtr.hpp"
+#include "./Casts.hpp"
 
 /*
     This is a Hyprland implementation of std::weak_ptr.
@@ -91,7 +92,7 @@ namespace Hyprutils {
             /* create a weak ptr from a shared ptr with assignment */
             template <typename U>
             validHierarchy<const CWeakPointer<U>&> operator=(const CSharedPointer<U>& rhs) {
-                if (reinterpret_cast<uintptr_t>(impl_) == reinterpret_cast<uintptr_t>(rhs.impl_))
+                if (rc<uintptr_t>(impl_) == rc<uintptr_t>(rhs.impl_))
                     return *this;
 
                 decrementWeak();
@@ -162,15 +163,15 @@ namespace Hyprutils {
             }
 
             bool operator()(const CWeakPointer& lhs, const CWeakPointer& rhs) const {
-                return reinterpret_cast<uintptr_t>(lhs.impl_) < reinterpret_cast<uintptr_t>(rhs.impl_);
+                return rc<uintptr_t>(lhs.impl_) < rc<uintptr_t>(rhs.impl_);
             }
 
             bool operator<(const CWeakPointer& rhs) const {
-                return reinterpret_cast<uintptr_t>(impl_) < reinterpret_cast<uintptr_t>(rhs.impl_);
+                return rc<uintptr_t>(impl_) < rc<uintptr_t>(rhs.impl_);
             }
 
             T* get() const {
-                return impl_ ? static_cast<T*>(impl_->getData()) : nullptr;
+                return impl_ ? sc<T*>(impl_->getData()) : nullptr;
             }
 
             T* operator->() const {

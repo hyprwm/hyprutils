@@ -1,7 +1,9 @@
+#include "hyprutils/memory/Casts.hpp"
 #include <hyprutils/math/Region.hpp>
 #include <cmath>
 
 using namespace Hyprutils::Math;
+using namespace Hyprutils::Memory;
 
 constexpr const int64_t MAX_REGION_SIDE = 10000000;
 
@@ -86,7 +88,7 @@ CRegion& Hyprutils::Math::CRegion::invert(pixman_box32_t* box) {
 }
 
 CRegion& Hyprutils::Math::CRegion::invert(const CBox& box) {
-    pixman_box32 pixmanBox = {.x1 = (int32_t)box.x, .y1 = (int32_t)box.y, .x2 = (int32_t)box.w + (int32_t)box.x, .y2 = (int32_t)box.h + (int32_t)box.y};
+    pixman_box32 pixmanBox = {.x1 = sc<int32_t>(box.x), .y1 = sc<int32_t>(box.y), .x2 = sc<int32_t>(box.w) + sc<int32_t>(box.x), .y2 = sc<int32_t>(box.h) + sc<int32_t>(box.y)};
     return this->invert(&pixmanBox);
 }
 
@@ -104,7 +106,7 @@ CRegion& Hyprutils::Math::CRegion::transform(const eTransform t, double w, doubl
     clear();
 
     for (auto& r : rects) {
-        CBox xfmd{(double)r.x1, (double)r.y1, (double)r.x2 - r.x1, (double)r.y2 - r.y1};
+        CBox xfmd{r.x1, r.y1, r.x2 - r.x1, r.y2 - r.y1};
         xfmd.transform(t, w, h);
         add(xfmd);
     }
@@ -118,7 +120,7 @@ CRegion& Hyprutils::Math::CRegion::expand(double units) {
     clear();
 
     for (auto& r : rects) {
-        CBox b{(double)r.x1 - units, (double)r.y1 - units, (double)r.x2 - r.x1 + (units * 2), (double)r.y2 - r.y1 + (units * 2)};
+        CBox b{sc<double>(r.x1) - units, sc<double>(r.y1) - units, sc<double>(r.x2) - r.x1 + (units * 2), sc<double>(r.y2) - r.y1 + (units * 2)};
         add(b);
     }
 
@@ -171,7 +173,7 @@ std::vector<pixman_box32_t> Hyprutils::Math::CRegion::getRects() const {
 
 CBox Hyprutils::Math::CRegion::getExtents() {
     pixman_box32_t* box = pixman_region32_extents(&m_rRegion);
-    return {(double)box->x1, (double)box->y1, (double)box->x2 - box->x1, (double)box->y2 - box->y1};
+    return {sc<double>(box->x1), sc<double>(box->y1), sc<double>(box->x2) - box->x1, sc<double>(box->y2) - box->y1};
 }
 
 bool Hyprutils::Math::CRegion::containsPoint(const Vector2D& vec) const {

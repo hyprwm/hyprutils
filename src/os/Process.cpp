@@ -1,5 +1,7 @@
 #include <hyprutils/os/Process.hpp>
+#include <hyprutils/memory/Casts.hpp>
 using namespace Hyprutils::OS;
+using namespace Hyprutils::Memory;
 
 #include <csignal>
 #include <cstdio>
@@ -61,7 +63,7 @@ bool Hyprutils::OS::CProcess::runSync() {
         dup2(errPipe[1], 2 /* stderr */);
 
         // build argv
-        std::vector<const char*> argsC;
+        std::vector<char*> argsC;
         argsC.emplace_back(strdup(m_impl->binary.c_str()));
         for (auto& arg : m_impl->args) {
             // TODO: does this leak? Can we just pipe c_str() as the strings won't be realloc'd?
@@ -75,7 +77,7 @@ bool Hyprutils::OS::CProcess::runSync() {
             setenv(n.c_str(), v.c_str(), 1);
         }
 
-        execvp(m_impl->binary.c_str(), (char* const*)argsC.data());
+        execvp(m_impl->binary.c_str(), argsC.data());
         exit(1);
     } else {
         // parent
@@ -129,7 +131,7 @@ bool Hyprutils::OS::CProcess::runSync() {
 
             if (pollfds[0].revents & POLLIN) {
                 while ((ret = read(outPipe[0], buf.data(), 1023)) > 0) {
-                    m_impl->out += std::string_view{(char*)buf.data(), (size_t)ret};
+                    m_impl->out += std::string_view{buf.data(), sc<size_t>(ret)};
                 }
 
                 buf.fill(0);
@@ -137,7 +139,7 @@ bool Hyprutils::OS::CProcess::runSync() {
 
             if (pollfds[1].revents & POLLIN) {
                 while ((ret = read(errPipe[0], buf.data(), 1023)) > 0) {
-                    m_impl->err += std::string_view{(char*)buf.data(), (size_t)ret};
+                    m_impl->err += std::string_view{buf.data(), sc<size_t>(ret)};
                 }
 
                 buf.fill(0);
@@ -146,13 +148,13 @@ bool Hyprutils::OS::CProcess::runSync() {
 
         // Final reads. Nonblock, so its ok.
         while ((ret = read(outPipe[0], buf.data(), 1023)) > 0) {
-            m_impl->out += std::string_view{(char*)buf.data(), (size_t)ret};
+            m_impl->out += std::string_view{buf.data(), sc<size_t>(ret)};
         }
 
         buf.fill(0);
 
         while ((ret = read(errPipe[0], buf.data(), 1023)) > 0) {
-            m_impl->err += std::string_view{(char*)buf.data(), (size_t)ret};
+            m_impl->err += std::string_view{buf.data(), sc<size_t>(ret)};
         }
 
         buf.fill(0);
@@ -198,7 +200,7 @@ bool Hyprutils::OS::CProcess::runAsync() {
             close(socket[0]);
             close(socket[1]);
             // build argv
-            std::vector<const char*> argsC;
+            std::vector<char*> argsC;
             argsC.emplace_back(strdup(m_impl->binary.c_str()));
             for (auto& arg : m_impl->args) {
                 argsC.emplace_back(strdup(arg.c_str()));
@@ -216,7 +218,7 @@ bool Hyprutils::OS::CProcess::runAsync() {
             if (m_impl->stderrFD != -1)
                 dup2(m_impl->stderrFD, 2);
 
-            execvp(m_impl->binary.c_str(), (char* const*)argsC.data());
+            execvp(m_impl->binary.c_str(), argsC.data());
             _exit(0);
         }
         close(socket[0]);
