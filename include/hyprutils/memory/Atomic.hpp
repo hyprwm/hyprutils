@@ -1,5 +1,4 @@
 #pragma once
-#pragma once
 
 #include "./ImplBase.hpp"
 #include "./SharedPtr.hpp"
