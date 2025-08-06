@@ -3,6 +3,7 @@
 #include <cmath>
 
 using namespace Hyprutils::Math;
+using namespace Hyprutils::Memory;
 
 constexpr const int64_t MAX_REGION_SIDE = 10000000;
 

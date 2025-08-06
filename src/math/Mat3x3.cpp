@@ -7,6 +7,7 @@
 #include <format>
 
 using namespace Hyprutils::Math;
+using namespace Hyprutils::Memory;
 
 static std::unordered_map<eTransform, Mat3x3> transforms = {
     {HYPRUTILS_TRANSFORM_NORMAL, std::array<float, 9>{1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f}},

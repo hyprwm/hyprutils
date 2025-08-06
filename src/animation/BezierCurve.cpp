@@ -6,6 +6,7 @@
 
 using namespace Hyprutils::Animation;
 using namespace Hyprutils::Math;
+using namespace Hyprutils::Memory;
 
 void CBezierCurve::setup(const std::array<Vector2D, 2>& pVec) {
     // Avoid reallocations by reserving enough memory upfront

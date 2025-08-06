@@ -1,6 +1,7 @@
 #include <hyprutils/os/Process.hpp>
 #include <hyprutils/memory/Casts.hpp>
 using namespace Hyprutils::OS;
+using namespace Hyprutils::Memory;
 
 #include <csignal>
 #include <cstdio>

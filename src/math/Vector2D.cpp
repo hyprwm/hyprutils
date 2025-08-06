@@ -5,6 +5,7 @@
 #include <cmath>
 
 using namespace Hyprutils::Math;
+using namespace Hyprutils::Memory;
 
 Hyprutils::Math::Vector2D::Vector2D(double xx, double yy) : x(xx), y(yy) {
     ;
