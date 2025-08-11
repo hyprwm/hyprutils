@@ -134,7 +134,7 @@ namespace Hyprutils {
         };
 
         template <typename U, typename... Args>
-            [[nodiscard]] inline CUniquePointer<U> makeUnique(Args&&... args) {
+        [[nodiscard]] inline CUniquePointer<U> makeUnique(Args&&... args) {
             return CUniquePointer<U>(new U(std::forward<Args>(args)...));
         }
     }
