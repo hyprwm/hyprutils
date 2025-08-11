@@ -61,9 +61,7 @@ namespace Hyprutils {
             }
 
             /* creates an empty shared pointer with no implementation */
-            CSharedPointer() noexcept {
-                ; // empty
-            }
+            CSharedPointer() noexcept = default;
 
             /* creates an empty shared pointer with no implementation */
             CSharedPointer(std::nullptr_t) noexcept {

@@ -42,9 +42,7 @@ namespace Hyprutils {
             }
 
             /* creates an empty unique pointer with no implementation */
-            CUniquePointer() noexcept {
-                ; // empty
-            }
+            CUniquePointer() noexcept = default;
 
             /* creates an empty unique pointer with no implementation */
             CUniquePointer(std::nullptr_t) noexcept {

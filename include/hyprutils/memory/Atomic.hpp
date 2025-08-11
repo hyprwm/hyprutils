@@ -83,9 +83,7 @@ namespace Hyprutils::Memory {
             std::swap(m_ptr, ref.m_ptr);
         }
 
-        CAtomicSharedPointer() noexcept {
-            ; // empty
-        }
+        CAtomicSharedPointer() noexcept = default;
 
         CAtomicSharedPointer(std::nullptr_t) noexcept {
             ; // empty
@@ -262,9 +260,7 @@ namespace Hyprutils::Memory {
             m_ptr   = ref.m_ptr;
         }
 
-        CAtomicWeakPointer() noexcept {
-            ; // empty
-        }
+        CAtomicWeakPointer() noexcept = default;
 
         CAtomicWeakPointer(std::nullptr_t) noexcept {
             ; // empty

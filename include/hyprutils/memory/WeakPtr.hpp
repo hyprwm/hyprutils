@@ -102,9 +102,7 @@ namespace Hyprutils {
             }
 
             /* create an empty weak ptr */
-            CWeakPointer() {
-                ;
-            }
+            CWeakPointer() noexcept = default;
 
             ~CWeakPointer() {
                 decrementWeak();
