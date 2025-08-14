@@ -42,9 +42,7 @@ namespace Hyprutils {
             }
 
             /* creates an empty unique pointer with no implementation */
-            CUniquePointer() noexcept {
-                ; // empty
-            }
+            CUniquePointer() noexcept = default;
 
             /* creates an empty unique pointer with no implementation */
             CUniquePointer(std::nullptr_t) noexcept {
@@ -136,7 +134,7 @@ namespace Hyprutils {
         };
 
         template <typename U, typename... Args>
-        static CUniquePointer<U> makeUnique(Args&&... args) {
+        [[nodiscard]] inline CUniquePointer<U> makeUnique(Args&&... args) {
             return CUniquePointer<U>(new U(std::forward<Args>(args)...));
         }
     }

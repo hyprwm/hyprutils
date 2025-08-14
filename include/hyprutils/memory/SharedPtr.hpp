@@ -61,9 +61,7 @@ namespace Hyprutils {
             }
 
             /* creates an empty shared pointer with no implementation */
-            CSharedPointer() noexcept {
-                ; // empty
-            }
+            CSharedPointer() noexcept = default;
 
             /* creates an empty shared pointer with no implementation */
             CSharedPointer(std::nullptr_t) noexcept {
@@ -184,7 +182,7 @@ namespace Hyprutils {
         };
 
         template <typename U, typename... Args>
-        static CSharedPointer<U> makeShared(Args&&... args) {
+        [[nodiscard]] inline CSharedPointer<U> makeShared(Args&&... args) {
             return CSharedPointer<U>(new U(std::forward<Args>(args)...));
         }
 
