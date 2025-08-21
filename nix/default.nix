@@ -8,13 +8,16 @@
   version ? "git",
   doCheck ? false,
   debug ? false,
+  # whether to use the mold linker
+  # disable this for older machines without SSE4_2 and AVX2 support
+  withMold ? true,
 }: let
   inherit (builtins) foldl';
   inherit (lib.lists) flatten;
   inherit (lib.strings) optionalString;
 
   adapters = flatten [
-    stdenvAdapters.useMoldLinker
+    (lib.optional withMold stdenvAdapters.useMoldLinker)
     (lib.optional debug stdenvAdapters.keepDebugInfo)
   ];
 
