@@ -19,7 +19,7 @@ struct Hyprutils::OS::CProcess::impl {
     std::vector<std::string>                         args;
     std::vector<std::pair<std::string, std::string>> env;
     pid_t                                            grandchildPid = 0;
-    int                                              stdoutFD = -1, stderrFD = -1, exitCode = 0;
+    int                                              stdoutFD = -1, stderrFD = -1, exitCode = 0, stdinFD = -1;
 };
 
 Hyprutils::OS::CProcess::CProcess(const std::string& binary, const std::vector<std::string>& args) : m_impl(new impl()) {
@@ -213,10 +213,18 @@ bool Hyprutils::OS::CProcess::runAsync() {
                 setenv(n.c_str(), v.c_str(), 1);
             }
 
-            if (m_impl->stdoutFD != -1)
-                dup2(m_impl->stdoutFD, 1);
-            if (m_impl->stderrFD != -1)
-                dup2(m_impl->stderrFD, 2);
+            if (m_impl->stdinFD != -1) {
+                dup2(m_impl->stdinFD, STDIN_FILENO);
+                close(m_impl->stdinFD);
+            }
+            if (m_impl->stdoutFD != -1) {
+                dup2(m_impl->stdoutFD, STDOUT_FILENO);
+                close(m_impl->stdoutFD);
+            }
+            if (m_impl->stderrFD != -1) {
+                dup2(m_impl->stderrFD, STDERR_FILENO);
+                close(m_impl->stderrFD);
+            }
 
             execvp(m_impl->binary.c_str(), argsC.data());
             _exit(0);
@@ -262,6 +270,10 @@ pid_t Hyprutils::OS::CProcess::pid() {
 
 int Hyprutils::OS::CProcess::exitCode() {
     return m_impl->exitCode;
+}
+
+void Hyprutils::OS::CProcess::setStdinFD(int fd) {
+    m_impl->stdinFD = fd;
 }
 
 void Hyprutils::OS::CProcess::setStdoutFD(int fd) {
