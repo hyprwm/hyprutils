@@ -23,6 +23,8 @@ namespace Hyprutils {
             void      addEnv(const std::string& name, const std::string& value);
 
             // only for async, sync doesn't make sense
+            void setStdinFD(int fd);
+            // only for async, sync doesn't make sense
             void setStdoutFD(int fd);
             // only for async, sync doesn't make sense
             void setStderrFD(int fd);
