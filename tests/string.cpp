@@ -39,6 +39,15 @@ int main(int argc, char** argv, char** envp) {
     EXPECT(list[0], "hello");
     EXPECT(list[1], "world!");
 
+    CVarList list2("test:test\\:test", 0, ':', true, true);
+    EXPECT(list2[0], "test");
+    EXPECT(list2[1], "test:test");
+
+    CVarList list3("test:test\\:test", 0, ':', true);
+    EXPECT(list3[0], "test");
+    EXPECT(list3[1], "test\\");
+    EXPECT(list3[2], "test");
+
     CConstVarList listConst("hello    world!", 0, 's', true);
     EXPECT(listConst[0], "hello");
     EXPECT(listConst[1], "world!");
