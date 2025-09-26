@@ -8,7 +8,7 @@ namespace Hyprutils {
         namespace Impl_ {
             class impl_base {
               public:
-                virtual ~impl_base() {};
+                virtual ~impl_base() = default;
 
                 virtual void         inc() noexcept         = 0;
                 virtual void         dec() noexcept         = 0;
@@ -57,13 +57,13 @@ namespace Hyprutils {
                     // this way, weak pointers will still be able to
                     // reference and use, but no longer create shared ones.
                     _destroying = true;
-                    __deleter(_data);
+                    _deleter(_data);
                     // now, we can reset the data and call it a day.
                     _data       = nullptr;
                     _destroying = false;
                 }
 
-                std::default_delete<T> __deleter{};
+                std::default_delete<T> _deleter{};
 
                 //
                 virtual void inc() noexcept {

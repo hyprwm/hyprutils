@@ -22,9 +22,9 @@ namespace Hyprutils {
         class CSharedPointer {
           public:
             template <typename X>
-            using validHierarchy = typename std::enable_if<std::is_assignable<CSharedPointer<T>&, X>::value, CSharedPointer&>::type;
+            using validHierarchy = std::enable_if_t<std::is_assignable_v<CSharedPointer<T>&, X>, CSharedPointer&>;
             template <typename X>
-            using isConstructible = typename std::enable_if<std::is_constructible<T&, X&>::value>::type;
+            using isConstructible = std::enable_if_t<std::is_constructible_v<T&, X&>>;
 
             /* creates a new shared pointer managing a resource
                avoid calling. Could duplicate ownership. Prefer makeShared */
@@ -95,7 +95,7 @@ namespace Hyprutils {
                 return *this;
             }
 
-            CSharedPointer& operator=(CSharedPointer&& rhs) {
+            CSharedPointer& operator=(CSharedPointer&& rhs) noexcept {
                 std::swap(impl_, rhs.impl_);
                 return *this;
             }

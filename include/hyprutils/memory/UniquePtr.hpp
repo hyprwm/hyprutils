@@ -16,9 +16,9 @@ namespace Hyprutils {
         class CUniquePointer {
           public:
             template <typename X>
-            using validHierarchy = typename std::enable_if<std::is_assignable<CUniquePointer<T>&, X>::value, CUniquePointer&>::type;
+            using validHierarchy = std::enable_if_t<std::is_assignable_v<CUniquePointer<T>&, X>, CUniquePointer&>;
             template <typename X>
-            using isConstructible = typename std::enable_if<std::is_constructible<T&, X&>::value>::type;
+            using isConstructible = std::enable_if_t<std::is_constructible_v<T&, X&>>;
 
             /* creates a new unique pointer managing a resource
                avoid calling. Could duplicate ownership. Prefer makeUnique */
@@ -62,7 +62,7 @@ namespace Hyprutils {
                 return *this;
             }
 
-            CUniquePointer& operator=(CUniquePointer&& rhs) {
+            CUniquePointer& operator=(CUniquePointer&& rhs) noexcept {
                 std::swap(impl_, rhs.impl_);
                 return *this;
             }
