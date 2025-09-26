@@ -16,9 +16,9 @@ namespace Hyprutils {
         class CWeakPointer {
           public:
             template <typename X>
-            using validHierarchy = typename std::enable_if<std::is_assignable<CWeakPointer<T>&, X>::value, CWeakPointer&>::type;
+            using validHierarchy = std::enable_if_t<std::is_assignable_v<CWeakPointer<T>&, X>, CWeakPointer&>;
             template <typename X>
-            using isConstructible = typename std::enable_if<std::is_constructible<T&, X&>::value>::type;
+            using isConstructible = std::enable_if_t<std::is_constructible_v<T&, X&>>;
 
             /* create a weak ptr from a reference */
             template <typename U, typename = isConstructible<U>>

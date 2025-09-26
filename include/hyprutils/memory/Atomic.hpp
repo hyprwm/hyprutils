@@ -50,9 +50,9 @@ namespace Hyprutils::Memory {
     template <typename T>
     class CAtomicSharedPointer {
         template <typename X>
-        using isConstructible = typename std::enable_if<std::is_constructible<T&, X&>::value>::type;
+        using isConstructible = std::enable_if_t<std::is_constructible_v<T&, X&>>;
         template <typename X>
-        using validHierarchy = typename std::enable_if<std::is_assignable<CAtomicSharedPointer<T>&, X>::value, CAtomicSharedPointer&>::type;
+        using validHierarchy = std::enable_if_t<std::is_assignable_v<CAtomicSharedPointer<T>&, X>, CAtomicSharedPointer&>;
 
       public:
         explicit CAtomicSharedPointer(Impl_::impl_base* impl) noexcept : m_ptr(impl) {}
@@ -221,9 +221,9 @@ namespace Hyprutils::Memory {
     class CAtomicWeakPointer {
 
         template <typename X>
-        using isConstructible = typename std::enable_if<std::is_constructible<T&, X&>::value>::type;
+        using isConstructible = std::enable_if_t<std::is_constructible_v<T&, X&>>;
         template <typename X>
-        using validHierarchy = typename std::enable_if<std::is_assignable<CAtomicWeakPointer<T>&, X>::value, CAtomicWeakPointer&>::type;
+        using validHierarchy = std::enable_if_t<std::is_assignable_v<CAtomicWeakPointer<T>&, X>, CAtomicWeakPointer&>;
 
       public:
         CAtomicWeakPointer(const CAtomicWeakPointer<T>& ref) {
