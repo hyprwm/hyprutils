@@ -145,16 +145,14 @@ CRegion& Hyprutils::Math::CRegion::scale(const Vector2D& scale) {
     if (scale == Vector2D{1, 1})
         return *this;
 
-    auto rects = getRects();
+    int  rectsNum = 0;
+    auto RECTSARR = pixman_region32_rectangles(&m_rRegion, &rectsNum);
 
-    clear();
-
-    for (auto& r : rects) {
-        r.x1 = std::floor(r.x1 * scale.x);
-        r.y1 = std::floor(r.y1 * scale.y);
-        r.x2 = std::ceil(r.x2 * scale.x);
-        r.y2 = std::ceil(r.y2 * scale.y);
-        add(&r);
+    for (int i = 0; i < rectsNum; ++i) {
+        RECTSARR[i].x1 = std::floor(RECTSARR[i].x1 * scale.x);
+        RECTSARR[i].x2 = std::ceil(RECTSARR[i].x2 * scale.x);
+        RECTSARR[i].y1 = std::floor(RECTSARR[i].y1 * scale.y);
+        RECTSARR[i].y2 = std::ceil(RECTSARR[i].y2 * scale.y);
     }
 
     return *this;
