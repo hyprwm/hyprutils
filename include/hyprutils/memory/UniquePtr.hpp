@@ -22,8 +22,7 @@ namespace Hyprutils {
 
             /* creates a new unique pointer managing a resource
                avoid calling. Could duplicate ownership. Prefer makeUnique */
-            explicit CUniquePointer(T* object) noexcept {
-                impl_ = new Impl_::impl<T>(object, false);
+            explicit CUniquePointer(T* object) noexcept : impl_(new Impl_::impl<T>(object, false)) {
                 increment();
             }
 
