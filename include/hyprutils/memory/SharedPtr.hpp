@@ -28,20 +28,17 @@ namespace Hyprutils {
 
             /* creates a new shared pointer managing a resource
                avoid calling. Could duplicate ownership. Prefer makeShared */
-            explicit CSharedPointer(T* object) noexcept {
-                impl_ = new Impl_::impl<T>(object);
+            explicit CSharedPointer(T* object) noexcept : impl_(new Impl_::impl<T>(object)) {
                 increment();
             }
 
             /* creates a shared pointer from a reference */
             template <typename U, typename = isConstructible<U>>
-            CSharedPointer(const CSharedPointer<U>& ref) noexcept {
-                impl_ = ref.impl_;
+            CSharedPointer(const CSharedPointer<U>& ref) noexcept : impl_(ref.impl_) {
                 increment();
             }
 
-            CSharedPointer(const CSharedPointer& ref) noexcept {
-                impl_ = ref.impl_;
+            CSharedPointer(const CSharedPointer& ref) noexcept : impl_(ref.impl_) {
                 increment();
             }
 
@@ -55,8 +52,7 @@ namespace Hyprutils {
             }
 
             /* allows weakPointer to create from an impl */
-            CSharedPointer(Impl_::impl_base* implementation) noexcept {
-                impl_ = implementation;
+            CSharedPointer(Impl_::impl_base* implementation) noexcept : impl_(implementation) {
                 increment();
             }
 
