@@ -5,21 +5,6 @@
 #include <cmath>
 
 using namespace Hyprutils::Math;
-using namespace Hyprutils::Memory;
-
-Hyprutils::Math::Vector2D::Vector2D(double xx, double yy) : x(xx), y(yy) {
-    ;
-}
-
-Hyprutils::Math::Vector2D::Vector2D(int xx, int yy) : x(sc<double>(xx)), y(sc<double>(yy)) {
-    ;
-}
-
-Hyprutils::Math::Vector2D::Vector2D() : x(0), y(0) {
-    ;
-}
-
-Hyprutils::Math::Vector2D::~Vector2D() {}
 
 double Hyprutils::Math::Vector2D::normalize() {
     // get max abs
