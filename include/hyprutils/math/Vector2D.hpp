@@ -1,5 +1,6 @@
 #pragma once
 
+#include <hyprutils/memory/Casts.hpp>
 #include <hyprutils/math/Misc.hpp>
 
 #include <format>
@@ -9,82 +10,86 @@ namespace Hyprutils {
     namespace Math {
         class Vector2D {
           public:
-            Vector2D(double, double);
-            Vector2D(int, int);
-            Vector2D();
-            ~Vector2D();
+            constexpr Vector2D(double xx, double yy) : x(xx), y(yy) {
+                ;
+            }
+            constexpr Vector2D(int xx, int yy) : x(Hyprutils::Memory::sc<double>(xx)), y(Hyprutils::Memory::sc<double>(yy)) {
+                ;
+            }
+            constexpr Vector2D() = default;
+            ~Vector2D()          = default;
 
             double x = 0;
             double y = 0;
 
             // returns the scale
-            double   normalize();
+            double             normalize();
 
-            Vector2D operator+(const Vector2D& a) const {
+            constexpr Vector2D operator+(const Vector2D& a) const {
                 return Vector2D(this->x + a.x, this->y + a.y);
             }
-            Vector2D operator-(const Vector2D& a) const {
+            constexpr Vector2D operator-(const Vector2D& a) const {
                 return Vector2D(this->x - a.x, this->y - a.y);
             }
-            Vector2D operator-() const {
+            constexpr Vector2D operator-() const {
                 return Vector2D(-this->x, -this->y);
             }
-            Vector2D operator*(const double& a) const {
+            constexpr Vector2D operator*(const double& a) const {
                 return Vector2D(this->x * a, this->y * a);
             }
-            Vector2D operator/(const double& a) const {
+            constexpr Vector2D operator/(const double& a) const {
                 return Vector2D(this->x / a, this->y / a);
             }
 
-            bool operator==(const Vector2D& a) const {
+            constexpr bool operator==(const Vector2D& a) const {
                 return a.x == x && a.y == y;
             }
 
-            bool operator!=(const Vector2D& a) const {
+            constexpr bool operator!=(const Vector2D& a) const {
                 return a.x != x || a.y != y;
             }
 
-            Vector2D operator*(const Vector2D& a) const {
+            constexpr Vector2D operator*(const Vector2D& a) const {
                 return Vector2D(this->x * a.x, this->y * a.y);
             }
 
-            Vector2D operator/(const Vector2D& a) const {
+            constexpr Vector2D operator/(const Vector2D& a) const {
                 return Vector2D(this->x / a.x, this->y / a.y);
             }
 
-            bool operator>(const Vector2D& a) const {
+            constexpr bool operator>(const Vector2D& a) const {
                 return this->x > a.x && this->y > a.y;
             }
 
-            bool operator<(const Vector2D& a) const {
+            constexpr bool operator<(const Vector2D& a) const {
                 return this->x < a.x && this->y < a.y;
             }
-            Vector2D& operator+=(const Vector2D& a) {
+            constexpr Vector2D& operator+=(const Vector2D& a) {
                 this->x += a.x;
                 this->y += a.y;
                 return *this;
             }
-            Vector2D& operator-=(const Vector2D& a) {
+            constexpr Vector2D& operator-=(const Vector2D& a) {
                 this->x -= a.x;
                 this->y -= a.y;
                 return *this;
             }
-            Vector2D& operator*=(const Vector2D& a) {
+            constexpr Vector2D& operator*=(const Vector2D& a) {
                 this->x *= a.x;
                 this->y *= a.y;
                 return *this;
             }
-            Vector2D& operator/=(const Vector2D& a) {
+            constexpr Vector2D& operator/=(const Vector2D& a) {
                 this->x /= a.x;
                 this->y /= a.y;
                 return *this;
             }
-            Vector2D& operator*=(const double& a) {
+            constexpr Vector2D& operator*=(const double& a) {
                 this->x *= a;
                 this->y *= a;
                 return *this;
             }
-            Vector2D& operator/=(const double& a) {
+            constexpr Vector2D& operator/=(const double& a) {
                 this->x /= a;
                 this->y /= a;
                 return *this;
