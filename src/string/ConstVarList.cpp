@@ -25,8 +25,8 @@ CConstVarList::CConstVarList(const std::string& in, const size_t lastArgNo, cons
     if (in.empty())
         return;
 
-    size_t      idx = 0;
-    size_t      pos = 0;
+    size_t idx = 0;
+    size_t pos = 0;
     std::ranges::replace_if(m_str, [&](const char& c) { return delim == 's' ? std::isspace(c) : c == delim; }, 0);
 
     for (const auto& s : m_str | std::views::split(0)) {

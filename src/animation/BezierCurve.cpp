@@ -9,12 +9,21 @@ using namespace Hyprutils::Math;
 using namespace Hyprutils::Memory;
 
 void CBezierCurve::setup(const std::array<Vector2D, 2>& pVec) {
-    // Avoid reallocations by reserving enough memory upfront
-    m_vPoints.resize(pVec.size() + 2);
-    m_vPoints = {
+    setup4(std::array<Vector2D, 4>{
         Vector2D(0, 0),   // Start point
         pVec[0], pVec[1], // Control points
         Vector2D(1, 1)    // End point
+    });
+}
+
+void CBezierCurve::setup4(const std::array<Vector2D, 4>& pVec) {
+    // Avoid reallocations by reserving enough memory upfront
+    m_vPoints.resize(4);
+    m_vPoints = {
+        pVec[0],
+        pVec[1],
+        pVec[2],
+        pVec[3],
     };
 
     if (m_vPoints.size() != 4)

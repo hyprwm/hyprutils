@@ -6,7 +6,7 @@ using namespace Hyprutils::Animation;
 using namespace Hyprutils::Memory;
 
 static const std::string DEFAULTBEZIERNAME = "default";
-static const std::string DEFAULTSTYLE = "";
+static const std::string DEFAULTSTYLE      = "";
 
 #define SP CSharedPointer
 #define WP CWeakPointer

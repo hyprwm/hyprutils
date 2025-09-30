@@ -27,5 +27,3 @@ namespace Hyprutils::Memory {
         return std::bit_cast<To>(from);
     }
 }
-
-

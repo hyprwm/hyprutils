@@ -14,7 +14,9 @@ namespace Hyprutils {
         class CBezierCurve {
           public:
             /* Calculates a cubic bezier curve based on 2 control points (EXCLUDES the 0,0 and 1,1 points). */
-            void  setup(const std::array<Hyprutils::Math::Vector2D, 2>& points);
+            void setup(const std::array<Hyprutils::Math::Vector2D, 2>& points);
+            /* Calculates a cubic bezier curve based on 4 control points. */
+            void  setup4(const std::array<Hyprutils::Math::Vector2D, 4>& points);
 
             float getYForT(float const& t) const;
             float getXForT(float const& t) const;
