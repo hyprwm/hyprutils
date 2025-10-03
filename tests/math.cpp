@@ -104,6 +104,20 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(std::abs(expected.getMatrix().at(8) - matrixBox.getMatrix().at(8)) < 0.1, true);
     }
 
+    // Test Region Scaling
+    {
+        CRegion rg(CBox{{20, 20}, {40, 40}});
+        
+        auto extents = rg.getExtents();
+        EXPECT_VECTOR2D(extents.pos(), Vector2D(20, 20));
+        EXPECT_VECTOR2D(extents.size(), Vector2D(40, 40));
+
+        rg.scale(2);
+        extents = rg.getExtents();
+        EXPECT_VECTOR2D(extents.pos(), Vector2D(40, 40));
+        EXPECT_VECTOR2D(extents.size(), Vector2D(80, 80));
+    }
+
     {
         Vector2D original(30, 40);
         Vector2D monitorSize(100, 200);
