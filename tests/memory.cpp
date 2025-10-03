@@ -92,6 +92,38 @@ static int testAtomicImpl() {
         foo->bar      = foo;
     }
 
+    { // This tests destroying the data when storing the base class of a type
+        class ITest {
+          public:
+            size_t num = 0;
+            ITest() : num(1234) {};
+        };
+
+        class CA : public ITest {
+          public:
+            size_t num2 = 0;
+            CA() : ITest(), num2(4321) {};
+        };
+
+        class CB : public ITest {
+          public:
+            int num2 = 0;
+            CB() : ITest(), num2(-1) {};
+        };
+
+        ASP<ITest> genericAtomic = nullptr;
+        SP<ITest>  genericNormal = nullptr;
+        {
+            auto derivedAtomic = makeAtomicShared<CA>();
+            auto derivedNormal = makeShared<CA>();
+            genericAtomic      = derivedAtomic;
+            genericNormal      = derivedNormal;
+        }
+
+        EXPECT(!!genericAtomic, true);
+        EXPECT(!!genericNormal, true);
+    }
+
     return ret;
 }
 
@@ -149,6 +181,5 @@ int main(int argc, char** argv, char** envp) {
     EXPECT(*intPtr2, 10);
 
     EXPECT(testAtomicImpl(), 0);
-
     return ret;
 }

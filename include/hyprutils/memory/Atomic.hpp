@@ -23,12 +23,11 @@
 
 namespace Hyprutils::Memory {
     namespace Atomic_ {
-        template <typename T>
-        class impl : public Impl_::impl<T> {
+        class impl : public Impl_::impl_base {
             std::recursive_mutex m_mutex;
 
           public:
-            impl(T* data, bool lock = true) noexcept : Impl_::impl<T>(data, lock) {
+            impl(void* data, DeleteFn deleter) noexcept : Impl_::impl_base(data, deleter, true) {
                 ;
             }
 
@@ -55,7 +54,13 @@ namespace Hyprutils::Memory {
         using validHierarchy = std::enable_if_t<std::is_assignable_v<CAtomicSharedPointer<T>&, X>, CAtomicSharedPointer&>;
 
       public:
-        explicit CAtomicSharedPointer(Impl_::impl_base* impl) noexcept : m_ptr(impl) {}
+        explicit CAtomicSharedPointer(T* object) noexcept : m_ptr(new Atomic_::impl(sc<void*>(object), _delete)) {
+            ;
+        }
+
+        CAtomicSharedPointer(Impl_::impl_base* impl) noexcept : m_ptr(impl) {
+            ;
+        }
 
         CAtomicSharedPointer(const CAtomicSharedPointer<T>& ref) {
             if (!ref.m_ptr.impl_)
@@ -141,7 +146,7 @@ namespace Hyprutils::Memory {
             // -> must unlock BEFORE reset
             // not last ref?
             // -> must unlock AFTER reset
-            auto& mutex = sc<Atomic_::impl<T>*>(m_ptr.impl_)->getMutex();
+            auto& mutex = sc<Atomic_::impl*>(m_ptr.impl_)->getMutex();
             mutex.lock();
 
             if (m_ptr.impl_->ref() > 1) {
@@ -152,7 +157,11 @@ namespace Hyprutils::Memory {
 
             if (m_ptr.impl_->wref() == 0) {
                 mutex.unlock(); // Don't hold the mutex when destroying it
-                m_ptr.reset();
+
+                m_ptr.impl_->destroy();
+                delete sc<Atomic_::impl*>(m_ptr.impl_);
+                m_ptr.impl_ = nullptr;
+
                 // mutex invalid
                 return;
             } else {
@@ -163,12 +172,18 @@ namespace Hyprutils::Memory {
                 // To avoid this altogether, keep a weak pointer here.
                 // This guarantees that impl_ is still valid after the reset.
                 CWeakPointer<T> guard = m_ptr;
-                m_ptr.reset();
+                m_ptr.reset(); // destroys the data
 
                 // Now we can safely check if guard is the last wref.
                 if (guard.impl_->wref() == 1) {
                     mutex.unlock();
-                    return; // ~guard destroys impl_ and mutex
+
+                    // destroy impl_ (includes the mutex)
+                    delete sc<Atomic_::impl*>(guard.impl_);
+                    guard.impl_ = nullptr;
+
+                    // mutex invalid
+                    return;
                 }
 
                 guard.reset();
@@ -205,8 +220,12 @@ namespace Hyprutils::Memory {
         }
 
       private:
+        static void _delete(void* p) {
+            std::default_delete<T>{}(sc<T*>(p));
+        }
+
         std::lock_guard<std::recursive_mutex> implLockGuard() const {
-            return sc<Atomic_::impl<T>*>(m_ptr.impl_)->lockGuard();
+            return sc<Atomic_::impl*>(m_ptr.impl_)->lockGuard();
         }
 
         CSharedPointer<T> m_ptr;
@@ -312,11 +331,13 @@ namespace Hyprutils::Memory {
             // -> must unlock BEFORE reset
             // not last ref?
             // -> must unlock AFTER reset
-            auto& mutex = sc<Atomic_::impl<T>*>(m_ptr.impl_)->getMutex();
+            auto& mutex = sc<Atomic_::impl*>(m_ptr.impl_)->getMutex();
             mutex.lock();
             if (m_ptr.impl_->ref() == 0 && m_ptr.impl_->wref() == 1) {
                 mutex.unlock();
-                m_ptr.reset();
+
+                delete sc<Atomic_::impl*>(m_ptr.impl_);
+                m_ptr.impl_ = nullptr;
                 // mutex invalid
                 return;
             }
@@ -375,7 +396,7 @@ namespace Hyprutils::Memory {
 
       private:
         std::lock_guard<std::recursive_mutex> implLockGuard() const {
-            return sc<Atomic_::impl<T>*>(m_ptr.impl_)->lockGuard();
+            return sc<Atomic_::impl*>(m_ptr.impl_)->lockGuard();
         }
 
         CWeakPointer<T> m_ptr;
@@ -387,7 +408,7 @@ namespace Hyprutils::Memory {
     };
 
     template <typename U, typename... Args>
-    static CAtomicSharedPointer<U> makeAtomicShared(Args&&... args) {
-        return CAtomicSharedPointer<U>(new Atomic_::impl<U>(new U(std::forward<Args>(args)...)));
+    [[nodiscard]] inline CAtomicSharedPointer<U> makeAtomicShared(Args&&... args) {
+        return CAtomicSharedPointer<U>(new U(std::forward<Args>(args)...));
     }
 }

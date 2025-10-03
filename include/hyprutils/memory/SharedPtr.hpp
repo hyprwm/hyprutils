@@ -28,7 +28,7 @@ namespace Hyprutils {
 
             /* creates a new shared pointer managing a resource
                avoid calling. Could duplicate ownership. Prefer makeShared */
-            explicit CSharedPointer(T* object) noexcept : impl_(new Impl_::impl<T>(object)) {
+            explicit CSharedPointer(T* object) noexcept : impl_(new Impl_::impl_base(sc<void*>(object), _delete)) {
                 increment();
             }
 
@@ -140,6 +140,10 @@ namespace Hyprutils {
             Impl_::impl_base* impl_ = nullptr;
 
           private:
+            static void _delete(void* p) {
+                std::default_delete<T>{}(sc<T*>(p));
+            }
+
             /*
                 no-op if there is no impl_
                 may delete the stored object if ref == 0
