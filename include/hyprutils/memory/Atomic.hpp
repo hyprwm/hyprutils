@@ -27,7 +27,7 @@ namespace Hyprutils::Memory {
             std::recursive_mutex m_mutex;
 
           public:
-            impl(void* data, DeleteFn deleter) noexcept : Impl_::impl_base(data, deleter, true) {
+            impl(void* data, DeleteFn deleter) noexcept : Impl_::impl_base(data, deleter) {
                 ;
             }
 

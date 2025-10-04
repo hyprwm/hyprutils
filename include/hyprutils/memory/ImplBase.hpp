@@ -10,7 +10,7 @@ namespace Hyprutils {
               public:
                 using DeleteFn = void (*)(void*);
 
-                impl_base(void* data, DeleteFn deleter, bool lock = false) noexcept : _lockable(lock), _data(data), _deleter(deleter) {
+                impl_base(void* data, DeleteFn deleter, bool lock = true) noexcept : _lockable(lock), _data(data), _deleter(deleter) {
                     ;
                 }
 

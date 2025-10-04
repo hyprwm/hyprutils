@@ -145,6 +145,7 @@ int main(int argc, char** argv, char** envp) {
     EXPECT(intPtr.strongRef(), 1);
     EXPECT(*weak, 10);
     EXPECT(weak.expired(), false);
+    EXPECT(!!weak.lock(), true);
     EXPECT(*weakUnique, 420);
     EXPECT(weakUnique.expired(), false);
     EXPECT(intUnique.impl_->wref(), 1);
