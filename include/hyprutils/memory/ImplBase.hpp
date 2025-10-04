@@ -8,44 +8,71 @@ namespace Hyprutils {
         namespace Impl_ {
             class impl_base {
               public:
-                virtual ~impl_base() = default;
+                using DeleteFn = void (*)(void*);
 
-                virtual void         inc() noexcept         = 0;
-                virtual void         dec() noexcept         = 0;
-                virtual void         incWeak() noexcept     = 0;
-                virtual void         decWeak() noexcept     = 0;
-                virtual unsigned int ref() noexcept         = 0;
-                virtual unsigned int wref() noexcept        = 0;
-                virtual void         destroy() noexcept     = 0;
-                virtual bool         destroying() noexcept  = 0;
-                virtual bool         dataNonNull() noexcept = 0;
-                virtual bool         lockable() noexcept    = 0;
-                virtual void*        getData() noexcept     = 0;
-            };
-
-            template <typename T>
-            class impl : public impl_base {
-              public:
-                impl(T* data, bool lock = true) noexcept : _lockable(lock), _data(data) {
+                impl_base(void* data, DeleteFn deleter, bool lock = true) noexcept : _lockable(lock), _data(data), _deleter(deleter) {
                     ;
                 }
 
+                void inc() noexcept {
+                    _ref++;
+                }
+
+                void dec() noexcept {
+                    _ref--;
+                }
+
+                void incWeak() noexcept {
+                    _weak++;
+                }
+
+                void decWeak() noexcept {
+                    _weak--;
+                }
+
+                unsigned int ref() noexcept {
+                    return _ref;
+                }
+
+                unsigned int wref() noexcept {
+                    return _weak;
+                }
+
+                void destroy() noexcept {
+                    _destroy();
+                }
+
+                bool destroying() noexcept {
+                    return _destroying;
+                }
+
+                bool lockable() noexcept {
+                    return _lockable;
+                }
+
+                bool dataNonNull() noexcept {
+                    return _data != nullptr;
+                }
+
+                void* getData() noexcept {
+                    return _data;
+                }
+
+                ~impl_base() {
+                    destroy();
+                }
+
+              private:
                 /* strong refcount */
                 unsigned int _ref = 0;
                 /* weak refcount */
                 unsigned int _weak = 0;
                 /* if this is lockable (shared) */
-                bool        _lockable = true;
+                bool  _lockable = true;
 
-                T*          _data = nullptr;
+                void* _data = nullptr;
 
-                friend void swap(impl*& a, impl*& b) {
-                    impl* tmp = a;
-                    a         = b;
-                    b         = tmp;
-                }
-
-                /* if the destructor was called, 
+                /* if the destructor was called,
                    creating shared_ptrs is no longer valid */
                 bool _destroying = false;
 
@@ -63,56 +90,7 @@ namespace Hyprutils {
                     _destroying = false;
                 }
 
-                std::default_delete<T> _deleter{};
-
-                //
-                virtual void inc() noexcept {
-                    _ref++;
-                }
-
-                virtual void dec() noexcept {
-                    _ref--;
-                }
-
-                virtual void incWeak() noexcept {
-                    _weak++;
-                }
-
-                virtual void decWeak() noexcept {
-                    _weak--;
-                }
-
-                virtual unsigned int ref() noexcept {
-                    return _ref;
-                }
-
-                virtual unsigned int wref() noexcept {
-                    return _weak;
-                }
-
-                virtual void destroy() noexcept {
-                    _destroy();
-                }
-
-                virtual bool destroying() noexcept {
-                    return _destroying;
-                }
-
-                virtual bool lockable() noexcept {
-                    return _lockable;
-                }
-
-                virtual bool dataNonNull() noexcept {
-                    return _data != nullptr;
-                }
-
-                virtual void* getData() noexcept {
-                    return _data;
-                }
-
-                virtual ~impl() {
-                    destroy();
-                }
+                DeleteFn _deleter = nullptr;
             };
         }
     }
