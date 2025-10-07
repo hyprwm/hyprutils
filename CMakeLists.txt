@@ -31,11 +31,11 @@ add_compile_options(
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 if(CMAKE_BUILD_TYPE MATCHES Debug OR CMAKE_BUILD_TYPE MATCHES DEBUG)
-  message(STATUS "Configuring hyprutils in Debug")
-  add_compile_definitions(HYPRLAND_DEBUG)
+    message(STATUS "Configuring hyprutils in Debug")
+    add_compile_definitions(HYPRLAND_DEBUG)
 else()
-  add_compile_options(-O3)
-  message(STATUS "Configuring hyprutils in Release")
+    add_compile_options(-O3)
+    message(STATUS "Configuring hyprutils in Release")
 endif()
 
 file(GLOB_RECURSE SRCFILES CONFIGURE_DEPENDS "src/*.cpp" "include/*.hpp")
@@ -111,6 +111,14 @@ add_test(
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/tests
   COMMAND hyprutils_animation "utils")
 add_dependencies(tests hyprutils_animation)
+
+add_executable(hyprutils_expression "tests/expression.cpp")
+target_link_libraries(hyprutils_expression PRIVATE hyprutils PkgConfig::deps)
+add_test(
+  NAME "Expression"
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/tests
+  COMMAND hyprutils_expression "expression")
+add_dependencies(tests hyprutils_expression)
 
 # Installation
 install(TARGETS hyprutils)

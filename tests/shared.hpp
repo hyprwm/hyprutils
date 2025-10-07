@@ -30,3 +30,25 @@ namespace Colors {
             std::cout << Colors::GREEN << "Passed " << Colors::RESET << #expr << ". Got (" << RESULT.x << ", " << RESULT.y << ")\n";                                               \
         }                                                                                                                                                                          \
     } while (0)
+
+#define EXPECT_RESULT_PASS(EXPR, VAL)                                                                                                                                              \
+    {                                                                                                                                                                              \
+        const auto RES = EXPR;                                                                                                                                                     \
+        if (RES) {                                                                                                                                                                 \
+            EXPECT(RES.value(), VAL);                                                                                                                                              \
+        } else {                                                                                                                                                                   \
+            std::cout << Colors::RED << "Unexpected failure: " << Colors::RESET << RES.error() << "\n";                                                                            \
+            ret = 1;                                                                                                                                                               \
+        }                                                                                                                                                                          \
+    }
+
+#define EXPECT_RESULT_FAIL(EXPR, ERR)                                                                                                                                              \
+    {                                                                                                                                                                              \
+        auto RES = EXPR;                                                                                                                                                           \
+        if (!RES) {                                                                                                                                                                \
+            EXPECT(RES.error(), ERR);                                                                                                                                              \
+        } else {                                                                                                                                                                   \
+            std::cout << Colors::RED << "Unexpected success: " << Colors::RESET << RES.value() << "\n";                                                                            \
+            ret = 1;                                                                                                                                                               \
+        }                                                                                                                                                                          \
+    }
