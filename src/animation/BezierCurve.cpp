@@ -26,19 +26,14 @@ void CBezierCurve::setup4(const std::array<Vector2D, 4>& pVec) {
         pVec[3],
     };
 
-    if (m_vPoints.size() != 4)
-        std::abort();
-
-    // bake BAKEDPOINTS points for faster lookups
-    // T -> X ( / BAKEDPOINTS )
+    // Pre-bake curve
+    //
+    // We start baking at t=(i+1)/n not at t=0
+    // That means the first baked x can be > 0 if curve itself starts at x>0
     for (int i = 0; i < BAKEDPOINTS; ++i) {
-        float const t     = (i + 1) / sc<float>(BAKEDPOINTS);
+        // When i=0 -> t=1/255
+        const float t     = (i + 1) * INVBAKEDPOINTS;
         m_aPointsBaked[i] = Vector2D(getXForT(t), getYForT(t));
-    }
-
-    for (int j = 1; j < 10; ++j) {
-        float i = j / 10.0f;
-        getYForPoint(i);
     }
 }
 
@@ -53,7 +48,7 @@ float CBezierCurve::getYForT(float const& t) const {
     float t2 = t * t;
     float t3 = t2 * t;
 
-    return ((1 - t) * (1 - t) * (1 - t) * m_vPoints[0].y) +(3 * t * (1 - t) * (1 - t) * m_vPoints[1].y) + (3 * t2 * (1 - t) * m_vPoints[2].y) + (t3 * m_vPoints[3].y);
+    return ((1 - t) * (1 - t) * (1 - t) * m_vPoints[0].y) + (3 * t * (1 - t) * (1 - t) * m_vPoints[1].y) + (3 * t2 * (1 - t) * m_vPoints[2].y) + (t3 * m_vPoints[3].y);
 }
 
 // Todo: this probably can be done better and faster
@@ -71,21 +66,40 @@ float CBezierCurve::getYForPoint(float const& x) const {
         else
             index -= step;
 
+        // Clamp to avoid index walking off
+        if (index < 0)
+            index = 0;
+        else if (index > BAKEDPOINTS - 1)
+            index = BAKEDPOINTS - 1;
+
         below = m_aPointsBaked[index].x < x;
     }
 
     int lowerIndex = index - (!below || index == BAKEDPOINTS - 1);
 
-    // in the name of performance i shall make a hack
-    const auto LOWERPOINT = &m_aPointsBaked[lowerIndex];
-    const auto UPPERPOINT = &m_aPointsBaked[lowerIndex + 1];
+    // Clamp final indices
+    if (lowerIndex < 0)
+        lowerIndex = 0;
+    else if (lowerIndex > BAKEDPOINTS - 2)
+        lowerIndex = BAKEDPOINTS - 2;
 
-    const auto PERCINDELTA = (x - LOWERPOINT->x) / (UPPERPOINT->x - LOWERPOINT->x);
+    // In the name of performance I shall make a hack
+    const auto& LOWERPOINT = m_aPointsBaked[lowerIndex];
+    const auto& UPPERPOINT = m_aPointsBaked[lowerIndex + 1];
 
-    if (std::isnan(PERCINDELTA) || std::isinf(PERCINDELTA)) // can sometimes happen for VERY small x
-        return 0.f;
+    const float dx = (UPPERPOINT.x - LOWERPOINT.x);
+    // If two baked points have almost the same x
+    //  just return the lower one
+    if (dx <= 1e-6f)
+        return LOWERPOINT.y;
 
-    return LOWERPOINT->y + ((UPPERPOINT->y - LOWERPOINT->y) * PERCINDELTA);
+    const auto PERCINDELTA = (x - LOWERPOINT.x) / dx;
+
+    // Can sometimes happen for VERY small x
+    if (std::isnan(PERCINDELTA) || std::isinf(PERCINDELTA))
+        return LOWERPOINT.y;
+
+    return LOWERPOINT.y + ((UPPERPOINT.y - LOWERPOINT.y) * PERCINDELTA);
 }
 
 const std::vector<Hyprutils::Math::Vector2D>& CBezierCurve::getControlPoints() const {
