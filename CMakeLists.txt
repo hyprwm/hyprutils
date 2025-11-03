@@ -112,6 +112,14 @@ add_test(
   COMMAND hyprutils_animation "utils")
 add_dependencies(tests hyprutils_animation)
 
+add_executable(hyprutils_beziercurve "tests/beziercurve.cpp")
+target_link_libraries(hyprutils_beziercurve PRIVATE hyprutils PkgConfig::deps)
+add_test(
+  NAME "BezierCurve"
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/tests
+  COMMAND hyprutils_beziercurve "beziercurve")
+add_dependencies(tests hyprutils_beziercurve)
+
 # Installation
 install(TARGETS hyprutils)
 install(DIRECTORY "include/hyprutils" DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
