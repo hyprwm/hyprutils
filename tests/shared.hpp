@@ -18,6 +18,7 @@ namespace Colors {
     } else {                                                                                                                                                                       \
         std::cout << Colors::GREEN << "Passed " << Colors::RESET << #expr << ". Got " << val << "\n";                                                                              \
     }
+
 #define EXPECT_VECTOR2D(expr, val)                                                                                                                                                 \
     do {                                                                                                                                                                           \
         const auto& RESULT   = expr;                                                                                                                                               \
@@ -28,5 +29,19 @@ namespace Colors {
             ret = 1;                                                                                                                                                               \
         } else {                                                                                                                                                                   \
             std::cout << Colors::GREEN << "Passed " << Colors::RESET << #expr << ". Got (" << RESULT.x << ", " << RESULT.y << ")\n";                                               \
+        }                                                                                                                                                                          \
+    } while (0)
+
+#define EXPECT_NEAR(actual, expected, tolerance)                                                                                                                                   \
+    do {                                                                                                                                                                           \
+        auto _a = (actual);                                                                                                                                                        \
+        auto _e = (expected);                                                                                                                                                      \
+        auto _t = (tolerance);                                                                                                                                                     \
+        if (!(std::fabs((_a) - (_e)) <= (_t))) {                                                                                                                                   \
+            std::cout << Colors::RED << "Failed: " << Colors::RESET << " EXPECT_NEAR(" #actual ", " #expected ", " #tolerance ")  got=" << _a << " expected=" << _e << " ± " << _t \
+                      << "\n";                                                                                                                                                     \
+            ret = 1;                                                                                                                                                               \
+        } else {                                                                                                                                                                   \
+            std::cout << Colors::GREEN << "Passed " << Colors::RESET << " |" #actual " - " #expected "| <= " #tolerance "\n";                                                      \
         }                                                                                                                                                                          \
     } while (0)
