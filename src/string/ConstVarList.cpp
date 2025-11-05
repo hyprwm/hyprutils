@@ -33,7 +33,7 @@ CConstVarList::CConstVarList(const std::string& in, const size_t lastArgNo, cons
         if (removeEmpty && s.empty())
             continue;
         if (++idx == lastArgNo) {
-            m_args.emplace_back(trim(in.substr(pos)));
+            m_args.emplace_back(trim(std::string_view{m_str}.substr(pos)));
             break;
         }
         pos += s.size() + 1;

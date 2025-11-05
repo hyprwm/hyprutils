@@ -43,6 +43,10 @@ int main(int argc, char** argv, char** envp) {
     EXPECT(listConst[0], "hello");
     EXPECT(listConst[1], "world!");
 
+    CConstVarList listConst2("0 set", 2, ' ');
+    EXPECT(listConst2[0], "0");
+    EXPECT(listConst2[1], "set");
+
     std::string hello = "hello world!";
     replaceInString(hello, "hello", "hi");
     EXPECT(hello, "hi world!");
