@@ -61,7 +61,7 @@ std::string CI18nEngine::localizeEntry(const std::string& locale, uint64_t key, 
 
             auto stem = locale.substr(0, locale.find('_') + 1);
             for (const auto& [k, v] : m_impl->entries) {
-                if (k.starts_with(stem)) {
+                if (k.starts_with(stem) || k == stem) {
                     if (m_impl->entries.contains(k) && m_impl->entries[k].size() > key)
                         entry = &m_impl->entries[k][key];
 
