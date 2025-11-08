@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <format>
+#include <locale>
 #include <hyprutils/string/String.hpp>
 
 using namespace Hyprutils::I18n;
@@ -43,9 +44,10 @@ std::string CI18nEngine::localizeEntry(const std::string& locale, uint64_t key, 
     if (m_impl->entries.contains(locale) && m_impl->entries[locale].size() > key)
         entry = &m_impl->entries[locale][key];
 
-    if (!entry || !entry->exists) {
-        // try to fall back to lang_LANG
-        if (locale.contains('_')) {
+    if (locale.contains('_')) {
+
+        if (!entry || !entry->exists) {
+            // try to fall back to lang_LANG
             auto stem      = locale.substr(0, locale.find('_'));
             auto stemUpper = stem;
             std::ranges::transform(stemUpper, stemUpper.begin(), ::toupper);
@@ -53,11 +55,10 @@ std::string CI18nEngine::localizeEntry(const std::string& locale, uint64_t key, 
             if (m_impl->entries.contains(newLocale) && m_impl->entries[newLocale].size() > key)
                 entry = &m_impl->entries[newLocale][key];
         }
-    }
 
-    if (!entry || !entry->exists) {
-        // try to fall back to any lang prefixed with our prefix
-        if (locale.contains('_')) {
+        if (!entry || !entry->exists) {
+            // try to fall back to any lang prefixed with our prefix
+
             auto stem = locale.substr(0, locale.find('_') + 1);
             for (const auto& [k, v] : m_impl->entries) {
                 if (k.starts_with(stem)) {
@@ -67,6 +68,18 @@ std::string CI18nEngine::localizeEntry(const std::string& locale, uint64_t key, 
                     if (entry && entry->exists)
                         break;
                 }
+            }
+        }
+    } else {
+        // locale doesn't have a _, e.g. pl
+        // find any locale that has the same stem
+        for (const auto& [k, v] : m_impl->entries) {
+            if (k.starts_with(locale + "_") || k == locale) {
+                if (m_impl->entries.contains(k) && m_impl->entries[k].size() > key)
+                    entry = &m_impl->entries[k][key];
+
+                if (entry && entry->exists)
+                    break;
             }
         }
     }
@@ -90,4 +103,30 @@ std::string CI18nEngine::localizeEntry(const std::string& locale, uint64_t key, 
     }
 
     return rawStr;
+}
+
+std::string CI18nEngine::getSystemLocale() {
+    std::locale locale("");
+    auto        localeStr = locale.name();
+
+    // localeStr is very arbitrary... from my testing, it can be:
+    // en_US.UTF-8
+    // LC_CTYPE=en_US
+    // POSIX
+    // *
+    //
+    // We only return e.g. en_US or pl_PL, or pl
+
+    if (localeStr == "POSIX")
+        return "en_US";
+    if (localeStr == "*")
+        return "en_US";
+
+    if (localeStr.contains('='))
+        localeStr = localeStr.substr(localeStr.find('=') + 1);
+
+    if (localeStr.contains('.'))
+        localeStr = localeStr.substr(0, localeStr.find('.'));
+
+    return localeStr;
 }

@@ -31,6 +31,8 @@ namespace Hyprutils::I18n {
 
         std::string localizeEntry(const std::string& locale, uint64_t key, const translationVarMap& map);
 
+        std::string getSystemLocale();
+
       private:
         Memory::CUniquePointer<SI18nEngineImpl> m_impl;
     };

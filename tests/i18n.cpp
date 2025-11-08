@@ -1,5 +1,6 @@
 #include <hyprutils/i18n/I18nEngine.hpp>
 #include "shared.hpp"
+#include <print>
 
 using namespace Hyprutils::I18n;
 
@@ -13,6 +14,8 @@ int main(int argc, char** argv, char** envp) {
     int         ret = 0;
 
     CI18nEngine engine;
+
+    std::println("System locale: {}", engine.getSystemLocale());
 
     engine.setFallbackLocale("en_US");
 
@@ -49,6 +52,8 @@ int main(int argc, char** argv, char** envp) {
     EXPECT(engine.localizeEntry("pl_PL", TXT_KEY_I_HAVE_APPLES, {{"count", "1"}}), "Mam 1 jabłko.");
     EXPECT(engine.localizeEntry("pl_PL", TXT_KEY_I_HAVE_APPLES, {{"count", "2"}}), "Mam 2 jabłka.");
     EXPECT(engine.localizeEntry("pl_PL", TXT_KEY_I_HAVE_APPLES, {{"count", "5"}}), "Mam 5 jabłek.");
+
+    EXPECT(engine.localizeEntry("pl", TXT_KEY_I_HAVE_APPLES, {{"count", "5"}}), "Mam 5 jabłek.");
 
     EXPECT(engine.localizeEntry("pl_XX", TXT_KEY_I_HAVE_APPLES, {{"count", "5"}}), "Mam 5 jabłek.");
     EXPECT(engine.localizeEntry("en_XX", TXT_KEY_I_HAVE_APPLES, {{"count", "2"}}), "I have 2 apples.");
