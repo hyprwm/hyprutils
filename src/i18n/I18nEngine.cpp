@@ -1,5 +1,7 @@
 #include "I18nEngine.hpp"
 
+#include <algorithm>
+#include <format>
 #include <hyprutils/string/String.hpp>
 
 using namespace Hyprutils::I18n;
@@ -42,6 +44,35 @@ std::string CI18nEngine::localizeEntry(const std::string& locale, uint64_t key, 
         entry = &m_impl->entries[locale][key];
 
     if (!entry || !entry->exists) {
+        // try to fall back to lang_LANG
+        if (locale.contains('_')) {
+            auto stem      = locale.substr(0, locale.find('_'));
+            auto stemUpper = stem;
+            std::ranges::transform(stemUpper, stemUpper.begin(), ::toupper);
+            auto newLocale = std::format("{}_{}", stem, stemUpper);
+            if (m_impl->entries.contains(newLocale) && m_impl->entries[newLocale].size() > key)
+                entry = &m_impl->entries[newLocale][key];
+        }
+    }
+
+    if (!entry || !entry->exists) {
+        // try to fall back to any lang prefixed with our prefix
+        if (locale.contains('_')) {
+            auto stem = locale.substr(0, locale.find('_') + 1);
+            for (const auto& [k, v] : m_impl->entries) {
+                if (k.starts_with(stem)) {
+                    if (m_impl->entries.contains(k) && m_impl->entries[k].size() > key)
+                        entry = &m_impl->entries[k][key];
+
+                    if (entry && entry->exists)
+                        break;
+                }
+            }
+        }
+    }
+
+    if (!entry || !entry->exists) {
+        // fall back to general fallback
         if (m_impl->entries.contains(m_impl->fallbackLocale) && m_impl->entries[m_impl->fallbackLocale].size() > key)
             entry = &m_impl->entries[m_impl->fallbackLocale][key];
     }
