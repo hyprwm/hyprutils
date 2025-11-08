@@ -120,6 +120,15 @@ add_test(
   COMMAND hyprutils_beziercurve "beziercurve")
 add_dependencies(tests hyprutils_beziercurve)
 
+add_executable(hyprutils_i18n "tests/i18n.cpp")
+target_link_libraries(hyprutils_i18n PRIVATE hyprutils PkgConfig::deps)
+add_test(
+  NAME "I18n"
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/tests
+  COMMAND hyprutils_i18n "i18n")
+add_dependencies(tests hyprutils_i18n)
+
+
 # Installation
 install(TARGETS hyprutils)
 install(DIRECTORY "include/hyprutils" DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
