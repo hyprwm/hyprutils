@@ -49,13 +49,12 @@ std::string CI18nLocale::full() {
 #include <hyprutils/i18n/I18nEngine.hpp>
 
 TEST(I18n, Locale) {
-    setenv("LANG", "pl_PL.UTF-8", true);
-    setenv("LC_CTYPE", "pl_PL.UTF-8", true);
-
     CI18nEngine engine;
 
-    EXPECT_EQ(engine.getSystemLocale().locale(), "pl_PL");
-    EXPECT_EQ(engine.getSystemLocale().stem(), "pl");
+    EXPECT_EQ(extractLocale("pl_PL.UTF-8"), "pl_PL");
+    EXPECT_EQ(extractLocale("POSIX"), "en_US");
+    EXPECT_EQ(extractLocale("*"), "en_US");
+    EXPECT_EQ(extractLocale("LC_CTYPE=pl_PL.UTF-8"), "pl_PL");
 }
 
 #endif

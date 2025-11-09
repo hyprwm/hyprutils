@@ -106,7 +106,9 @@ std::string CI18nEngine::localizeEntry(const std::string& locale, uint64_t key, 
 }
 
 CI18nLocale CI18nEngine::getSystemLocale() {
-    return CI18nLocale(std::locale("").name());
+    try {
+        return CI18nLocale(std::locale("").name());
+    } catch (...) { return CI18nLocale("en_US.UTF-8"); }
 }
 
 #ifdef HU_UNIT_TESTS
