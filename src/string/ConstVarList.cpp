@@ -1,25 +1,9 @@
 #include <ranges>
 #include <algorithm>
+#include <hyprutils/string/String.hpp>
 #include <hyprutils/string/ConstVarList.hpp>
 
 using namespace Hyprutils::String;
-
-static std::string_view trim(const std::string_view& sv) {
-    if (sv.empty())
-        return sv;
-
-    size_t countBefore = 0;
-    while (countBefore < sv.length() && std::isspace(sv.at(countBefore))) {
-        countBefore++;
-    }
-
-    size_t countAfter = 0;
-    while (countAfter < sv.length() - countBefore && std::isspace(sv.at(sv.length() - countAfter - 1))) {
-        countAfter++;
-    }
-
-    return sv.substr(countBefore, sv.length() - countBefore - countAfter);
-}
 
 CConstVarList::CConstVarList(const std::string& in, const size_t lastArgNo, const char delim, const bool removeEmpty) : m_str(in) {
     if (in.empty())
@@ -37,7 +21,7 @@ CConstVarList::CConstVarList(const std::string& in, const size_t lastArgNo, cons
             break;
         }
         pos += s.size() + 1;
-        m_args.emplace_back(trim(s.data()));
+        m_args.emplace_back(trim(std::string_view{s.data()}));
     }
 }
 

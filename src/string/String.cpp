@@ -22,6 +22,27 @@ std::string Hyprutils::String::trim(const std::string& in) {
     return result;
 }
 
+std::string_view Hyprutils::String::trim(const std::string_view& sv) {
+    if (sv.empty())
+        return sv;
+
+    size_t countBefore = 0;
+    while (countBefore < sv.length() && std::isspace(sv.at(countBefore))) {
+        countBefore++;
+    }
+
+    size_t countAfter = 0;
+    while (countAfter < sv.length() - countBefore && std::isspace(sv.at(sv.length() - countAfter - 1))) {
+        countAfter++;
+    }
+
+    return sv.substr(countBefore, sv.length() - countBefore - countAfter);
+}
+
+std::string Hyprutils::String::trim(const char* in) {
+    return trim(std::string{in});
+}
+
 bool Hyprutils::String::isNumber(const std::string& str, bool allowfloat) {
     if (str.empty())
         return false;
