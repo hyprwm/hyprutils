@@ -53,9 +53,7 @@ set_target_properties(hyprutils PROPERTIES VERSION ${hyprutils_VERSION}
                                            SOVERSION 9)
 target_link_libraries(hyprutils PkgConfig::deps)
 
-if (NOT DISABLE_TESTS)
-  enable_testing()
-
+if(BUILD_TESTING)
   # GTest
   find_package(GTest CONFIG REQUIRED)
   include(GoogleTest)
@@ -63,8 +61,12 @@ if (NOT DISABLE_TESTS)
   target_compile_definitions(hyprutils_inline_tests PRIVATE HU_UNIT_TESTS=1)
   target_compile_options(hyprutils_inline_tests PRIVATE --coverage)
   target_link_options(hyprutils_inline_tests PRIVATE --coverage)
-  target_include_directories(hyprutils_inline_tests PUBLIC "./include" PRIVATE "./src" "./src/include" "./protocols" "${CMAKE_BINARY_DIR}")
-  target_link_libraries(hyprutils_inline_tests PRIVATE GTest::gtest_main PkgConfig::deps)
+  target_include_directories(
+    hyprutils_inline_tests
+    PUBLIC "./include"
+    PRIVATE "./src" "./src/include" "./protocols" "${CMAKE_BINARY_DIR}")
+  target_link_libraries(hyprutils_inline_tests PRIVATE GTest::gtest_main
+                                                       PkgConfig::deps)
   gtest_discover_tests(hyprutils_inline_tests)
 endif()
 

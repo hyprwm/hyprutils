@@ -4,6 +4,7 @@
   stdenvAdapters,
   cmake,
   pkg-config,
+  gtest,
   pixman,
   version ? "git",
   doCheck ? false,
@@ -11,10 +12,12 @@
   # whether to use the mold linker
   # disable this for older machines without SSE4_2 and AVX2 support
   withMold ? true,
-}: let
+}:
+let
   inherit (builtins) foldl';
-  inherit (lib.lists) flatten;
-  inherit (lib.strings) optionalString;
+  inherit (lib.attrsets) mapAttrsToList;
+  inherit (lib.lists) flatten optional;
+  inherit (lib.strings) cmakeBool optionalString;
 
   adapters = flatten [
     (lib.optional withMold stdenvAdapters.useMoldLinker)
@@ -23,31 +26,36 @@
 
   customStdenv = foldl' (acc: adapter: adapter acc) stdenv adapters;
 in
-  customStdenv.mkDerivation {
-    pname = "hyprutils" + optionalString debug "-debug";
-    inherit version doCheck;
-    src = ../.;
+customStdenv.mkDerivation {
+  pname = "hyprutils" + optionalString debug "-debug";
+  inherit version doCheck;
+  src = ../.;
 
-    nativeBuildInputs = [
-      cmake
-      pkg-config
-    ];
+  nativeBuildInputs = [
+    cmake
+    pkg-config
+  ];
 
-    buildInputs = [
-      pixman
-    ];
+  buildInputs = flatten [
+    (optional doCheck gtest)
+    pixman
+  ];
 
-    outputs = ["out" "dev"];
+  outputs = [
+    "out"
+    "dev"
+  ];
 
-    cmakeBuildType =
-      if debug
-      then "Debug"
-      else "RelWithDebInfo";
+  cmakeBuildType = if debug then "Debug" else "RelWithDebInfo";
 
-    meta = with lib; {
-      homepage = "https://github.com/hyprwm/hyprutils";
-      description = "Small C++ library for utilities used across the Hypr* ecosystem";
-      license = licenses.bsd3;
-      platforms = platforms.linux;
-    };
-  }
+  cmakeFlags = mapAttrsToList cmakeBool {
+    "DISABLE_TESTING" = !doCheck;
+  };
+
+  meta = with lib; {
+    homepage = "https://github.com/hyprwm/hyprutils";
+    description = "Small C++ library for utilities used across the Hypr* ecosystem";
+    license = licenses.bsd3;
+    platforms = platforms.linux;
+  };
+}
