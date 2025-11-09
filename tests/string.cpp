@@ -87,6 +87,11 @@ int main(int argc, char** argv, char** envp) {
     EXPECT(varList2H[1], "\\");
     EXPECT(varList2H[2], "ok?");
 
+    CVarList2 varList2I("Hello,\\, ok?", 0, ',', true, false);
+    EXPECT(varList2I[0], "Hello");
+    EXPECT(varList2I[1], "\\");
+    EXPECT(varList2I[2], "ok?");
+
     std::string hello = "hello world!";
     replaceInString(hello, "hello", "hi");
     EXPECT(hello, "hi world!");
