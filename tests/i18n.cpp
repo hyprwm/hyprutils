@@ -15,7 +15,7 @@ int main(int argc, char** argv, char** envp) {
 
     CI18nEngine engine;
 
-    std::println("System locale: {}", engine.getSystemLocale());
+    std::println("System locale: {}, stem: {}", engine.getSystemLocale().locale(), engine.getSystemLocale().stem());
 
     engine.setFallbackLocale("en_US");
 

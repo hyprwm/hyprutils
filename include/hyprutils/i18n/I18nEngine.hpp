@@ -13,6 +13,22 @@ namespace Hyprutils::I18n {
     typedef std::unordered_map<std::string, std::string>         translationVarMap;
     typedef std::function<std::string(const translationVarMap&)> translationFn;
 
+    class CI18nLocale {
+      public:
+        ~CI18nLocale() = default;
+
+        std::string locale();
+        std::string stem();
+        std::string full();
+
+      private:
+        CI18nLocale(std::string fullLocale);
+
+        std::string m_locale, m_rawFullLocale;
+
+        friend class CI18nEngine;
+    };
+
     class CI18nEngine {
       public:
         CI18nEngine();
@@ -31,7 +47,7 @@ namespace Hyprutils::I18n {
 
         std::string localizeEntry(const std::string& locale, uint64_t key, const translationVarMap& map);
 
-        std::string getSystemLocale();
+        CI18nLocale getSystemLocale();
 
       private:
         Memory::CUniquePointer<SI18nEngineImpl> m_impl;

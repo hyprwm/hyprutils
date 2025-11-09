@@ -105,28 +105,6 @@ std::string CI18nEngine::localizeEntry(const std::string& locale, uint64_t key, 
     return rawStr;
 }
 
-std::string CI18nEngine::getSystemLocale() {
-    std::locale locale("");
-    auto        localeStr = locale.name();
-
-    // localeStr is very arbitrary... from my testing, it can be:
-    // en_US.UTF-8
-    // LC_CTYPE=en_US
-    // POSIX
-    // *
-    //
-    // We only return e.g. en_US or pl_PL, or pl
-
-    if (localeStr == "POSIX")
-        return "en_US";
-    if (localeStr == "*")
-        return "en_US";
-
-    if (localeStr.contains('='))
-        localeStr = localeStr.substr(localeStr.find('=') + 1);
-
-    if (localeStr.contains('.'))
-        localeStr = localeStr.substr(0, localeStr.find('.'));
-
-    return localeStr;
+CI18nLocale CI18nEngine::getSystemLocale() {
+    return CI18nLocale(std::locale("").name());
 }
