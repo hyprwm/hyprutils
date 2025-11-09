@@ -36,3 +36,15 @@ std::string Hyprutils::String::CVarList::join(const std::string& joiner, size_t 
 
     return rolling;
 }
+
+#ifdef HU_UNIT_TESTS
+
+#include <gtest/gtest.h>
+
+TEST(String, varlist) {
+    CVarList list("hello    world!", 0, 's', true);
+    EXPECT_EQ(list[0], "hello");
+    EXPECT_EQ(list[1], "world!");
+}
+
+#endif

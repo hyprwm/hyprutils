@@ -42,3 +42,20 @@ std::string CI18nLocale::stem() {
 std::string CI18nLocale::full() {
     return m_rawFullLocale;
 }
+
+#ifdef HU_UNIT_TESTS
+
+#include <gtest/gtest.h>
+#include <hyprutils/i18n/I18nEngine.hpp>
+
+TEST(I18n, Locale) {
+    setenv("LANG", "pl_PL.UTF-8", true);
+    setenv("LC_CTYPE", "pl_PL.UTF-8", true);
+
+    CI18nEngine engine;
+
+    EXPECT_EQ(engine.getSystemLocale().locale(), "pl_PL");
+    EXPECT_EQ(engine.getSystemLocale().stem(), "pl");
+}
+
+#endif
