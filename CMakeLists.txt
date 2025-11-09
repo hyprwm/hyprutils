@@ -53,81 +53,22 @@ set_target_properties(hyprutils PROPERTIES VERSION ${hyprutils_VERSION}
                                            SOVERSION 9)
 target_link_libraries(hyprutils PkgConfig::deps)
 
-# tests
-add_custom_target(tests)
-
-add_executable(hyprutils_memory "tests/memory.cpp")
-target_link_libraries(hyprutils_memory PRIVATE hyprutils PkgConfig::deps)
-add_test(
-  NAME "Memory"
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/tests
-  COMMAND hyprutils_memory "memory")
-add_dependencies(tests hyprutils_memory)
-
-add_executable(hyprutils_string "tests/string.cpp")
-target_link_libraries(hyprutils_string PRIVATE hyprutils PkgConfig::deps)
-add_test(
-  NAME "String"
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/tests
-  COMMAND hyprutils_string "string")
-add_dependencies(tests hyprutils_string)
-
-add_executable(hyprutils_signal "tests/signal.cpp")
-target_link_libraries(hyprutils_signal PRIVATE hyprutils PkgConfig::deps)
-add_test(
-  NAME "Signal"
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/tests
-  COMMAND hyprutils_signal "signal")
-add_dependencies(tests hyprutils_signal)
-
-add_executable(hyprutils_math "tests/math.cpp")
-target_link_libraries(hyprutils_math PRIVATE hyprutils PkgConfig::deps)
-add_test(
-  NAME "Math"
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/tests
-  COMMAND hyprutils_math "math")
-add_dependencies(tests hyprutils_math)
-
-add_executable(hyprutils_os "tests/os.cpp")
-target_link_libraries(hyprutils_os PRIVATE hyprutils PkgConfig::deps)
-add_test(
-  NAME "OS"
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/tests
-  COMMAND hyprutils_os "os")
-add_dependencies(tests hyprutils_os)
-
-add_executable(hyprutils_filedescriptor "tests/filedescriptor.cpp")
-target_link_libraries(hyprutils_filedescriptor PRIVATE hyprutils PkgConfig::deps)
-add_test(
-  NAME "Filedescriptor"
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/tests
-  COMMAND hyprutils_filedescriptor "filedescriptor")
-add_dependencies(tests hyprutils_filedescriptor)
-
-add_executable(hyprutils_animation "tests/animation.cpp")
-target_link_libraries(hyprutils_animation PRIVATE hyprutils PkgConfig::deps)
-add_test(
-  NAME "Animation"
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/tests
-  COMMAND hyprutils_animation "utils")
-add_dependencies(tests hyprutils_animation)
-
-add_executable(hyprutils_beziercurve "tests/beziercurve.cpp")
-target_link_libraries(hyprutils_beziercurve PRIVATE hyprutils PkgConfig::deps)
-add_test(
-  NAME "BezierCurve"
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/tests
-  COMMAND hyprutils_beziercurve "beziercurve")
-add_dependencies(tests hyprutils_beziercurve)
-
-add_executable(hyprutils_i18n "tests/i18n.cpp")
-target_link_libraries(hyprutils_i18n PRIVATE hyprutils PkgConfig::deps)
-add_test(
-  NAME "I18n"
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/tests
-  COMMAND hyprutils_i18n "i18n")
-add_dependencies(tests hyprutils_i18n)
-
+if(BUILD_TESTING)
+  # GTest
+  find_package(GTest CONFIG REQUIRED)
+  include(GoogleTest)
+  add_executable(hyprutils_inline_tests ${SRCFILES})
+  target_compile_definitions(hyprutils_inline_tests PRIVATE HU_UNIT_TESTS=1)
+  target_compile_options(hyprutils_inline_tests PRIVATE --coverage)
+  target_link_options(hyprutils_inline_tests PRIVATE --coverage)
+  target_include_directories(
+    hyprutils_inline_tests
+    PUBLIC "./include"
+    PRIVATE "./src" "./src/include" "./protocols" "${CMAKE_BINARY_DIR}")
+  target_link_libraries(hyprutils_inline_tests PRIVATE GTest::gtest_main
+                                                       PkgConfig::deps)
+  gtest_discover_tests(hyprutils_inline_tests)
+endif()
 
 # Installation
 install(TARGETS hyprutils)

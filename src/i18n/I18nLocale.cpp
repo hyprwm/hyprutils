@@ -42,3 +42,19 @@ std::string CI18nLocale::stem() {
 std::string CI18nLocale::full() {
     return m_rawFullLocale;
 }
+
+#ifdef HU_UNIT_TESTS
+
+#include <gtest/gtest.h>
+#include <hyprutils/i18n/I18nEngine.hpp>
+
+TEST(I18n, Locale) {
+    CI18nEngine engine;
+
+    EXPECT_EQ(extractLocale("pl_PL.UTF-8"), "pl_PL");
+    EXPECT_EQ(extractLocale("POSIX"), "en_US");
+    EXPECT_EQ(extractLocale("*"), "en_US");
+    EXPECT_EQ(extractLocale("LC_CTYPE=pl_PL.UTF-8"), "pl_PL");
+}
+
+#endif

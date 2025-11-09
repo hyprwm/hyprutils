@@ -1,14 +1,12 @@
-#include <hyprutils/memory/UniquePtr.hpp>
-#include <hyprutils/memory/SharedPtr.hpp>
 #include <hyprutils/memory/WeakPtr.hpp>
 #include <hyprutils/memory/Atomic.hpp>
-#include "shared.hpp"
-#include <chrono>
-#include <print>
-#include <thread>
-#include <vector>
+#include <hyprutils/memory/Casts.hpp>
 
 using namespace Hyprutils::Memory;
+
+#ifdef HU_UNIT_TESTS
+
+#include <gtest/gtest.h>
 
 #define SP CSharedPointer
 #define WP CWeakPointer
@@ -19,9 +17,7 @@ using namespace Hyprutils::Memory;
 #define NTHREADS   8
 #define ITERATIONS 10000
 
-static int testAtomicImpl() {
-    int ret = 0;
-
+static void testAtomicImpl() {
     {
         // Using makeShared here could lead to invalid refcounts.
         ASP<int>                 shared = makeAtomicShared<int>(0);
@@ -45,7 +41,7 @@ static int testAtomicImpl() {
         // Actual count is not incremented in a thread-safe manner here, so we can't check it.
         // We just want to check that the concurent refcounting doesn't cause any memory corruption.
         shared.reset();
-        EXPECT(shared, false);
+        EXPECT_EQ(shared, false);
     }
 
     {
@@ -71,15 +67,15 @@ static int testAtomicImpl() {
             thread.join();
         }
 
-        EXPECT(shared.strongRef(), 0);
-        EXPECT(weak.valid(), false);
+        EXPECT_EQ(shared.strongRef(), 0);
+        EXPECT_EQ(weak.valid(), false);
 
         auto shared2 = weak.lock();
-        EXPECT(shared, false);
-        EXPECT(shared2.get(), nullptr);
-        EXPECT(shared.strongRef(), 0);
-        EXPECT(weak.valid(), false);
-        EXPECT(weak.expired(), true);
+        EXPECT_EQ(shared, false);
+        EXPECT_EQ(shared2.get(), nullptr);
+        EXPECT_EQ(shared.strongRef(), 0);
+        EXPECT_EQ(weak.valid(), false);
+        EXPECT_EQ(weak.expired(), true);
     }
 
     { // This tests recursive deletion. When foo will be deleted, bar will be deleted within the foo dtor.
@@ -120,38 +116,34 @@ static int testAtomicImpl() {
             genericNormal      = derivedNormal;
         }
 
-        EXPECT(!!genericAtomic, true);
-        EXPECT(!!genericNormal, true);
+        EXPECT_EQ(!!genericAtomic, true);
+        EXPECT_EQ(!!genericNormal, true);
     }
-
-    return ret;
 }
 
-int main(int argc, char** argv, char** envp) {
+TEST(Memory, memory) {
     SP<int> intPtr    = makeShared<int>(10);
     SP<int> intPtr2   = makeShared<int>(-1337);
     UP<int> intUnique = makeUnique<int>(420);
 
-    int     ret = 0;
-
-    EXPECT(*intPtr, 10);
-    EXPECT(intPtr.strongRef(), 1);
-    EXPECT(*intUnique, 420);
+    EXPECT_EQ(*intPtr, 10);
+    EXPECT_EQ(intPtr.strongRef(), 1);
+    EXPECT_EQ(*intUnique, 420);
 
     WP<int> weak       = intPtr;
     WP<int> weakUnique = intUnique;
 
-    EXPECT(*intPtr, 10);
-    EXPECT(intPtr.strongRef(), 1);
-    EXPECT(*weak, 10);
-    EXPECT(weak.expired(), false);
-    EXPECT(!!weak.lock(), true);
-    EXPECT(*weakUnique, 420);
-    EXPECT(weakUnique.expired(), false);
-    EXPECT(intUnique.impl_->wref(), 1);
+    EXPECT_EQ(*intPtr, 10);
+    EXPECT_EQ(intPtr.strongRef(), 1);
+    EXPECT_EQ(*weak, 10);
+    EXPECT_EQ(weak.expired(), false);
+    EXPECT_EQ(!!weak.lock(), true);
+    EXPECT_EQ(*weakUnique, 420);
+    EXPECT_EQ(weakUnique.expired(), false);
+    EXPECT_EQ(intUnique.impl_->wref(), 1);
 
     SP<int> sharedFromUnique = weakUnique.lock();
-    EXPECT(sharedFromUnique, nullptr);
+    EXPECT_EQ(sharedFromUnique, nullptr);
 
     std::vector<SP<int>> sps;
     sps.push_back(intPtr);
@@ -163,24 +155,25 @@ int main(int argc, char** argv, char** envp) {
     intPtr.reset();
     intUnique.reset();
 
-    EXPECT(weak.impl_->ref(), 0);
-    EXPECT(weakUnique.impl_->ref(), 0);
-    EXPECT(weakUnique.impl_->wref(), 1);
-    EXPECT(intPtr2.strongRef(), 3);
+    EXPECT_EQ(weak.impl_->ref(), 0);
+    EXPECT_EQ(weakUnique.impl_->ref(), 0);
+    EXPECT_EQ(weakUnique.impl_->wref(), 1);
+    EXPECT_EQ(intPtr2.strongRef(), 3);
 
-    EXPECT(weak.expired(), true);
-    EXPECT(weakUnique.expired(), true);
+    EXPECT_EQ(weak.expired(), true);
+    EXPECT_EQ(weakUnique.expired(), true);
 
     auto intPtr2AsUint = reinterpretPointerCast<unsigned int>(intPtr2);
-    EXPECT(intPtr2.strongRef(), 4);
-    EXPECT(intPtr2AsUint.strongRef(), 4);
+    EXPECT_EQ(intPtr2.strongRef(), 4);
+    EXPECT_EQ(intPtr2AsUint.strongRef(), 4);
 
-    EXPECT(*intPtr2AsUint > 0, true);
-    EXPECT(*intPtr2AsUint, (unsigned int)(int)-1337);
+    EXPECT_EQ(*intPtr2AsUint > 0, true);
+    EXPECT_EQ(*intPtr2AsUint, (unsigned int)(int)-1337);
     *intPtr2AsUint = 10;
-    EXPECT(*intPtr2AsUint, 10);
-    EXPECT(*intPtr2, 10);
+    EXPECT_EQ(*intPtr2AsUint, 10);
+    EXPECT_EQ(*intPtr2, 10);
 
-    EXPECT(testAtomicImpl(), 0);
-    return ret;
+    testAtomicImpl();
 }
+
+#endif
