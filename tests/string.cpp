@@ -1,5 +1,6 @@
 #include <hyprutils/string/String.hpp>
 #include <hyprutils/string/VarList.hpp>
+#include <hyprutils/string/VarList2.hpp>
 #include <hyprutils/string/ConstVarList.hpp>
 #include "shared.hpp"
 
@@ -46,6 +47,50 @@ int main(int argc, char** argv, char** envp) {
     CConstVarList listConst2("0 set", 2, ' ');
     EXPECT(listConst2[0], "0");
     EXPECT(listConst2[1], "set");
+
+    CVarList2 varList2("0 set", 2, ' ');
+    EXPECT(varList2[0], "0");
+    EXPECT(varList2[1], "set");
+
+    varList2.append("Hello");
+
+    EXPECT(varList2[1], "set");
+    EXPECT(varList2[2], "Hello");
+
+    CVarList2 varList2B("hello, world\\, ok?", 0, ',', true, true);
+    EXPECT(varList2B[0], "hello");
+    EXPECT(varList2B[1], "world, ok?");
+
+    CVarList2 varList2C("hello, , ok?", 0, ',', true, true);
+    EXPECT(varList2C[0], "hello");
+    EXPECT(varList2C[1], "ok?");
+
+    CVarList2 varList2D("\\\\, , ok?", 0, ',', true, true);
+    EXPECT(varList2D[0], "\\");
+    EXPECT(varList2D[1], "ok?");
+
+    CVarList2 varList2E("\\, , ok?", 0, ',', true, true);
+    EXPECT(varList2E[0], ",");
+    EXPECT(varList2E[1], "ok?");
+
+    CVarList2 varList2F("Hello, world\\\\, ok?", 0, ',', true, true);
+    EXPECT(varList2F[0], "Hello");
+    EXPECT(varList2F[1], "world\\");
+    EXPECT(varList2F[2], "ok?");
+
+    CVarList2 varList2G("Hello,\\, ok?", 0, ',', true, true);
+    EXPECT(varList2G[0], "Hello");
+    EXPECT(varList2G[1], ", ok?");
+
+    CVarList2 varList2H("Hello,\\\\, ok?", 0, ',', true, true);
+    EXPECT(varList2H[0], "Hello");
+    EXPECT(varList2H[1], "\\");
+    EXPECT(varList2H[2], "ok?");
+
+    CVarList2 varList2I("Hello,\\, ok?", 0, ',', true, false);
+    EXPECT(varList2I[0], "Hello");
+    EXPECT(varList2I[1], "\\");
+    EXPECT(varList2I[2], "ok?");
 
     std::string hello = "hello world!";
     replaceInString(hello, "hello", "hi");
