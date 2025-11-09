@@ -15,7 +15,7 @@ namespace Hyprutils {
                 @param removeEmpty remove empty args from argv
                 @param allowEscape whether to allow escaping the delimiter
             */
-            CVarList2(std::string&& in, const size_t lastArgNo = 0, const char delim = ',', const bool removeEmpty = false, const bool allowEscape = false);
+            CVarList2(std::string&& in, const size_t lastArgNo = 0, const char delim = ',', const bool removeEmpty = false, const bool allowEscape = true);
 
             ~CVarList2() = default;
 
