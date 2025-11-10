@@ -7,6 +7,9 @@ using namespace Hyprutils::Memory;
 #ifdef HU_UNIT_TESTS
 
 #include <gtest/gtest.h>
+#include <chrono>
+#include <thread>
+#include <vector>
 
 #define SP CSharedPointer
 #define WP CWeakPointer
