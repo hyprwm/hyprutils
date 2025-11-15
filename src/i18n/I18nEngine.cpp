@@ -59,9 +59,10 @@ std::string CI18nEngine::localizeEntry(const std::string& locale, uint64_t key, 
         if (!entry || !entry->exists) {
             // try to fall back to any lang prefixed with our prefix
 
-            auto stem = locale.substr(0, locale.find('_') + 1);
+            const auto stem    = locale.substr(0, locale.find('_') + 1);
+            const auto stemRaw = locale.substr(0, locale.find('_'));
             for (const auto& [k, v] : m_impl->entries) {
-                if (k.starts_with(stem) || k == stem) {
+                if (k.starts_with(stem) || k == stemRaw) {
                     if (m_impl->entries.contains(k) && m_impl->entries[k].size() > key)
                         entry = &m_impl->entries[k][key];
 
@@ -149,6 +150,8 @@ TEST(I18n, Engine) {
     engine.registerEntry("es_XX", TXT_KEY_FALLBACK, "I don't speak spanish");
     engine.registerEntry("es_ES", TXT_KEY_FALLBACK, "I don't speak spanish here either");
 
+    engine.registerEntry("am", TXT_KEY_FALLBACK, "Amongus!");
+
     EXPECT_EQ(engine.localizeEntry("en_US", TXT_KEY_HELLO, {}), "Hello World!");
     EXPECT_EQ(engine.localizeEntry("pl_PL", TXT_KEY_HELLO, {}), "Witaj świecie!");
     EXPECT_EQ(engine.localizeEntry("de_DE", TXT_KEY_HELLO, {}), "Hello World!");
@@ -169,6 +172,8 @@ TEST(I18n, Engine) {
     EXPECT_EQ(engine.localizeEntry("es_XX", TXT_KEY_FALLBACK, {}), "I don't speak spanish");
 
     EXPECT_EQ(engine.localizeEntry("pl_PL", TXT_KEY_FALLBACK, {}), "Fallback string!");
+
+    EXPECT_EQ(engine.localizeEntry("am_AM", TXT_KEY_FALLBACK, {}), "Amongus!");
 }
 
 #endif
