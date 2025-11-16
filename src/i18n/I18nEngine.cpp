@@ -3,11 +3,11 @@
 #include <algorithm>
 #include <format>
 #include <locale>
-#include <hyprutils/string/String.hpp>
+#include <hyprutils/utils/ScopeGuard.hpp>
 
 using namespace Hyprutils::I18n;
 using namespace Hyprutils;
-using namespace Hyprutils::String;
+using namespace Hyprutils::Utils;
 
 CI18nEngine::CI18nEngine() : m_impl(Memory::makeUnique<SI18nEngineImpl>()) {
     ;
@@ -94,16 +94,68 @@ std::string CI18nEngine::localizeEntry(const std::string& locale, uint64_t key, 
     if (!entry || !entry->exists)
         return "";
 
-    std::string rawStr = entry->entry;
+    std::string_view rawStr = entry->entry;
+    std::string      fnStringContainer;
 
-    if (entry->fn)
-        rawStr = entry->fn(map);
-
-    for (const auto& e : map) {
-        replaceInString(rawStr, "{" + e.first + "}", e.second);
+    if (entry->fn) {
+        fnStringContainer = entry->fn(map);
+        rawStr            = fnStringContainer;
     }
 
-    return rawStr;
+    struct SRange {
+        size_t             begin = 0;
+        size_t             end   = 0;
+        const std::string* val   = nullptr;
+    };
+    std::vector<SRange> rangesFound;
+
+    // discover all replacable ranges
+    for (const auto& [k, v] : map) {
+        size_t start = rawStr.find(k, 0);
+        while (start != std::string::npos) {
+            if (start == 0 || start + k.size() >= rawStr.size())
+                break;
+
+            // always move the pointer
+            CScopeGuard x([&start, &rawStr, &k] { start = rawStr.find(k, start + 1); });
+
+            if (rawStr[start - 1] != '{' || rawStr[start + k.size()] != '}')
+                continue;
+
+            // add range
+            rangesFound.emplace_back(SRange{.begin = start - 1, .end = start + k.size() + 1, .val = &v});
+        }
+    }
+
+    if (rangesFound.empty())
+        return std::string{rawStr};
+
+    // build the new string. First, sort our entries
+    std::ranges::sort(rangesFound, [](const auto& a, const auto& b) { return a.begin - b.begin; });
+
+    // calc the size
+    size_t stringLen = 0;
+    size_t lastBegin = 0;
+    for (const auto& r : rangesFound) {
+        stringLen += r.begin - lastBegin + r.val->size();
+        lastBegin = r.end;
+    }
+    stringLen += rawStr.size() - lastBegin;
+
+    lastBegin                = 0;
+    const auto  ORIGINAL_STR = std::string_view{rawStr};
+    std::string newStr;
+    newStr.reserve(stringLen);
+
+    for (const auto& r : rangesFound) {
+        newStr += ORIGINAL_STR.substr(lastBegin, r.begin);
+        newStr += *r.val;
+
+        lastBegin = r.end;
+    }
+    newStr += ORIGINAL_STR.substr(lastBegin);
+
+    return newStr;
 }
 
 CI18nLocale CI18nEngine::getSystemLocale() {
@@ -174,6 +226,15 @@ TEST(I18n, Engine) {
     EXPECT_EQ(engine.localizeEntry("pl_PL", TXT_KEY_FALLBACK, {}), "Fallback string!");
 
     EXPECT_EQ(engine.localizeEntry("am_AM", TXT_KEY_FALLBACK, {}), "Amongus!");
+
+    // test weird translations
+    engine.registerEntry("ts", TXT_KEY_HELLO, "count}");
+    EXPECT_EQ(engine.localizeEntry("ts", TXT_KEY_HELLO, {{"count", "1"}}), "count}");
+
+    engine.registerEntry("ts", TXT_KEY_HELLO, "{count");
+    EXPECT_EQ(engine.localizeEntry("ts", TXT_KEY_HELLO, {{"count", "1"}}), "{count");
+
+    EXPECT_EQ(engine.localizeEntry("ts", 42069 /* invalid key */, {{"count", "1"}}), "");
 }
 
 #endif
