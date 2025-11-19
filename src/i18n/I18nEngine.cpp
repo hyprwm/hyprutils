@@ -148,7 +148,7 @@ std::string CI18nEngine::localizeEntry(const std::string& locale, uint64_t key, 
     newStr.reserve(stringLen);
 
     for (const auto& r : rangesFound) {
-        newStr += ORIGINAL_STR.substr(lastBegin, r.begin);
+        newStr += ORIGINAL_STR.substr(lastBegin, r.begin - lastBegin);
         newStr += *r.val;
 
         lastBegin = r.end;
@@ -201,6 +201,7 @@ TEST(I18n, Engine) {
 
     engine.registerEntry("es_XX", TXT_KEY_FALLBACK, "I don't speak spanish");
     engine.registerEntry("es_ES", TXT_KEY_FALLBACK, "I don't speak spanish here either");
+    engine.registerEntry("ts_TST", TXT_KEY_FALLBACK, "Hello {var1} world {var2}");
 
     engine.registerEntry("am", TXT_KEY_FALLBACK, "Amongus!");
 
@@ -235,6 +236,8 @@ TEST(I18n, Engine) {
     EXPECT_EQ(engine.localizeEntry("ts", TXT_KEY_HELLO, {{"count", "1"}}), "{count");
 
     EXPECT_EQ(engine.localizeEntry("ts", 42069 /* invalid key */, {{"count", "1"}}), "");
+
+    EXPECT_EQ(engine.localizeEntry("ts_TST", TXT_KEY_FALLBACK, {{"var1", "hi"}, {"var2", "!"}}), "Hello hi world !");
 }
 
 #endif
