@@ -1,8 +1,8 @@
-#include <hyprutils/i18n/I18nEngine.hpp>
+#include "I18nEngine.hpp"
 
 using namespace Hyprutils::I18n;
 
-static std::string extractLocale(std::string locale) {
+std::string Hyprutils::I18n::extractLocale(std::string locale) {
     // localeStr is very arbitrary... from my testing, it can be:
     // en_US.UTF-8
     // LC_CTYPE=en_US
@@ -42,19 +42,3 @@ std::string CI18nLocale::stem() {
 std::string CI18nLocale::full() {
     return m_rawFullLocale;
 }
-
-#ifdef HU_UNIT_TESTS
-
-#include <gtest/gtest.h>
-#include <hyprutils/i18n/I18nEngine.hpp>
-
-TEST(I18n, Locale) {
-    CI18nEngine engine;
-
-    EXPECT_EQ(extractLocale("pl_PL.UTF-8"), "pl_PL");
-    EXPECT_EQ(extractLocale("POSIX"), "en_US");
-    EXPECT_EQ(extractLocale("*"), "en_US");
-    EXPECT_EQ(extractLocale("LC_CTYPE=pl_PL.UTF-8"), "pl_PL");
-}
-
-#endif

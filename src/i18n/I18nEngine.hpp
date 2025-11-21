@@ -13,4 +13,6 @@ namespace Hyprutils::I18n {
         std::unordered_map<std::string, std::vector<SI18nTranslationEntry>> entries;
         std::string                                                         fallbackLocale = "en_US";
     };
+
+    std::string extractLocale(std::string locale);
 };
