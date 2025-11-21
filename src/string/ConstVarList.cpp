@@ -36,19 +36,3 @@ std::string CConstVarList::join(const std::string& joiner, size_t from, size_t t
 
     return rolling;
 }
-
-#ifdef HU_UNIT_TESTS
-
-#include <gtest/gtest.h>
-
-TEST(String, constvarlist) {
-    CConstVarList listConst("hello    world!", 0, 's', true);
-    EXPECT_EQ(listConst[0], "hello");
-    EXPECT_EQ(listConst[1], "world!");
-
-    CConstVarList listConst2("0 set", 2, ' ');
-    EXPECT_EQ(listConst2[0], "0");
-    EXPECT_EQ(listConst2[1], "set");
-}
-
-#endif

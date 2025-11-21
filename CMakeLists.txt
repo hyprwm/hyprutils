@@ -57,17 +57,17 @@ if(BUILD_TESTING)
   # GTest
   find_package(GTest CONFIG REQUIRED)
   include(GoogleTest)
-  add_executable(hyprutils_inline_tests ${SRCFILES})
-  target_compile_definitions(hyprutils_inline_tests PRIVATE HU_UNIT_TESTS=1)
-  target_compile_options(hyprutils_inline_tests PRIVATE --coverage)
-  target_link_options(hyprutils_inline_tests PRIVATE --coverage)
+  file(GLOB_RECURSE TESTFILES CONFIGURE_DEPENDS "tests/*.cpp")
+  add_executable(hyprutils_tests ${TESTFILES})
+  target_compile_options(hyprutils_tests PRIVATE --coverage)
+  target_link_options(hyprutils_tests PRIVATE --coverage)
   target_include_directories(
-    hyprutils_inline_tests
+    hyprutils_tests
     PUBLIC "./include"
     PRIVATE "./src" "./src/include" "./protocols" "${CMAKE_BINARY_DIR}")
-  target_link_libraries(hyprutils_inline_tests PRIVATE GTest::gtest_main
+  target_link_libraries(hyprutils_tests PRIVATE hyprutils GTest::gtest_main
                                                        PkgConfig::deps)
-  gtest_discover_tests(hyprutils_inline_tests)
+  gtest_discover_tests(hyprutils_tests)
 endif()
 
 # Installation

@@ -1,15 +1,14 @@
-#include <hyprutils/memory/WeakPtr.hpp>
+
 #include <hyprutils/memory/Atomic.hpp>
-#include <hyprutils/memory/Casts.hpp>
-
-using namespace Hyprutils::Memory;
-
-#ifdef HU_UNIT_TESTS
+#include <hyprutils/memory/SharedPtr.hpp>
+#include <hyprutils/memory/WeakPtr.hpp>
 
 #include <gtest/gtest.h>
 #include <chrono>
 #include <thread>
 #include <vector>
+
+using namespace Hyprutils::Memory;
 
 #define SP CSharedPointer
 #define WP CWeakPointer
@@ -178,5 +177,3 @@ TEST(Memory, memory) {
 
     testAtomicImpl();
 }
-
-#endif
