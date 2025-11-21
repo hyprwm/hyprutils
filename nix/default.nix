@@ -7,7 +7,6 @@
   gtest,
   pixman,
   version ? "git",
-  doCheck ? false,
   debug ? false,
   # whether to use the mold linker
   # disable this for older machines without SSE4_2 and AVX2 support
@@ -15,9 +14,8 @@
 }:
 let
   inherit (builtins) foldl';
-  inherit (lib.attrsets) mapAttrsToList;
   inherit (lib.lists) flatten optional;
-  inherit (lib.strings) cmakeBool optionalString;
+  inherit (lib.strings) optionalString;
 
   adapters = flatten [
     (lib.optional withMold stdenvAdapters.useMoldLinker)
@@ -28,8 +26,10 @@ let
 in
 customStdenv.mkDerivation {
   pname = "hyprutils" + optionalString debug "-debug";
-  inherit version doCheck;
+  inherit version;
   src = ../.;
+
+  doCheck = debug;
 
   nativeBuildInputs = [
     cmake
@@ -37,7 +37,7 @@ customStdenv.mkDerivation {
   ];
 
   buildInputs = flatten [
-    (optional doCheck gtest)
+    (optional debug gtest)
     pixman
   ];
 
@@ -47,10 +47,6 @@ customStdenv.mkDerivation {
   ];
 
   cmakeBuildType = if debug then "Debug" else "RelWithDebInfo";
-
-  cmakeFlags = mapAttrsToList cmakeBool {
-    "DISABLE_TESTING" = !doCheck;
-  };
 
   meta = with lib; {
     homepage = "https://github.com/hyprwm/hyprutils";

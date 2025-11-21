@@ -18,6 +18,6 @@ in {
       inherit version;
     };
     hyprutils-debug = final.hyprutils.override {debug = true;};
-    hyprutils-with-tests = final.hyprutils.override {doCheck = true;};
+    hyprutils-with-tests = final.hyprutils-debug;
   };
 }
