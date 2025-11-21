@@ -33,9 +33,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 if(CMAKE_BUILD_TYPE MATCHES Debug OR CMAKE_BUILD_TYPE MATCHES DEBUG)
   message(STATUS "Configuring hyprutils in Debug")
   add_compile_definitions(HYPRLAND_DEBUG)
+  set(BUILD_TESTING ON)
 else()
   add_compile_options(-O3)
   message(STATUS "Configuring hyprutils in Release")
+  set(BUILD_TESTING OFF)
 endif()
 
 file(GLOB_RECURSE SRCFILES CONFIGURE_DEPENDS "src/*.cpp" "include/*.hpp")
@@ -59,8 +61,10 @@ if(BUILD_TESTING)
   include(GoogleTest)
   file(GLOB_RECURSE TESTFILES CONFIGURE_DEPENDS "tests/*.cpp")
   add_executable(hyprutils_tests ${TESTFILES})
+
   target_compile_options(hyprutils_tests PRIVATE --coverage)
   target_link_options(hyprutils_tests PRIVATE --coverage)
+  
   target_include_directories(
     hyprutils_tests
     PUBLIC "./include"
@@ -68,6 +72,10 @@ if(BUILD_TESTING)
   target_link_libraries(hyprutils_tests PRIVATE hyprutils GTest::gtest_main
                                                        PkgConfig::deps)
   gtest_discover_tests(hyprutils_tests)
+
+  # Add coverage to hyprutils for test builds
+  target_compile_options(hyprutils PRIVATE --coverage)
+  target_link_options(hyprutils PRIVATE --coverage)
 endif()
 
 # Installation
