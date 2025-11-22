@@ -30,7 +30,7 @@ namespace Hyprutils::CLI {
         std::string                         getDescription(const std::string_view& header, std::optional<size_t> maxWidth = {});
         std::expected<void, std::string>    parse();
         std::vector<SArgumentKey>::iterator getValue(const std::string_view& sv);
-        std::expected<void, std::string> registerOption(std::string&& name, std::string&& abbrev, std::string&& description, eArgumentType type);
+        std::expected<void, std::string>    registerOption(std::string&& name, std::string&& abbrev, std::string&& description, eArgumentType type);
 
         std::vector<SArgumentKey>           m_values;
 
