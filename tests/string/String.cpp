@@ -31,4 +31,17 @@ TEST(String, string) {
     EXPECT_EQ(isNumber("-1.0", true), true);
     EXPECT_EQ(isNumber("-1..0", true), false);
     EXPECT_EQ(isNumber("-10.0000000001", true), true);
+
+    EXPECT_EQ(truthy("frgeujgeruibger"), false);
+    EXPECT_EQ(truthy("false"), false);
+    EXPECT_EQ(truthy("0"), false);
+    EXPECT_EQ(truthy("yees"), false);
+    EXPECT_EQ(truthy("naa"), false);
+    EXPECT_EQ(truthy("-1"), false);
+    EXPECT_EQ(truthy("true"), true);
+    EXPECT_EQ(truthy("true eeee ee"), true);
+    EXPECT_EQ(truthy("yesss"), true);
+    EXPECT_EQ(truthy("1"), true);
+    EXPECT_EQ(truthy("on"), true);
+    EXPECT_EQ(truthy("onn"), true);
 }

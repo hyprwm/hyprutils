@@ -9,5 +9,6 @@ namespace Hyprutils {
         std::string_view trim(const std::string_view& in);
         bool             isNumber(const std::string& str, bool allowfloat = false);
         void             replaceInString(std::string& string, const std::string& what, const std::string& to);
+        bool             truthy(const std::string_view& in);
     };
 };
