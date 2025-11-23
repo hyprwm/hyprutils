@@ -24,6 +24,12 @@ TEST(CLI, Logger) {
 
     EXPECT_EQ(logger.rollingLog(), "DEBUG ]: Hello!\nTRACE ]: Hello, Trace!");
 
+    logger.setEnableStdout(false);
+
+    logger.log(Hyprutils::CLI::LOG_ERR, "Error");
+
+    EXPECT_EQ(logger.rollingLog(), "DEBUG ]: Hello!\nTRACE ]: Hello, Trace!");
+
     auto res = logger.setOutputFile("./loggerFile.log");
     EXPECT_TRUE(res);
 
@@ -39,4 +45,22 @@ TEST(CLI, Logger) {
 
     std::error_code ec;
     std::filesystem::remove("./loggerFile.log", ec);
+
+    // TODO: maybe find a way to test the times and color?
+    logger.setEnableStdout(true);
+    logger.setTime(true);
+
+    logger.log(Hyprutils::CLI::LOG_WARN, "Timed warning!");
+
+    logger.setEnableColor(false);
+
+    logger.log(Hyprutils::CLI::LOG_CRIT, "rip");
+
+    // spam some logs to check rolling
+    for (size_t i = 0; i < 1000; ++i) {
+        logger.log(LOG_DEBUG, "Log log log!");
+    }
+
+    EXPECT_TRUE(logger.rollingLog().size() < 4096);
+    EXPECT_TRUE(logger.rollingLog().starts_with("DEBUG")); // test the breaking is done correctly
 }

@@ -6,7 +6,7 @@
 using namespace Hyprutils;
 using namespace Hyprutils::CLI;
 
-CLogger::CLogger()  {
+CLogger::CLogger() {
     m_impl = Memory::makeUnique<CLoggerImpl>(this);
 }
 
@@ -21,7 +21,7 @@ void CLogger::setTime(bool enabled) {
 }
 
 void CLogger::setEnableStdout(bool enabled) {
-    m_impl->m_stdoutEnabled;
+    m_impl->m_stdoutEnabled = enabled;
     m_impl->updateParentShouldLog();
 }
 
