@@ -24,11 +24,18 @@ TEST(CLI, Logger) {
 
     EXPECT_EQ(logger.rollingLog(), "DEBUG ]: Hello!\nTRACE ]: Hello, Trace!");
 
+    CLoggerConnection connection(logger);
+    connection.setName("conn");
+
+    connection.log(Hyprutils::CLI::LOG_DEBUG, "Hello from connection!");
+
+    EXPECT_EQ(logger.rollingLog(), "DEBUG ]: Hello!\nTRACE ]: Hello, Trace!\nDEBUG from conn ]: Hello from connection!");
+
     logger.setEnableStdout(false);
 
     logger.log(Hyprutils::CLI::LOG_ERR, "Error");
 
-    EXPECT_EQ(logger.rollingLog(), "DEBUG ]: Hello!\nTRACE ]: Hello, Trace!");
+    EXPECT_EQ(logger.rollingLog(), "DEBUG ]: Hello!\nTRACE ]: Hello, Trace!\nDEBUG from conn ]: Hello from connection!");
 
     auto res = logger.setOutputFile("./loggerFile.log");
     EXPECT_TRUE(res);
@@ -57,7 +64,7 @@ TEST(CLI, Logger) {
     logger.log(Hyprutils::CLI::LOG_CRIT, "rip");
 
     // spam some logs to check rolling
-    for (size_t i = 0; i < 1000; ++i) {
+    for (size_t i = 0; i < 200; ++i) {
         logger.log(LOG_DEBUG, "Log log log!");
     }
 

@@ -15,6 +15,7 @@ namespace Hyprutils::CLI {
 
         void                  updateParentShouldLog();
         void                  appendToRolling(const std::string& s);
+        void                  log(eLogLevel level, const std::string_view& msg, const std::string_view& from = "");
 
         std::string           m_rollingLog;
         std::ofstream         m_logOfs;

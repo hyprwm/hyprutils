@@ -66,7 +66,19 @@ void CLogger::log(eLogLevel level, const std::string_view& msg) {
     if (level == LOG_TRACE && !m_trace)
         return;
 
-    std::lock_guard<std::mutex> lg(m_impl->m_logMtx);
+    m_impl->log(level, msg);
+}
+
+const std::string& CLogger::rollingLog() {
+    return m_impl->m_rollingLog;
+}
+
+CLoggerImpl::CLoggerImpl(CLogger* parent) : m_parent(parent) {
+    updateParentShouldLog();
+}
+
+void CLoggerImpl::log(eLogLevel level, const std::string_view& msg, const std::string_view& from) {
+    std::lock_guard<std::mutex> lg(m_logMtx);
 
     std::string                 logPrefix = "", logPrefixColor = "";
     std::string                 logMsg = "";
@@ -94,7 +106,7 @@ void CLogger::log(eLogLevel level, const std::string_view& msg) {
             break;
     }
 
-    if (m_impl->m_timeEnabled) {
+    if (m_timeEnabled) {
 #ifndef _LIBCPP_VERSION
         static auto current_zone = std::chrono::current_zone();
         const auto  zt           = std::chrono::zoned_time{current_zone, std::chrono::system_clock::now()};
@@ -106,23 +118,21 @@ void CLogger::log(eLogLevel level, const std::string_view& msg) {
         logMsg += std::format("@ {} ", hms);
     }
 
+    if (!from.empty()) {
+        logMsg += "from ";
+        logMsg += from;
+        logMsg += " ";
+    }
+
     logMsg += "]: ";
     logMsg += msg;
 
-    if (m_impl->m_stdoutEnabled)
-        std::println("{}{}", m_impl->m_colorEnabled ? logPrefixColor : logPrefix, logMsg);
-    if (m_impl->m_fileEnabled)
-        m_impl->m_logOfs << logPrefix << logMsg << "\n";
+    if (m_stdoutEnabled)
+        std::println("{}{}", m_colorEnabled ? logPrefixColor : logPrefix, logMsg);
+    if (m_fileEnabled)
+        m_logOfs << logPrefix << logMsg << "\n";
 
-    m_impl->appendToRolling(logPrefix + logMsg);
-}
-
-const std::string& CLogger::rollingLog() {
-    return m_impl->m_rollingLog;
-}
-
-CLoggerImpl::CLoggerImpl(CLogger* parent) : m_parent(parent) {
-    updateParentShouldLog();
+    appendToRolling(logPrefix + logMsg);
 }
 
 void CLoggerImpl::updateParentShouldLog() {
@@ -136,4 +146,27 @@ void CLoggerImpl::appendToRolling(const std::string& s) {
     m_rollingLog += s;
     if (m_rollingLog.size() > ROLLING_LOG_SIZE)
         m_rollingLog = m_rollingLog.substr(m_rollingLog.find('\n', m_rollingLog.size() - ROLLING_LOG_SIZE) + 1);
+}
+
+CLoggerConnection::CLoggerConnection(CLogger& logger) : m_impl(logger.m_impl), m_logger(&logger) {
+    ;
+}
+
+CLoggerConnection::~CLoggerConnection() = default;
+
+void CLoggerConnection::setName(const std::string_view& name) {
+    m_name = name;
+}
+
+void CLoggerConnection::log(eLogLevel level, const std::string_view& msg) {
+    if (!m_impl || !m_logger)
+        return;
+
+    if (!m_logger->m_shouldLogAtAll)
+        return;
+
+    if (level == LOG_TRACE && !m_logger->m_trace)
+        return;
+
+    m_impl->log(level, msg, m_name);
 }

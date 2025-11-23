@@ -5,6 +5,7 @@
 #include <string_view>
 
 #include "../memory/UniquePtr.hpp"
+#include "../memory/WeakPtr.hpp"
 
 namespace Hyprutils::CLI {
     class CLoggerImpl;
@@ -62,5 +63,41 @@ namespace Hyprutils::CLI {
         bool m_shouldLogAtAll = false;
 
         friend class CLoggerImpl;
+        friend class CLoggerConnection;
+    };
+
+    // CLoggerConnection is a "handle" to a logger, that can be created from a logger and
+    // allows to send messages to a logger via a proxy
+    // this does not allow for any changes to the logger itself, only sending logs.
+    class CLoggerConnection {
+      public:
+        CLoggerConnection(CLogger& logger);
+        ~CLoggerConnection();
+
+        void setName(const std::string_view& name);
+
+        void log(eLogLevel level, const std::string_view& msg);
+
+        template <typename... Args>
+        // NOLINTNEXTLINE
+        void log(eLogLevel level, std::format_string<Args...> fmt, Args&&... args) {
+            if (!m_impl || !m_logger)
+                return;
+
+            if (!m_logger->m_shouldLogAtAll)
+                return;
+
+            if (level == LOG_TRACE && !m_logger->m_trace)
+                return;
+
+            std::string logMsg = std::vformat(fmt.get(), std::make_format_args(args...));
+            log(level, logMsg);
+        }
+
+      private:
+        Memory::CWeakPointer<CLoggerImpl> m_impl;
+        CLogger*                          m_logger = nullptr;
+
+        std::string                       m_name = "";
     };
 };
