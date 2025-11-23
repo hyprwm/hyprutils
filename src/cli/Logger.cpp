@@ -29,6 +29,10 @@ void CLogger::setEnableColor(bool enabled) {
     m_impl->m_colorEnabled = enabled;
 }
 
+void CLogger::setEnableRolling(bool enabled) {
+    m_impl->m_rollingEnabled = enabled;
+}
+
 std::expected<void, std::string> CLogger::setOutputFile(const std::string_view& file) {
     if (file.empty()) {
         m_impl->m_fileEnabled = false;
@@ -132,7 +136,8 @@ void CLoggerImpl::log(eLogLevel level, const std::string_view& msg, const std::s
     if (m_fileEnabled)
         m_logOfs << logPrefix << logMsg << "\n";
 
-    appendToRolling(logPrefix + logMsg);
+    if (m_rollingEnabled)
+        appendToRolling(logPrefix + logMsg);
 }
 
 void CLoggerImpl::updateParentShouldLog() {

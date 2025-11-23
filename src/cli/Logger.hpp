@@ -21,10 +21,11 @@ namespace Hyprutils::CLI {
         std::ofstream         m_logOfs;
         std::filesystem::path m_logFilePath;
 
-        bool                  m_timeEnabled   = false;
-        bool                  m_stdoutEnabled = true;
-        bool                  m_fileEnabled   = false;
-        bool                  m_colorEnabled  = true;
+        bool                  m_timeEnabled    = false;
+        bool                  m_stdoutEnabled  = true;
+        bool                  m_fileEnabled    = false;
+        bool                  m_colorEnabled   = true;
+        bool                  m_rollingEnabled = false;
 
         std::mutex            m_logMtx;
 

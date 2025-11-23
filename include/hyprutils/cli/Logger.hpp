@@ -35,6 +35,7 @@ namespace Hyprutils::CLI {
         void                             setTime(bool enabled);
         void                             setEnableStdout(bool enabled);
         void                             setEnableColor(bool enabled);
+        void                             setEnableRolling(bool enabled);
         std::expected<void, std::string> setOutputFile(const std::string_view& file);
         const std::string&               rollingLog();
 

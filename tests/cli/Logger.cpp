@@ -10,6 +10,9 @@ using namespace Hyprutils;
 
 TEST(CLI, Logger) {
     CLogger logger;
+
+    logger.setEnableRolling(true);
+
     logger.log(Hyprutils::CLI::LOG_DEBUG, "Hello!");
 
     EXPECT_EQ(logger.rollingLog(), "DEBUG ]: Hello!");
@@ -34,6 +37,12 @@ TEST(CLI, Logger) {
     connection.setLogLevel(Hyprutils::CLI::LOG_WARN);
 
     connection.log(Hyprutils::CLI::LOG_DEBUG, "Hello from connection!");
+
+    EXPECT_EQ(logger.rollingLog(), "DEBUG ]: Hello!\nTRACE ]: Hello, Trace!\nTRACE from conn ]: Hello from connection!");
+
+    logger.setEnableRolling(false);
+
+    connection.log(Hyprutils::CLI::LOG_ERR, "Err!");
 
     EXPECT_EQ(logger.rollingLog(), "DEBUG ]: Hello!\nTRACE ]: Hello, Trace!\nTRACE from conn ]: Hello from connection!");
 
@@ -68,6 +77,8 @@ TEST(CLI, Logger) {
     logger.setEnableColor(false);
 
     logger.log(Hyprutils::CLI::LOG_CRIT, "rip");
+
+    logger.setEnableRolling(true);
 
     // spam some logs to check rolling
     for (size_t i = 0; i < 200; ++i) {
