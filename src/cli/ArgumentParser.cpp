@@ -99,7 +99,8 @@ std::vector<SArgumentKey>::iterator CArgumentParserImpl::getValue(const std::str
     return it;
 }
 
-std::expected<void, std::string> CArgumentParserImpl::registerOption(const std::string_view& name, const std::string_view& abbrev, const std::string_view& description, eArgumentType type) {
+std::expected<void, std::string> CArgumentParserImpl::registerOption(const std::string_view& name, const std::string_view& abbrev, const std::string_view& description,
+                                                                     eArgumentType type) {
     if (getValue(name) != m_values.end() || getValue(abbrev) != m_values.end())
         return std::unexpected("Value already exists");
 
