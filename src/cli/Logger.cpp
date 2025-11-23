@@ -179,3 +179,15 @@ void CLoggerConnection::log(eLogLevel level, const std::string_view& msg) {
 
     m_impl->log(level, msg, m_name);
 }
+
+CLogger* CLoggerConnection::getLogger() {
+    if (!m_impl)
+        return nullptr;
+
+    return m_logger;
+}
+
+void CLoggerConnection::redirect(CLogger& logger) {
+    m_impl   = logger.m_impl;
+    m_logger = &logger;
+}

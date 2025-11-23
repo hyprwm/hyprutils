@@ -82,10 +82,13 @@ namespace Hyprutils::CLI {
         // Allow move
         CLoggerConnection(CLoggerConnection&&) = default;
 
-        void setName(const std::string_view& name);
-        void setLogLevel(eLogLevel level);
+        void     setName(const std::string_view& name);
+        void     setLogLevel(eLogLevel level);
 
-        void log(eLogLevel level, const std::string_view& msg);
+        void     log(eLogLevel level, const std::string_view& msg);
+
+        CLogger* getLogger();
+        void     redirect(CLogger& logger);
 
         template <typename... Args>
         // NOLINTNEXTLINE
