@@ -88,3 +88,16 @@ void Hyprutils::String::replaceInString(std::string& string, const std::string& 
         pos += to.length();
     }
 }
+
+bool Hyprutils::String::truthy(const std::string_view& in) {
+    if (in == "1")
+        return true;
+
+    if (in == "0")
+        return false;
+
+    std::string lower = std::string{in};
+    std::ranges::transform(lower, lower.begin(), ::tolower);
+
+    return lower.starts_with("true") || lower.starts_with("yes") || lower.starts_with("on");
+}
