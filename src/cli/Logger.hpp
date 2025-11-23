@@ -1,6 +1,7 @@
 #include <hyprutils/cli/Logger.hpp>
 #include <fstream>
 #include <filesystem>
+#include <mutex>
 
 namespace Hyprutils::CLI {
     class CLoggerImpl {
@@ -23,6 +24,8 @@ namespace Hyprutils::CLI {
         bool                  m_stdoutEnabled = true;
         bool                  m_fileEnabled   = false;
         bool                  m_colorEnabled  = true;
+
+        std::mutex            m_logMtx;
 
         // this is fine because CLogger is NOMOVE and NOCOPY
         CLogger* m_parent = nullptr;

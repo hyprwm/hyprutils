@@ -66,8 +66,10 @@ void CLogger::log(eLogLevel level, const std::string_view& msg) {
     if (level == LOG_TRACE && !m_trace)
         return;
 
-    std::string logPrefix = "", logPrefixColor = "";
-    std::string logMsg = "";
+    std::lock_guard<std::mutex> lg(m_impl->m_logMtx);
+
+    std::string                 logPrefix = "", logPrefixColor = "";
+    std::string                 logMsg = "";
 
     switch (level) {
         case LOG_TRACE:
