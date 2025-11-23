@@ -18,7 +18,7 @@ TEST(CLI, Logger) {
 
     EXPECT_EQ(logger.rollingLog(), "DEBUG ]: Hello!");
 
-    logger.setTrace(true);
+    logger.setLogLevel(LOG_TRACE);
 
     logger.log(Hyprutils::CLI::LOG_TRACE, "Hello, {}!", "Trace");
 
@@ -27,15 +27,21 @@ TEST(CLI, Logger) {
     CLoggerConnection connection(logger);
     connection.setName("conn");
 
+    connection.log(Hyprutils::CLI::LOG_TRACE, "Hello from connection!");
+
+    EXPECT_EQ(logger.rollingLog(), "DEBUG ]: Hello!\nTRACE ]: Hello, Trace!\nTRACE from conn ]: Hello from connection!");
+
+    connection.setLogLevel(Hyprutils::CLI::LOG_WARN);
+
     connection.log(Hyprutils::CLI::LOG_DEBUG, "Hello from connection!");
 
-    EXPECT_EQ(logger.rollingLog(), "DEBUG ]: Hello!\nTRACE ]: Hello, Trace!\nDEBUG from conn ]: Hello from connection!");
+    EXPECT_EQ(logger.rollingLog(), "DEBUG ]: Hello!\nTRACE ]: Hello, Trace!\nTRACE from conn ]: Hello from connection!");
 
     logger.setEnableStdout(false);
 
     logger.log(Hyprutils::CLI::LOG_ERR, "Error");
 
-    EXPECT_EQ(logger.rollingLog(), "DEBUG ]: Hello!\nTRACE ]: Hello, Trace!\nDEBUG from conn ]: Hello from connection!");
+    EXPECT_EQ(logger.rollingLog(), "DEBUG ]: Hello!\nTRACE ]: Hello, Trace!\nTRACE from conn ]: Hello from connection!");
 
     auto res = logger.setOutputFile("./loggerFile.log");
     EXPECT_TRUE(res);
@@ -65,9 +71,23 @@ TEST(CLI, Logger) {
 
     // spam some logs to check rolling
     for (size_t i = 0; i < 200; ++i) {
-        logger.log(LOG_DEBUG, "Log log log!");
+        logger.log(LOG_ERR, "Oh noes!!!");
     }
 
     EXPECT_TRUE(logger.rollingLog().size() < 4096);
-    EXPECT_TRUE(logger.rollingLog().starts_with("DEBUG")); // test the breaking is done correctly
+    EXPECT_TRUE(logger.rollingLog().starts_with("ERR")); // test the breaking is done correctly
+
+    // test scoping
+    CLogger*           pLogger     = new CLogger();
+    CLoggerConnection* pConnection = new CLoggerConnection(*pLogger);
+
+    pLogger->setEnableStdout(false);
+
+    pConnection->log(LOG_DEBUG, "This shouldn't log anything.");
+
+    EXPECT_TRUE(pLogger->rollingLog().empty());
+
+    delete pLogger;
+
+    pConnection->log(LOG_DEBUG, "This shouldn't do anything, or crash.");
 }

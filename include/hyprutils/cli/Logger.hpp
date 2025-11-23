@@ -31,7 +31,7 @@ namespace Hyprutils::CLI {
         CLogger(CLogger&)       = delete;
         CLogger(CLogger&&)      = delete;
 
-        void                             setTrace(bool enabled);
+        void                             setLogLevel(eLogLevel level);
         void                             setTime(bool enabled);
         void                             setEnableStdout(bool enabled);
         void                             setEnableColor(bool enabled);
@@ -46,7 +46,7 @@ namespace Hyprutils::CLI {
             if (!m_shouldLogAtAll)
                 return;
 
-            if (level == LOG_TRACE && !m_trace)
+            if (level < m_logLevel)
                 return;
 
             std::string logMsg = std::vformat(fmt.get(), std::make_format_args(args...));
@@ -57,7 +57,7 @@ namespace Hyprutils::CLI {
         Memory::CUniquePointer<CLoggerImpl> m_impl;
 
         // this has to be here as part of important optimization of trace logs
-        bool m_trace = false;
+        eLogLevel m_logLevel = LOG_DEBUG;
 
         // this has to be here as part of important optimization of disabled logging
         bool m_shouldLogAtAll = false;
@@ -69,12 +69,20 @@ namespace Hyprutils::CLI {
     // CLoggerConnection is a "handle" to a logger, that can be created from a logger and
     // allows to send messages to a logger via a proxy
     // this does not allow for any changes to the logger itself, only sending logs.
+    // Logger connections keep their own logLevel. They inherit it at creation, but can be changed
     class CLoggerConnection {
       public:
         CLoggerConnection(CLogger& logger);
         ~CLoggerConnection();
 
+        CLoggerConnection(const CLoggerConnection&) = delete;
+        CLoggerConnection(CLoggerConnection&)       = delete;
+
+        // Allow move
+        CLoggerConnection(CLoggerConnection&&) = default;
+
         void setName(const std::string_view& name);
+        void setLogLevel(eLogLevel level);
 
         void log(eLogLevel level, const std::string_view& msg);
 
@@ -87,7 +95,7 @@ namespace Hyprutils::CLI {
             if (!m_logger->m_shouldLogAtAll)
                 return;
 
-            if (level == LOG_TRACE && !m_logger->m_trace)
+            if (level < m_logLevel)
                 return;
 
             std::string logMsg = std::vformat(fmt.get(), std::make_format_args(args...));
@@ -96,7 +104,8 @@ namespace Hyprutils::CLI {
 
       private:
         Memory::CWeakPointer<CLoggerImpl> m_impl;
-        CLogger*                          m_logger = nullptr;
+        CLogger*                          m_logger   = nullptr;
+        eLogLevel                         m_logLevel = LOG_DEBUG;
 
         std::string                       m_name = "";
     };

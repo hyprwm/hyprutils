@@ -12,8 +12,8 @@ CLogger::CLogger() {
 
 CLogger::~CLogger() = default;
 
-void CLogger::setTrace(bool enabled) {
-    m_trace = enabled;
+void CLogger::setLogLevel(eLogLevel level) {
+    m_logLevel = level;
 }
 
 void CLogger::setTime(bool enabled) {
@@ -63,7 +63,7 @@ void CLogger::log(eLogLevel level, const std::string_view& msg) {
     if (!m_shouldLogAtAll)
         return;
 
-    if (level == LOG_TRACE && !m_trace)
+    if (level < m_logLevel)
         return;
 
     m_impl->log(level, msg);
@@ -148,7 +148,7 @@ void CLoggerImpl::appendToRolling(const std::string& s) {
         m_rollingLog = m_rollingLog.substr(m_rollingLog.find('\n', m_rollingLog.size() - ROLLING_LOG_SIZE) + 1);
 }
 
-CLoggerConnection::CLoggerConnection(CLogger& logger) : m_impl(logger.m_impl), m_logger(&logger) {
+CLoggerConnection::CLoggerConnection(CLogger& logger) : m_impl(logger.m_impl), m_logger(&logger), m_logLevel(logger.m_logLevel) {
     ;
 }
 
@@ -158,6 +158,10 @@ void CLoggerConnection::setName(const std::string_view& name) {
     m_name = name;
 }
 
+void CLoggerConnection::setLogLevel(eLogLevel level) {
+    m_logLevel = level;
+}
+
 void CLoggerConnection::log(eLogLevel level, const std::string_view& msg) {
     if (!m_impl || !m_logger)
         return;
@@ -165,7 +169,7 @@ void CLoggerConnection::log(eLogLevel level, const std::string_view& msg) {
     if (!m_logger->m_shouldLogAtAll)
         return;
 
-    if (level == LOG_TRACE && !m_logger->m_trace)
+    if (level < m_logLevel)
         return;
 
     m_impl->log(level, msg, m_name);
