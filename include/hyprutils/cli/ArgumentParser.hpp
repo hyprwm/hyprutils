@@ -15,15 +15,15 @@ namespace Hyprutils::CLI {
         CArgumentParser(const std::span<const char*>& args);
         ~CArgumentParser() = default;
 
-        std::expected<void, std::string> registerBoolOption(std::string&& name, std::string&& abbrev, std::string&& description);
-        std::expected<void, std::string> registerIntOption(std::string&& name, std::string&& abbrev, std::string&& description);
-        std::expected<void, std::string> registerFloatOption(std::string&& name, std::string&& abbrev, std::string&& description);
-        std::expected<void, std::string> registerStringOption(std::string&& name, std::string&& abbrev, std::string&& description);
+        std::expected<void, std::string> registerBoolOption(const std::string_view& name, const std::string_view& abbrev, const std::string_view& description);
+        std::expected<void, std::string> registerIntOption(const std::string_view& name, const std::string_view& abbrev, const std::string_view& description);
+        std::expected<void, std::string> registerFloatOption(const std::string_view& name, const std::string_view& abbrev, const std::string_view& description);
+        std::expected<void, std::string> registerStringOption(const std::string_view& name, const std::string_view& abbrev, const std::string_view& description);
 
-        std::optional<bool>              getBool(const char* name);
-        std::optional<int>               getInt(const char* name);
-        std::optional<float>             getFloat(const char* name);
-        std::optional<std::string_view>  getString(const char* name);
+        std::optional<bool>              getBool(const std::string_view& name);
+        std::optional<int>               getInt(const std::string_view& name);
+        std::optional<float>             getFloat(const std::string_view& name);
+        std::optional<std::string_view>  getString(const std::string_view& name);
 
         // commence the parsing after registering
         std::expected<void, std::string> parse();

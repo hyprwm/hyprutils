@@ -15,23 +15,23 @@ CArgumentParser::CArgumentParser(const std::span<const char*>& args) : m_impl(ma
     ;
 }
 
-std::expected<void, std::string> CArgumentParser::registerBoolOption(std::string&& name, std::string&& abbrev, std::string&& description) {
-    return m_impl->registerOption(std::move(name), std::move(abbrev), std::move(description), ARG_TYPE_BOOL);
+std::expected<void, std::string> CArgumentParser::registerBoolOption(const std::string_view& name, const std::string_view& abbrev, const std::string_view& description) {
+    return m_impl->registerOption(name, abbrev, description, ARG_TYPE_BOOL);
 }
 
-std::expected<void, std::string> CArgumentParser::registerIntOption(std::string&& name, std::string&& abbrev, std::string&& description) {
-    return m_impl->registerOption(std::move(name), std::move(abbrev), std::move(description), ARG_TYPE_INT);
+std::expected<void, std::string> CArgumentParser::registerIntOption(const std::string_view& name, const std::string_view& abbrev, const std::string_view& description) {
+    return m_impl->registerOption(name, abbrev, description, ARG_TYPE_INT);
 }
 
-std::expected<void, std::string> CArgumentParser::registerFloatOption(std::string&& name, std::string&& abbrev, std::string&& description) {
-    return m_impl->registerOption(std::move(name), std::move(abbrev), std::move(description), ARG_TYPE_FLOAT);
+std::expected<void, std::string> CArgumentParser::registerFloatOption(const std::string_view& name, const std::string_view& abbrev, const std::string_view& description) {
+    return m_impl->registerOption(name, abbrev, description, ARG_TYPE_FLOAT);
 }
 
-std::expected<void, std::string> CArgumentParser::registerStringOption(std::string&& name, std::string&& abbrev, std::string&& description) {
-    return m_impl->registerOption(std::move(name), std::move(abbrev), std::move(description), ARG_TYPE_STR);
+std::expected<void, std::string> CArgumentParser::registerStringOption(const std::string_view& name, const std::string_view& abbrev, const std::string_view& description) {
+    return m_impl->registerOption(name, abbrev, description, ARG_TYPE_STR);
 }
 
-std::optional<bool> CArgumentParser::getBool(const char* name) {
+std::optional<bool> CArgumentParser::getBool(const std::string_view& name) {
     auto ref = m_impl->getValue(name);
 
     if (ref == m_impl->m_values.end())
@@ -43,7 +43,7 @@ std::optional<bool> CArgumentParser::getBool(const char* name) {
     return std::nullopt;
 }
 
-std::optional<int> CArgumentParser::getInt(const char* name) {
+std::optional<int> CArgumentParser::getInt(const std::string_view& name) {
     auto ref = m_impl->getValue(name);
 
     if (ref == m_impl->m_values.end())
@@ -55,7 +55,7 @@ std::optional<int> CArgumentParser::getInt(const char* name) {
     return std::nullopt;
 }
 
-std::optional<float> CArgumentParser::getFloat(const char* name) {
+std::optional<float> CArgumentParser::getFloat(const std::string_view& name) {
     auto ref = m_impl->getValue(name);
 
     if (ref == m_impl->m_values.end())
@@ -67,7 +67,7 @@ std::optional<float> CArgumentParser::getFloat(const char* name) {
     return std::nullopt;
 }
 
-std::optional<std::string_view> CArgumentParser::getString(const char* name) {
+std::optional<std::string_view> CArgumentParser::getString(const std::string_view& name) {
     auto ref = m_impl->getValue(name);
 
     if (ref == m_impl->m_values.end())
@@ -99,14 +99,14 @@ std::vector<SArgumentKey>::iterator CArgumentParserImpl::getValue(const std::str
     return it;
 }
 
-std::expected<void, std::string> CArgumentParserImpl::registerOption(std::string&& name, std::string&& abbrev, std::string&& description, eArgumentType type) {
+std::expected<void, std::string> CArgumentParserImpl::registerOption(const std::string_view& name, const std::string_view& abbrev, const std::string_view& description, eArgumentType type) {
     if (getValue(name) != m_values.end() || getValue(abbrev) != m_values.end())
         return std::unexpected("Value already exists");
 
     m_values.emplace_back(SArgumentKey{
-        .full    = std::move(name),
-        .abbrev  = std::move(abbrev),
-        .desc    = std::move(description),
+        .full    = std::string{name},
+        .abbrev  = std::string{abbrev},
+        .desc    = std::string{description},
         .argType = type,
         .val     = std::monostate{},
     });
