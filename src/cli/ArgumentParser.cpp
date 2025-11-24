@@ -96,12 +96,17 @@ CArgumentParserImpl::CArgumentParserImpl(const std::span<const char*>& args) {
 }
 
 std::vector<SArgumentKey>::iterator CArgumentParserImpl::getValue(const std::string_view& sv) {
+    if (sv.empty())
+        return m_values.end();
     auto it = std::ranges::find_if(m_values, [&sv](const auto& e) { return e.full == sv || e.abbrev == sv; });
     return it;
 }
 
 std::expected<void, std::string> CArgumentParserImpl::registerOption(const std::string_view& name, const std::string_view& abbrev, const std::string_view& description,
                                                                      eArgumentType type) {
+    if (name.empty())
+        return std::unexpected("Name cannot be empty");
+
     if (getValue(name) != m_values.end() || getValue(abbrev) != m_values.end())
         return std::unexpected("Value already exists");
 

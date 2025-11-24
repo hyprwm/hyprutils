@@ -49,6 +49,8 @@ TEST(CLI, ArgumentParser) {
     EXPECT_TRUE(parser2.registerBoolOption("hello2", "e", "Says hello 2"));
     EXPECT_TRUE(parser2.registerFloatOption("value", "v", "Sets a valueeeeeee"));
     EXPECT_TRUE(parser2.registerIntOption("longlonglonglongintopt", "l", "Long long maaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaan maaan man maaan man maaan man maaan man"));
+    EXPECT_TRUE(parser2.registerFloatOption("value2", "", "Sets a valueeeeeee 2"));
+    EXPECT_TRUE(!parser2.registerFloatOption("", "a", "Sets a valueeeeeee 2"));
 
     auto result2 = parser2.parse();
 
