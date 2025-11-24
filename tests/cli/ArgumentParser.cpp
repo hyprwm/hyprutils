@@ -10,12 +10,12 @@ using namespace Hyprutils;
 constexpr const char* DESC_TEST = R"#(┏ My description
 ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┣ --hello                  -h          | Says hello                              ┃
-┣ --hello2                 -e          | Says hello 2                            ┃
+┣ --hello2                             | Says hello 2                            ┃
 ┣ --value                  -v [float]  | Sets a valueeeeeee                      ┃
 ┣ --longlonglonglongintopt -l [int]    | Long long                               ┃
-┣                                        maaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa┃
-┣                                        aaaaaaaaaaan maaan man maaan man maaan  ┃
-┣                                        man maaan man                           ┃
+┃                                        maaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa┃
+┃                                        aaaaaaaaaaan maaan man maaan man maaan  ┃
+┃                                        man maaan man                           ┃
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 )#";
 
@@ -25,7 +25,7 @@ TEST(CLI, ArgumentParser) {
     CArgumentParser          parser(argv);
 
     EXPECT_TRUE(parser.registerBoolOption("hello", "h", "Says hello"));
-    EXPECT_TRUE(parser.registerBoolOption("hello2", "e", "Says hello 2"));
+    EXPECT_TRUE(parser.registerBoolOption("hello2", "", "Says hello 2"));
     EXPECT_TRUE(parser.registerFloatOption("value", "v", "Sets a valueeeeeee"));
     EXPECT_TRUE(parser.registerIntOption("longlonglonglongintopt", "l", "Long long maaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaan maaan man maaan man maaan man maaan man"));
 

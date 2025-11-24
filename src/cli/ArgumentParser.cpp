@@ -253,12 +253,16 @@ std::string CArgumentParserImpl::getDescription(const std::string_view& header, 
         rolling += pad(maxArgWidth - lenUsed);
         lenUsed = maxArgWidth;
 
-        rolling += " -" + v.abbrev;
-        lenUsed += 2 + v.abbrev.size();
-        rolling += " ";
-        rolling += TYPE_STRS[v.argType];
-        lenUsed += std::string_view{TYPE_STRS[v.argType]}.length() + 1;
-        rolling += pad(maxArgWidth + maxShortWidth - lenUsed);
+        if (!v.abbrev.empty()) {
+            rolling += " -" + v.abbrev;
+            lenUsed += 2 + v.abbrev.size();
+
+            rolling += " ";
+            rolling += TYPE_STRS[v.argType];
+            lenUsed += std::string_view{TYPE_STRS[v.argType]}.length() + 1;
+            rolling += pad(maxArgWidth + maxShortWidth - lenUsed);
+        } else
+            rolling += pad(maxShortWidth);
         lenUsed = maxArgWidth + maxShortWidth;
 
         rolling += " | ";
@@ -275,7 +279,7 @@ std::string CArgumentParserImpl::getDescription(const std::string_view& header, 
 
         for (size_t i = 1; i < ROWS.size(); ++i) {
             lenUsed = LEN_START_DESC;
-            rolling += "┣";
+            rolling += "┃";
             rolling += pad(LEN_START_DESC);
             rolling += ROWS[i];
             lenUsed += ROWS[i].size();
