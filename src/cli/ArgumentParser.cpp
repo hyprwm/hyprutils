@@ -2,6 +2,7 @@
 
 #include <format>
 #include <vector>
+#include <algorithm>
 
 #include <hyprutils/string/String.hpp>
 #include <hyprutils/memory/Casts.hpp>
