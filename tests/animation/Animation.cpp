@@ -93,7 +93,7 @@ class CMyAnimationManager : public CAnimationManager {
     template <typename VarType>
     void createAnimation(const VarType& v, PANIMVAR<VarType>& av, const std::string& animationConfigName) {
         constexpr const eAVTypes EAVTYPE = std::is_same_v<VarType, int> ? eAVTypes::INT : eAVTypes::TEST;
-        av     = makeUnique<CGenericAnimatedVariable<VarType, EmtpyContext>>();
+        av                               = makeUnique<CGenericAnimatedVariable<VarType, EmtpyContext>>();
 
         av->create(EAVTYPE, sc<CAnimationManager*>(this), av, v);
         av->setConfig(animationTree.getConfig(animationConfigName));
