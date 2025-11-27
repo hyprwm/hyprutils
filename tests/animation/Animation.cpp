@@ -68,7 +68,7 @@ class CMyAnimationManager : public CAnimationManager {
                     if (!avInt)
                         std::cout << "Dynamic cast upcast failed\n";
 
-                    const auto DELTA = avInt->goal() - avInt->value();
+                    const auto DELTA = avInt->goal() - avInt->begun();
                     avInt->value()   = avInt->begun() + (DELTA * POINTY);
                 } break;
                 case eAVTypes::TEST: {
