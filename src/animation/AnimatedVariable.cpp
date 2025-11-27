@@ -11,9 +11,9 @@ static const std::string DEFAULTSTYLE      = "";
 #define SP CSharedPointer
 #define WP CWeakPointer
 
-void CBaseAnimatedVariable::create(CAnimationManager* pManager, int typeInfo, SP<CBaseAnimatedVariable> pSelf) {
+void CBaseAnimatedVariable::create(CAnimationManager* pManager, int typeInfo, WP<CBaseAnimatedVariable> pSelf) {
     m_Type  = typeInfo;
-    m_pSelf = pSelf;
+    m_pSelf = std::move(pSelf);
 
     m_pAnimationManager = pManager;
     m_pSignals          = pManager->getSignals();

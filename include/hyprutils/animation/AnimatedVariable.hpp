@@ -21,7 +21,7 @@ namespace Hyprutils {
                 ; // m_bDummy = true;
             };
 
-            void create(CAnimationManager*, int, Memory::CSharedPointer<CBaseAnimatedVariable>);
+            void create(CAnimationManager*, int, Memory::CWeakPointer<CBaseAnimatedVariable>);
             void connectToActive();
             void disconnectFromActive();
 
@@ -136,7 +136,7 @@ namespace Hyprutils {
           public:
             CGenericAnimatedVariable() = default;
 
-            void create(const int typeInfo, CAnimationManager* pAnimationManager, Memory::CSharedPointer<CGenericAnimatedVariable<VarType, AnimationContext>> pSelf,
+            void create(const int typeInfo, CAnimationManager* pAnimationManager, Memory::CWeakPointer<CGenericAnimatedVariable<VarType, AnimationContext>> pSelf,
                         const VarType& initialValue) {
                 m_Begun = initialValue;
                 m_Value = initialValue;
