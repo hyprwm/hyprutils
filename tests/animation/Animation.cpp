@@ -47,8 +47,7 @@ CAnimationConfigTree animationTree;
 class CMyAnimationManager : public CAnimationManager {
   public:
     void tick() {
-        for (size_t i = 0; i < m_vActiveAnimatedVariables.size(); i++) {
-            const auto PAV = m_vActiveAnimatedVariables[i];
+        for (const auto& PAV : m_vActiveAnimatedVariables) {
             if (!PAV || !PAV->ok() || !PAV->isBeingAnimated())
                 continue;
 
