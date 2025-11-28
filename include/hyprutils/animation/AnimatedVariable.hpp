@@ -21,7 +21,8 @@ namespace Hyprutils {
                 ; // m_bDummy = true;
             };
 
-            void create(CAnimationManager*, int, Memory::CWeakPointer<CBaseAnimatedVariable>);
+            void create(CAnimationManager*, int, Memory::CSharedPointer<CBaseAnimatedVariable>);
+            void create2(CAnimationManager*, int, Memory::CWeakPointer<CBaseAnimatedVariable>);
             void connectToActive();
             void disconnectFromActive();
 
@@ -136,13 +137,24 @@ namespace Hyprutils {
           public:
             CGenericAnimatedVariable() = default;
 
-            void create(const int typeInfo, CAnimationManager* pAnimationManager, Memory::CWeakPointer<CGenericAnimatedVariable<VarType, AnimationContext>> pSelf,
+            /* Deprecated: use create2 */
+            void create(const int typeInfo, CAnimationManager* pAnimationManager, Memory::CSharedPointer<CGenericAnimatedVariable<VarType, AnimationContext>> pSelf,
                         const VarType& initialValue) {
                 m_Begun = initialValue;
                 m_Value = initialValue;
                 m_Goal  = initialValue;
 
                 CBaseAnimatedVariable::create(pAnimationManager, typeInfo, pSelf);
+            }
+
+            /* Equivalent to create, except that it allows animated variables to be UP's */
+            void create2(const int typeInfo, CAnimationManager* pAnimationManager, Memory::CWeakPointer<CGenericAnimatedVariable<VarType, AnimationContext>> pSelf,
+                        const VarType& initialValue) {
+                m_Begun = initialValue;
+                m_Value = initialValue;
+                m_Goal  = initialValue;
+
+                CBaseAnimatedVariable::create2(pAnimationManager, typeInfo, pSelf);
             }
 
             CGenericAnimatedVariable(const CGenericAnimatedVariable&)            = delete;

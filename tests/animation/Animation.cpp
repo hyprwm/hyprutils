@@ -94,7 +94,7 @@ class CMyAnimationManager : public CAnimationManager {
         constexpr const eAVTypes EAVTYPE = std::is_same_v<VarType, int> ? eAVTypes::INT : eAVTypes::TEST;
         av                               = makeUnique<CGenericAnimatedVariable<VarType, EmtpyContext>>();
 
-        av->create(EAVTYPE, sc<CAnimationManager*>(this), av, v);
+        av->create2(EAVTYPE, sc<CAnimationManager*>(this), av, v);
         av->setConfig(animationTree.getConfig(animationConfigName));
     }
 
