@@ -21,7 +21,7 @@ template <typename VarType>
 using CAnimatedVariable = CGenericAnimatedVariable<VarType, EmtpyContext>;
 
 template <typename VarType>
-using PANIMVAR = SP<CAnimatedVariable<VarType>>;
+using PANIMVAR = UP<CAnimatedVariable<VarType>>;
 
 template <typename VarType>
 using PANIMVARREF = WP<CAnimatedVariable<VarType>>;
@@ -47,8 +47,7 @@ CAnimationConfigTree animationTree;
 class CMyAnimationManager : public CAnimationManager {
   public:
     void tick() {
-        for (size_t i = 0; i < m_vActiveAnimatedVariables.size(); i++) {
-            const auto PAV = m_vActiveAnimatedVariables[i].lock();
+        for (const auto& PAV : m_vActiveAnimatedVariables) {
             if (!PAV || !PAV->ok() || !PAV->isBeingAnimated())
                 continue;
 
@@ -68,7 +67,7 @@ class CMyAnimationManager : public CAnimationManager {
                     if (!avInt)
                         std::cout << "Dynamic cast upcast failed\n";
 
-                    const auto DELTA = avInt->goal() - avInt->value();
+                    const auto DELTA = avInt->goal() - avInt->begun();
                     avInt->value()   = avInt->begun() + (DELTA * POINTY);
                 } break;
                 case eAVTypes::TEST: {
@@ -93,11 +92,10 @@ class CMyAnimationManager : public CAnimationManager {
     template <typename VarType>
     void createAnimation(const VarType& v, PANIMVAR<VarType>& av, const std::string& animationConfigName) {
         constexpr const eAVTypes EAVTYPE = std::is_same_v<VarType, int> ? eAVTypes::INT : eAVTypes::TEST;
-        const auto               PAV     = makeShared<CGenericAnimatedVariable<VarType, EmtpyContext>>();
+        av                               = makeUnique<CGenericAnimatedVariable<VarType, EmtpyContext>>();
 
-        PAV->create(EAVTYPE, sc<CAnimationManager*>(this), PAV, v);
-        PAV->setConfig(animationTree.getConfig(animationConfigName));
-        av = std::move(PAV);
+        av->create2(EAVTYPE, sc<CAnimationManager*>(this), av, v);
+        av->setConfig(animationTree.getConfig(animationConfigName));
     }
 
     virtual void scheduleTick() {
@@ -298,7 +296,7 @@ TEST(Animation, animation) {
     // test adding / removing vars during a tick
     s.m_iA->resetAllCallbacks();
     s.m_iA->setUpdateCallback([&vars](WP<CBaseAnimatedVariable> v) {
-        if (v.lock() != vars.back())
+        if (v.get() != vars.back().get())
             vars.back()->warp();
     });
     s.m_iA->setCallbackOnEnd([&s, &vars](auto) {
@@ -350,7 +348,7 @@ TEST(Animation, animation) {
     *s.m_iA = 5;
     s.m_iA->setCallbackOnEnd([&endCallbackRan](WP<CBaseAnimatedVariable> v) {
         endCallbackRan++;
-        const auto PAV = dc<CAnimatedVariable<int>*>(v.lock().get());
+        const auto PAV = dc<CAnimatedVariable<int>*>(v.get());
 
         *PAV = 10;
         PAV->setCallbackOnEnd([&endCallbackRan](WP<CBaseAnimatedVariable> v) { endCallbackRan++; });

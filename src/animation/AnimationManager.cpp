@@ -64,14 +64,13 @@ void CAnimationManager::rotateActive() {
     std::vector<CWeakPointer<CBaseAnimatedVariable>> active;
     active.reserve(m_vActiveAnimatedVariables.size()); // avoid reallocations
     for (auto const& av : m_vActiveAnimatedVariables) {
-        const auto PAV = av.lock();
-        if (!PAV)
+        if (!av)
             continue;
 
-        if (PAV->ok() && PAV->isBeingAnimated())
+        if (av->ok() && av->isBeingAnimated())
             active.emplace_back(av);
         else
-            PAV->m_bIsConnectedToActive = false;
+            av->m_bIsConnectedToActive = false;
     }
 
     m_vActiveAnimatedVariables = std::move(active);

@@ -13,7 +13,16 @@ static const std::string DEFAULTSTYLE      = "";
 
 void CBaseAnimatedVariable::create(CAnimationManager* pManager, int typeInfo, SP<CBaseAnimatedVariable> pSelf) {
     m_Type  = typeInfo;
-    m_pSelf = pSelf;
+    m_pSelf = std::move(pSelf);
+
+    m_pAnimationManager = pManager;
+    m_pSignals          = pManager->getSignals();
+    m_bDummy            = false;
+}
+
+void CBaseAnimatedVariable::create2(CAnimationManager* pManager, int typeInfo, WP<CBaseAnimatedVariable> pSelf) {
+    m_Type  = typeInfo;
+    m_pSelf = std::move(pSelf);
 
     m_pAnimationManager = pManager;
     m_pSignals          = pManager->getSignals();
@@ -37,28 +46,22 @@ void CBaseAnimatedVariable::disconnectFromActive() {
 }
 
 bool Hyprutils::Animation::CBaseAnimatedVariable::enabled() const {
-    if (const auto PCONFIG = m_pConfig.lock()) {
-        const auto PVALUES = PCONFIG->pValues.lock();
-        return PVALUES ? PVALUES->internalEnabled : false;
-    }
+    if (m_pConfig && m_pConfig->pValues)
+        return m_pConfig->pValues->internalEnabled;
 
     return false;
 }
 
 const std::string& CBaseAnimatedVariable::getBezierName() const {
-    if (const auto PCONFIG = m_pConfig.lock()) {
-        const auto PVALUES = PCONFIG->pValues.lock();
-        return PVALUES ? PVALUES->internalBezier : DEFAULTBEZIERNAME;
-    }
+    if (m_pConfig && m_pConfig->pValues)
+        return m_pConfig->pValues->internalBezier;
 
     return DEFAULTBEZIERNAME;
 }
 
 const std::string& CBaseAnimatedVariable::getStyle() const {
-    if (const auto PCONFIG = m_pConfig.lock()) {
-        const auto PVALUES = PCONFIG->pValues.lock();
-        return PVALUES ? PVALUES->internalStyle : DEFAULTSTYLE;
-    }
+    if (m_pConfig && m_pConfig->pValues)
+        return m_pConfig->pValues->internalStyle;
 
     return DEFAULTSTYLE;
 }
@@ -66,10 +69,8 @@ const std::string& CBaseAnimatedVariable::getStyle() const {
 float CBaseAnimatedVariable::getPercent() const {
     const auto DURATIONPASSED = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - animationBegin).count();
 
-    if (const auto PCONFIG = m_pConfig.lock()) {
-        const auto PVALUES = PCONFIG->pValues.lock();
-        return PVALUES ? std::clamp((DURATIONPASSED / 100.f) / PVALUES->internalSpeed, 0.f, 1.f) : 1.f;
-    }
+    if (m_pConfig && m_pConfig->pValues)
+        return std::clamp((DURATIONPASSED / 100.f) / m_pConfig->pValues->internalSpeed, 0.f, 1.f);
 
     return 1.f;
 }
@@ -78,14 +79,7 @@ float CBaseAnimatedVariable::getCurveValue() const {
     if (!m_bIsBeingAnimated || isAnimationManagerDead())
         return 1.f;
 
-    std::string bezierName = "";
-    if (const auto PCONFIG = m_pConfig.lock()) {
-        const auto PVALUES = PCONFIG->pValues.lock();
-        if (PVALUES)
-            bezierName = PVALUES->internalBezier;
-    }
-
-    const auto BEZIER = m_pAnimationManager->getBezier(bezierName);
+    const auto BEZIER = m_pAnimationManager->getBezier(getBezierName());
     if (!BEZIER)
         return 1.f;
 
