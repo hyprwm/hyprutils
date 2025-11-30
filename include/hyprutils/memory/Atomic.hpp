@@ -54,11 +54,11 @@ namespace Hyprutils::Memory {
         using validHierarchy = std::enable_if_t<std::is_assignable_v<CAtomicSharedPointer<T>&, X>, CAtomicSharedPointer&>;
 
       public:
-        explicit CAtomicSharedPointer(T* object) noexcept : m_ptr(new Atomic_::impl(sc<void*>(object), _delete)) {
+        explicit CAtomicSharedPointer(T* object) noexcept : m_ptr(new Atomic_::impl(sc<void*>(object), _delete), sc<void*>(object)) {
             ;
         }
 
-        CAtomicSharedPointer(Impl_::impl_base* impl) noexcept : m_ptr(impl) {
+        CAtomicSharedPointer(Impl_::impl_base* impl, void* data) noexcept : m_ptr(impl, data) {
             ;
         }
 
@@ -219,13 +219,17 @@ namespace Hyprutils::Memory {
             return m_ptr.impl_ ? m_ptr.impl_->ref() : 0;
         }
 
+        Atomic_::impl* impl() const {
+            return sc<Atomic_::impl*>(m_ptr.impl_);
+        }
+
       private:
         static void _delete(void* p) {
             std::default_delete<T>{}(sc<T*>(p));
         }
 
         std::lock_guard<std::recursive_mutex> implLockGuard() const {
-            return sc<Atomic_::impl*>(m_ptr.impl_)->lockGuard();
+            return impl()->lockGuard();
         }
 
         CSharedPointer<T> m_ptr;
@@ -391,12 +395,16 @@ namespace Hyprutils::Memory {
             if (!m_ptr.impl_->dataNonNull() || m_ptr.impl_->destroying() || !m_ptr.impl_->lockable())
                 return {};
 
-            return CAtomicSharedPointer<T>(m_ptr.impl_);
+            return CAtomicSharedPointer<T>(m_ptr.impl_, m_ptr.m_data);
+        }
+
+        Atomic_::impl* impl() const {
+            return sc<Atomic_::impl*>(m_ptr.impl_);
         }
 
       private:
         std::lock_guard<std::recursive_mutex> implLockGuard() const {
-            return sc<Atomic_::impl*>(m_ptr.impl_)->lockGuard();
+            return impl()->lockGuard();
         }
 
         CWeakPointer<T> m_ptr;
@@ -410,5 +418,20 @@ namespace Hyprutils::Memory {
     template <typename U, typename... Args>
     [[nodiscard]] inline CAtomicSharedPointer<U> makeAtomicShared(Args&&... args) {
         return CAtomicSharedPointer<U>(new U(std::forward<Args>(args)...));
+    }
+
+    template <typename T, typename U>
+    CAtomicSharedPointer<T> reinterpretPointerCast(const CAtomicSharedPointer<U>& ref) {
+        return CAtomicSharedPointer<T>(ref.impl(), ref.m_data);
+    }
+
+    template <typename T, typename U>
+    CAtomicSharedPointer<T> dynamicPointerCast(const CAtomicSharedPointer<U>& ref) {
+        if (!ref)
+            return nullptr;
+        T* newPtr = dynamic_cast<T*>(sc<U*>(ref.impl()->getData()));
+        if (!newPtr)
+            return nullptr;
+        return CAtomicSharedPointer<T>(ref.impl(), newPtr);
     }
 }

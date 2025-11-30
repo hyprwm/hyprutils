@@ -28,31 +28,33 @@ namespace Hyprutils {
 
             /* creates a new shared pointer managing a resource
                avoid calling. Could duplicate ownership. Prefer makeShared */
-            explicit CSharedPointer(T* object) noexcept : impl_(new Impl_::impl_base(sc<void*>(object), _delete)) {
+            explicit CSharedPointer(T* object) noexcept : impl_(new Impl_::impl_base(sc<void*>(object), _delete)), m_data(sc<void*>(object)) {
                 increment();
             }
 
             /* creates a shared pointer from a reference */
             template <typename U, typename = isConstructible<U>>
-            CSharedPointer(const CSharedPointer<U>& ref) noexcept : impl_(ref.impl_) {
+            CSharedPointer(const CSharedPointer<U>& ref) noexcept : impl_(ref.impl_), m_data(ref.m_data) {
                 increment();
             }
 
-            CSharedPointer(const CSharedPointer& ref) noexcept : impl_(ref.impl_) {
+            CSharedPointer(const CSharedPointer& ref) noexcept : impl_(ref.impl_), m_data(ref.m_data) {
                 increment();
             }
 
             template <typename U, typename = isConstructible<U>>
             CSharedPointer(CSharedPointer<U>&& ref) noexcept {
                 std::swap(impl_, ref.impl_);
+                std::swap(m_data, ref.m_data);
             }
 
             CSharedPointer(CSharedPointer&& ref) noexcept {
                 std::swap(impl_, ref.impl_);
+                std::swap(m_data, ref.m_data);
             }
 
             /* allows weakPointer to create from an impl */
-            CSharedPointer(Impl_::impl_base* implementation) noexcept : impl_(implementation) {
+            CSharedPointer(Impl_::impl_base* implementation, void* data) noexcept : impl_(implementation), m_data(data) {
                 increment();
             }
 
@@ -74,7 +76,8 @@ namespace Hyprutils {
                     return *this;
 
                 decrement();
-                impl_ = rhs.impl_;
+                impl_  = rhs.impl_;
+                m_data = rhs.m_data;
                 increment();
                 return *this;
             }
@@ -84,7 +87,8 @@ namespace Hyprutils {
                     return *this;
 
                 decrement();
-                impl_ = rhs.impl_;
+                impl_  = rhs.impl_;
+                m_data = rhs.m_data;
                 increment();
                 return *this;
             }
@@ -92,11 +96,13 @@ namespace Hyprutils {
             template <typename U>
             validHierarchy<const CSharedPointer<U>&> operator=(CSharedPointer<U>&& rhs) {
                 std::swap(impl_, rhs.impl_);
+                std::swap(m_data, rhs.m_data);
                 return *this;
             }
 
             CSharedPointer& operator=(CSharedPointer&& rhs) noexcept {
                 std::swap(impl_, rhs.impl_);
+                std::swap(m_data, rhs.m_data);
                 return *this;
             }
 
@@ -104,6 +110,8 @@ namespace Hyprutils {
                 return impl_ && impl_->dataNonNull();
             }
 
+            // this compares that the pointed-to object is the same, but in multiple inheritance,
+            // different typed pointers can be equal if the object is the same
             bool operator==(const CSharedPointer& rhs) const {
                 return impl_ == rhs.impl_;
             }
@@ -126,11 +134,12 @@ namespace Hyprutils {
 
             void reset() {
                 decrement();
-                impl_ = nullptr;
+                impl_  = nullptr;
+                m_data = nullptr;
             }
 
             T* get() const {
-                return impl_ ? sc<T*>(impl_->getData()) : nullptr;
+                return impl_ && impl_->dataNonNull() ? sc<T*>(m_data) : nullptr;
             }
 
             unsigned int strongRef() const {
@@ -138,6 +147,9 @@ namespace Hyprutils {
             }
 
             Impl_::impl_base* impl_ = nullptr;
+
+            // Never use directly: raw data ptr, could be UAF
+            void* m_data = nullptr;
 
           private:
             static void _delete(void* p) {
@@ -188,7 +200,17 @@ namespace Hyprutils {
 
         template <typename T, typename U>
         CSharedPointer<T> reinterpretPointerCast(const CSharedPointer<U>& ref) {
-            return CSharedPointer<T>(ref.impl_);
+            return CSharedPointer<T>(ref.impl_, ref.m_data);
+        }
+
+        template <typename T, typename U>
+        CSharedPointer<T> dynamicPointerCast(const CSharedPointer<U>& ref) {
+            if (!ref)
+                return nullptr;
+            T* newPtr = dynamic_cast<T*>(sc<U*>(ref.impl_->getData()));
+            if (!newPtr)
+                return nullptr;
+            return CSharedPointer<T>(ref.impl_, newPtr);
         }
     }
 }

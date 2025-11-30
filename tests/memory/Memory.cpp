@@ -123,6 +123,111 @@ static void testAtomicImpl() {
     }
 }
 
+class InterfaceA {
+  public:
+    int m_ifaceAInt  = 69;
+    int m_ifaceAShit = 1;
+};
+
+class InterfaceB {
+  public:
+    int m_ifaceBInt  = 2;
+    int m_ifaceBShit = 3;
+};
+
+class CChild : public InterfaceA, public InterfaceB {
+  public:
+    int m_childInt = 4;
+};
+
+class CChildA : public InterfaceA {
+  public:
+    int m_childAInt = 4;
+};
+
+static void testHierarchy() {
+    // Same test for atomic and non-atomic
+    {
+        SP<CChildA> childA = makeShared<CChildA>();
+        auto        ifaceA = SP<InterfaceA>(childA);
+        EXPECT_TRUE(ifaceA);
+        EXPECT_EQ(ifaceA->m_ifaceAInt, 69);
+
+        auto ifaceB = dynamicPointerCast<InterfaceA>(SP<CChildA>{});
+        EXPECT_TRUE(!ifaceB);
+    }
+
+    {
+        SP<CChild>     child  = makeShared<CChild>();
+        SP<InterfaceA> ifaceA = dynamicPointerCast<InterfaceA>(child);
+        SP<InterfaceB> ifaceB = dynamicPointerCast<InterfaceB>(child);
+        EXPECT_TRUE(ifaceA);
+        EXPECT_TRUE(ifaceB);
+
+        EXPECT_EQ(ifaceA->m_ifaceAInt, 69);
+        EXPECT_EQ(ifaceB->m_ifaceBInt, 2);
+
+        WP<InterfaceA> ifaceAWeak = ifaceA;
+
+        child.reset();
+        EXPECT_TRUE(ifaceAWeak);
+        EXPECT_TRUE(ifaceA);
+        EXPECT_EQ(ifaceAWeak->m_ifaceAInt, 69);
+        EXPECT_EQ(ifaceA->m_ifaceAInt, 69);
+        ifaceA.reset();
+        EXPECT_TRUE(ifaceAWeak);
+        EXPECT_EQ(ifaceAWeak->m_ifaceAInt, 69);
+        EXPECT_TRUE(ifaceB);
+        EXPECT_EQ(ifaceB->m_ifaceBInt, 2);
+        ifaceB.reset();
+        EXPECT_TRUE(!ifaceAWeak);
+    }
+
+    //
+
+    {
+        ASP<CChildA> childA = makeAtomicShared<CChildA>();
+        auto         ifaceA = ASP<InterfaceA>(childA);
+        EXPECT_TRUE(ifaceA);
+        EXPECT_EQ(ifaceA->m_ifaceAInt, 69);
+
+        auto ifaceB = dynamicPointerCast<InterfaceA>(ASP<CChildA>{});
+        EXPECT_TRUE(!ifaceB);
+    }
+
+    {
+        ASP<CChild>     child  = makeAtomicShared<CChild>();
+        ASP<InterfaceA> ifaceA = dynamicPointerCast<InterfaceA>(child);
+        ASP<InterfaceB> ifaceB = dynamicPointerCast<InterfaceB>(child);
+        EXPECT_TRUE(ifaceA);
+        EXPECT_TRUE(ifaceB);
+
+        EXPECT_EQ(ifaceA->m_ifaceAInt, 69);
+        EXPECT_EQ(ifaceB->m_ifaceBInt, 2);
+
+        AWP<InterfaceA> ifaceAWeak = ifaceA;
+
+        child.reset();
+        EXPECT_TRUE(ifaceAWeak);
+        EXPECT_TRUE(ifaceA);
+        EXPECT_EQ(ifaceAWeak->m_ifaceAInt, 69);
+        EXPECT_EQ(ifaceA->m_ifaceAInt, 69);
+        ifaceA.reset();
+        EXPECT_TRUE(ifaceAWeak);
+        EXPECT_EQ(ifaceAWeak->m_ifaceAInt, 69);
+        EXPECT_TRUE(ifaceB);
+        EXPECT_EQ(ifaceB->m_ifaceBInt, 2);
+        ifaceB.reset();
+        EXPECT_TRUE(!ifaceAWeak);
+    }
+
+    // test for leaks
+    for (size_t i = 0; i < 10000; ++i) {
+        auto child  = makeAtomicShared<CChild>();
+        auto child2 = makeShared<CChild>();
+    }
+}
+
 TEST(Memory, memory) {
     SP<int> intPtr    = makeShared<int>(10);
     SP<int> intPtr2   = makeShared<int>(-1337);
@@ -176,4 +281,6 @@ TEST(Memory, memory) {
     EXPECT_EQ(*intPtr2, 10);
 
     testAtomicImpl();
+
+    testHierarchy();
 }
