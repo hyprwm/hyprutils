@@ -75,4 +75,6 @@ TEST(I18n, Engine) {
     EXPECT_EQ(engine.localizeEntry("ts", 42069 /* invalid key */, {{"count", "1"}}), "");
 
     EXPECT_EQ(engine.localizeEntry("ts_TST", TXT_KEY_FALLBACK, {{"var1", "hi"}, {"var2", "!"}}), "Hello hi world !");
+    // Order shouldn't matter
+    EXPECT_EQ(engine.localizeEntry("ts_TST", TXT_KEY_FALLBACK, {{"var2", "!"}, {"var1", "hi"}}), "Hello hi world !");
 }

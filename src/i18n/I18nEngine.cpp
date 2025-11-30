@@ -131,7 +131,7 @@ std::string CI18nEngine::localizeEntry(const std::string& locale, uint64_t key, 
         return std::string{rawStr};
 
     // build the new string. First, sort our entries
-    std::ranges::sort(rangesFound, [](const auto& a, const auto& b) { return a.begin - b.begin; });
+    std::ranges::sort(rangesFound, [](const auto& a, const auto& b) { return a.begin < b.begin; });
 
     // calc the size
     size_t stringLen = 0;
