@@ -125,19 +125,22 @@ static void testAtomicImpl() {
 
 class InterfaceA {
   public:
-    int m_ifaceAInt  = 69;
-    int m_ifaceAShit = 1;
+    virtual ~InterfaceA() = default;
+    int m_ifaceAInt       = 69;
+    int m_ifaceAShit      = 1;
 };
 
 class InterfaceB {
   public:
-    int m_ifaceBInt  = 2;
-    int m_ifaceBShit = 3;
+    virtual ~InterfaceB() = default;
+    int m_ifaceBInt       = 2;
+    int m_ifaceBShit      = 3;
 };
 
 class CChild : public InterfaceA, public InterfaceB {
   public:
-    int m_childInt = 4;
+    virtual ~CChild() = default;
+    int m_childInt    = 4;
 };
 
 class CChildA : public InterfaceA {
@@ -206,19 +209,24 @@ static void testHierarchy() {
         EXPECT_EQ(ifaceB->m_ifaceBInt, 2);
 
         AWP<InterfaceA> ifaceAWeak = ifaceA;
+        AWP<InterfaceB> ifaceBWeak = dynamicPointerCast<InterfaceB>(ifaceA);
 
         child.reset();
         EXPECT_TRUE(ifaceAWeak);
+        EXPECT_TRUE(ifaceBWeak);
         EXPECT_TRUE(ifaceA);
         EXPECT_EQ(ifaceAWeak->m_ifaceAInt, 69);
         EXPECT_EQ(ifaceA->m_ifaceAInt, 69);
+        EXPECT_EQ(ifaceBWeak->m_ifaceBInt, 2);
         ifaceA.reset();
         EXPECT_TRUE(ifaceAWeak);
         EXPECT_EQ(ifaceAWeak->m_ifaceAInt, 69);
         EXPECT_TRUE(ifaceB);
         EXPECT_EQ(ifaceB->m_ifaceBInt, 2);
+        EXPECT_EQ(ifaceBWeak->m_ifaceBInt, 2);
         ifaceB.reset();
         EXPECT_TRUE(!ifaceAWeak);
+        EXPECT_TRUE(!ifaceBWeak);
     }
 
     // test for leaks

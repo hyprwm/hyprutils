@@ -220,6 +220,16 @@ namespace Hyprutils {
                 impl_->incWeak();
             }
         };
+
+        template <typename T, typename U>
+        CWeakPointer<T> dynamicPointerCast(const CWeakPointer<U>& ref) {
+            if (!ref)
+                return nullptr;
+            T* newPtr = dynamic_cast<T*>(sc<U*>(ref.impl_->getData()));
+            if (!newPtr)
+                return nullptr;
+            return CWeakPointer<T>(ref.impl_, newPtr);
+        }
     }
 }
 
