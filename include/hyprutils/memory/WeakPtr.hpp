@@ -26,7 +26,8 @@ namespace Hyprutils {
                 if (!ref.impl_)
                     return;
 
-                impl_ = ref.impl_;
+                impl_  = ref.impl_;
+                m_data = ref.m_data;
                 incrementWeak();
             }
 
@@ -36,7 +37,8 @@ namespace Hyprutils {
                 if (!ref.impl_)
                     return;
 
-                impl_ = ref.impl_;
+                impl_  = ref.impl_;
+                m_data = ref.impl_->getData();
                 incrementWeak();
             }
 
@@ -46,7 +48,8 @@ namespace Hyprutils {
                 if (!ref.impl_)
                     return;
 
-                impl_ = ref.impl_;
+                impl_  = ref.impl_;
+                m_data = ref.m_data;
                 incrementWeak();
             }
 
@@ -54,17 +57,20 @@ namespace Hyprutils {
                 if (!ref.impl_)
                     return;
 
-                impl_ = ref.impl_;
+                impl_  = ref.impl_;
+                m_data = ref.m_data;
                 incrementWeak();
             }
 
             template <typename U, typename = isConstructible<U>>
             CWeakPointer(CWeakPointer<U>&& ref) noexcept {
                 std::swap(impl_, ref.impl_);
+                std::swap(m_data, ref.m_data);
             }
 
             CWeakPointer(CWeakPointer&& ref) noexcept {
                 std::swap(impl_, ref.impl_);
+                std::swap(m_data, ref.m_data);
             }
 
             /* create a weak ptr from another weak ptr with assignment */
@@ -74,7 +80,8 @@ namespace Hyprutils {
                     return *this;
 
                 decrementWeak();
-                impl_ = rhs.impl_;
+                impl_  = rhs.impl_;
+                m_data = rhs.m_data;
                 incrementWeak();
                 return *this;
             }
@@ -84,7 +91,8 @@ namespace Hyprutils {
                     return *this;
 
                 decrementWeak();
-                impl_ = rhs.impl_;
+                impl_  = rhs.impl_;
+                m_data = rhs.m_data;
                 incrementWeak();
                 return *this;
             }
@@ -96,7 +104,8 @@ namespace Hyprutils {
                     return *this;
 
                 decrementWeak();
-                impl_ = rhs.impl_;
+                impl_  = rhs.impl_;
+                m_data = rhs.m_data;
                 incrementWeak();
                 return *this;
             }
@@ -125,14 +134,15 @@ namespace Hyprutils {
 
             void reset() {
                 decrementWeak();
-                impl_ = nullptr;
+                impl_  = nullptr;
+                m_data = nullptr;
             }
 
             CSharedPointer<T> lock() const {
                 if (!impl_ || !impl_->dataNonNull() || impl_->destroying() || !impl_->lockable())
                     return {};
 
-                return CSharedPointer<T>(impl_);
+                return CSharedPointer<T>(impl_, m_data);
             }
 
             /* this returns valid() */
@@ -169,7 +179,7 @@ namespace Hyprutils {
             }
 
             T* get() const {
-                return impl_ ? sc<T*>(impl_->getData()) : nullptr;
+                return impl_ && impl_->dataNonNull() ? sc<T*>(m_data) : nullptr;
             }
 
             T* operator->() const {
@@ -181,6 +191,9 @@ namespace Hyprutils {
             }
 
             Impl_::impl_base* impl_ = nullptr;
+
+            // Never use directly: raw data ptr, could be UAF
+            void* m_data = nullptr;
 
           private:
             /* no-op if there is no impl_ */
@@ -207,6 +220,16 @@ namespace Hyprutils {
                 impl_->incWeak();
             }
         };
+
+        template <typename T, typename U>
+        CWeakPointer<T> dynamicPointerCast(const CWeakPointer<U>& ref) {
+            if (!ref)
+                return nullptr;
+            T* newPtr = dynamic_cast<T*>(sc<U*>(ref.impl_->getData()));
+            if (!newPtr)
+                return nullptr;
+            return CWeakPointer<T>(ref.impl_, newPtr);
+        }
     }
 }
 
