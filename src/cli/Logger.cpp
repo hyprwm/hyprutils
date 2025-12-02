@@ -131,8 +131,13 @@ void CLoggerImpl::log(eLogLevel level, const std::string_view& msg, const std::s
     logMsg += "]: ";
     logMsg += msg;
 
-    if (m_stdoutEnabled)
-        std::println("{}{}", m_colorEnabled ? logPrefixColor : logPrefix, logMsg);
+    if (m_stdoutEnabled) {
+        try {
+            std::println("{}{}", m_colorEnabled ? logPrefixColor : logPrefix, logMsg);
+        } catch (std::exception& e) {
+            ; // this could be e.g. stdout closed
+        }
+    }
     if (m_fileEnabled)
         m_logOfs << logPrefix << logMsg << "\n";
 
