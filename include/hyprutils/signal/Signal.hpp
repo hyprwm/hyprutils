@@ -26,10 +26,13 @@ namespace Hyprutils {
         template <typename... Args>
         class CSignalT : public CSignalBase {
             template <typename T>
-            using RefArg = std::conditional_t<std::is_reference_v<T> || std::is_arithmetic_v<T>, T, const T&>;
+            using RefArg = std::conditional_t<std::is_trivially_copyable_v<T>, T, const T&>;
 
           public:
             void emit(RefArg<Args>... args) {
+                if (m_vListeners.empty() && m_vStaticListeners.empty())
+                    return;
+
                 if constexpr (sizeof...(Args) == 0)
                     emitInternal(nullptr);
                 else {
