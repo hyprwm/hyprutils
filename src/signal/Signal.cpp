@@ -10,32 +10,37 @@ using namespace Hyprutils::Memory;
 #define WP CWeakPointer
 
 void Hyprutils::Signal::CSignalBase::emitInternal(void* args) {
-    std::vector<SP<CSignalListener>> listeners;
-    listeners.reserve(m_vListeners.size());
-    for (auto& l : m_vListeners) {
-        if (l.expired())
-            continue;
+    if (!m_vListeners.empty()) {
+        std::vector<SP<CSignalListener>> listeners;
+        listeners.reserve(m_vListeners.size());
 
-        listeners.emplace_back(l.lock());
+        for (const auto& l : m_vListeners) {
+            if (l.expired())
+                continue;
+
+            listeners.emplace_back(l.lock());
+        }
+
+        for (const auto& l : listeners) {
+            // if there is only one lock, it means the event is only held by the listeners
+            // vector and was removed during our iteration
+            if (l.strongRef() == 1)
+                continue;
+
+            l->emitInternal(args);
+        }
+
+        // release SPs
+        listeners.clear();
     }
 
-    auto statics = m_vStaticListeners;
+    if (!m_vStaticListeners.empty()) {
+        const auto statics = m_vStaticListeners;
 
-    for (auto& l : listeners) {
-        // if there is only one lock, it means the event is only held by the listeners
-        // vector and was removed during our iteration
-        if (l.strongRef() == 1)
-            continue;
-
-        l->emitInternal(args);
+        for (const auto& l : statics) {
+            l->emitInternal(args);
+        }
     }
-
-    for (auto& l : statics) {
-        l->emitInternal(args);
-    }
-
-    // release SPs
-    listeners.clear();
 
     // we cannot release any expired refs here as one of the listeners could've removed this object and
     // as such we'd be doing a UAF
