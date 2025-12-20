@@ -36,7 +36,7 @@ namespace Hyprutils {
                 if constexpr (sizeof...(Args) == 0)
                     emitInternal(nullptr);
                 else {
-                    auto argsTuple = std::tuple<RefArg<Args>...>(args...);
+                    auto argsTuple = std::forward_as_tuple(args...);
 
                     if constexpr (sizeof...(Args) == 1)
                         // NOLINTNEXTLINE: const is reapplied by handler invocation if required
