@@ -45,15 +45,16 @@ file(GLOB_RECURSE PUBLIC_HEADERS CONFIGURE_DEPENDS "include/*.hpp")
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(deps REQUIRED IMPORTED_TARGET pixman-1)
+pkg_check_modules(LIBDRM REQUIRED libdrm)
 
 add_library(hyprutils SHARED ${SRCFILES})
 target_include_directories(
   hyprutils
   PUBLIC "./include"
-  PRIVATE "./src")
+  PRIVATE "./src" ${LIBDRM_INCLUDE_DIRS})
 set_target_properties(hyprutils PROPERTIES VERSION ${hyprutils_VERSION}
                                            SOVERSION 10)
-target_link_libraries(hyprutils PkgConfig::deps)
+target_link_libraries(hyprutils PkgConfig::deps ${LIBDRM_LIBRARIES})
 
 if(BUILD_TESTING)
   # GTest
