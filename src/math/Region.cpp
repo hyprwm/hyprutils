@@ -174,6 +174,20 @@ std::vector<pixman_box32_t> Hyprutils::Math::CRegion::getRects() const {
     return result;
 }
 
+std::vector<pixman_box32_t> Hyprutils::Math::CRegion::getRectsSimplified() const {
+    pixman_region32_t reduced;
+    pixman_region32_init(&reduced);
+    pixman_region32_union(&reduced, &m_rRegion, &m_rRegion);
+
+    int                         n     = 0;
+    const auto*                 rects = pixman_region32_rectangles(&reduced, &n);
+
+    std::vector<pixman_box32_t> result(rects, rects + n);
+
+    pixman_region32_fini(&reduced);
+    return result;
+}
+
 CBox Hyprutils::Math::CRegion::getExtents() {
     pixman_box32_t* box = pixman_region32_extents(&m_rRegion);
     return {sc<double>(box->x1), sc<double>(box->y1), sc<double>(box->x2) - box->x1, sc<double>(box->y2) - box->y1};
