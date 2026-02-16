@@ -1,6 +1,7 @@
 #include "Logger.hpp"
 
 #include <chrono>
+#include <fcntl.h>
 #include <print>
 
 using namespace Hyprutils;
@@ -56,6 +57,8 @@ std::expected<void, std::string> CLogger::setOutputFile(const std::string_view& 
 
     if (!m_impl->m_logOfs.good())
         return std::unexpected("Failed to open a write stream");
+
+    fcntl(m_impl->m_logOfs.native_handle(), F_SETFD, FD_CLOEXEC);
 
     m_impl->m_fileEnabled = true;
     m_impl->updateParentShouldLog();

@@ -18,7 +18,7 @@ set(LIBDIR ${CMAKE_INSTALL_FULL_LIBDIR})
 
 configure_file(hyprutils.pc.in hyprutils.pc @ONLY)
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 26)
 add_compile_options(
   -Wall
   -Wextra
