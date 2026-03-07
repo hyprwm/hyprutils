@@ -110,8 +110,18 @@ namespace Hyprutils {
                 return *this;
             }
 
+            /* allows weakPointer to create from an impl */
+            CWeakPointer(Impl_::impl_base* implementation, void* data) noexcept : impl_(implementation), m_data(data) {
+                ;
+            }
+
             /* create an empty weak ptr */
             CWeakPointer() noexcept = default;
+
+            /* creates an empty weak pointer with no implementation */
+            CWeakPointer(std::nullptr_t) noexcept {
+                ; // empty
+            }
 
             ~CWeakPointer() {
                 decrementWeak();
