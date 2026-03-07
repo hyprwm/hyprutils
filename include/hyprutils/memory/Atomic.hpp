@@ -285,6 +285,10 @@ namespace Hyprutils::Memory {
 
         CAtomicWeakPointer() noexcept = default;
 
+        CAtomicWeakPointer(Impl_::impl_base* implementation, void* data) noexcept : m_ptr(implementation, data) {
+            ;
+        }
+
         CAtomicWeakPointer(std::nullptr_t) noexcept {
             ; // empty
         }
@@ -433,5 +437,15 @@ namespace Hyprutils::Memory {
         if (!newPtr)
             return nullptr;
         return CAtomicSharedPointer<T>(ref.impl(), newPtr);
+    }
+
+    template <typename T, typename U>
+    CAtomicWeakPointer<T> dynamicPointerCast(const CAtomicWeakPointer<U>& ref) {
+        if (!ref)
+            return nullptr;
+        T* newPtr = dynamic_cast<T*>(sc<U*>(ref.impl()->getData()));
+        if (!newPtr)
+            return nullptr;
+        return CAtomicWeakPointer<T>(ref.impl(), newPtr);
     }
 }

@@ -62,6 +62,14 @@ namespace Hyprutils {
                 incrementWeak();
             }
 
+            CWeakPointer(Impl_::impl_base* implementation, void* data) noexcept : impl_(implementation), m_data(data) {
+                incrementWeak();
+            }
+
+            CWeakPointer(std::nullptr_t) noexcept {
+                ; // empty
+            }
+
             template <typename U, typename = isConstructible<U>>
             CWeakPointer(CWeakPointer<U>&& ref) noexcept {
                 std::swap(impl_, ref.impl_);

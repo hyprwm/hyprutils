@@ -156,8 +156,10 @@ static void testHierarchy() {
         EXPECT_TRUE(ifaceA);
         EXPECT_EQ(ifaceA->m_ifaceAInt, 69);
 
-        auto ifaceB = dynamicPointerCast<InterfaceA>(SP<CChildA>{});
+        auto ifaceB  = dynamicPointerCast<InterfaceA>(SP<CChildA>{});
+        auto ifaceB2 = dynamicPointerCast<InterfaceA>(WP<CChildA>{});
         EXPECT_TRUE(!ifaceB);
+        EXPECT_TRUE(!ifaceB2);
     }
 
     {
@@ -171,9 +173,11 @@ static void testHierarchy() {
         EXPECT_EQ(ifaceB->m_ifaceBInt, 2);
 
         WP<InterfaceA> ifaceAWeak = ifaceA;
+        WP<InterfaceB> ifaceBWeak = dynamicPointerCast<InterfaceB>(WP<CChild>{child});
 
         child.reset();
         EXPECT_TRUE(ifaceAWeak);
+        EXPECT_TRUE(ifaceBWeak);
         EXPECT_TRUE(ifaceA);
         EXPECT_EQ(ifaceAWeak->m_ifaceAInt, 69);
         EXPECT_EQ(ifaceA->m_ifaceAInt, 69);
@@ -182,8 +186,10 @@ static void testHierarchy() {
         EXPECT_EQ(ifaceAWeak->m_ifaceAInt, 69);
         EXPECT_TRUE(ifaceB);
         EXPECT_EQ(ifaceB->m_ifaceBInt, 2);
+        EXPECT_EQ(ifaceBWeak->m_ifaceBInt, 2);
         ifaceB.reset();
         EXPECT_TRUE(!ifaceAWeak);
+        EXPECT_TRUE(!ifaceBWeak);
     }
 
     //
@@ -194,8 +200,10 @@ static void testHierarchy() {
         EXPECT_TRUE(ifaceA);
         EXPECT_EQ(ifaceA->m_ifaceAInt, 69);
 
-        auto ifaceB = dynamicPointerCast<InterfaceA>(ASP<CChildA>{});
+        auto ifaceB  = dynamicPointerCast<InterfaceA>(SP<CChildA>{});
+        auto ifaceB2 = dynamicPointerCast<InterfaceA>(WP<CChildA>{});
         EXPECT_TRUE(!ifaceB);
+        EXPECT_TRUE(!ifaceB2);
     }
 
     {
@@ -209,7 +217,7 @@ static void testHierarchy() {
         EXPECT_EQ(ifaceB->m_ifaceBInt, 2);
 
         AWP<InterfaceA> ifaceAWeak = ifaceA;
-        AWP<InterfaceB> ifaceBWeak = dynamicPointerCast<InterfaceB>(ifaceA);
+        AWP<InterfaceB> ifaceBWeak = dynamicPointerCast<InterfaceB>(AWP<CChild>{child});
 
         child.reset();
         EXPECT_TRUE(ifaceAWeak);
@@ -217,7 +225,6 @@ static void testHierarchy() {
         EXPECT_TRUE(ifaceA);
         EXPECT_EQ(ifaceAWeak->m_ifaceAInt, 69);
         EXPECT_EQ(ifaceA->m_ifaceAInt, 69);
-        EXPECT_EQ(ifaceBWeak->m_ifaceBInt, 2);
         ifaceA.reset();
         EXPECT_TRUE(ifaceAWeak);
         EXPECT_EQ(ifaceAWeak->m_ifaceAInt, 69);

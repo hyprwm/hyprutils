@@ -10,10 +10,10 @@ using namespace Hyprutils::Memory;
 #define WP CWeakPointer
 
 void Hyprutils::Signal::CSignalBase::emitInternal(void* args) {
-    
+
     // Save, an event can destroy thisptr
     const auto STATICS = m_vStaticListeners;
-    
+
     if (!m_vListeners.empty()) {
         std::vector<SP<CSignalListener>> listeners;
         listeners.reserve(m_vListeners.size());
