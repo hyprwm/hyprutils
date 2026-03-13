@@ -1,6 +1,7 @@
 #pragma once
 
 #include <hyprutils/i18n/I18nEngine.hpp>
+#include <vector>
 
 namespace Hyprutils::I18n {
     struct SI18nTranslationEntry {
