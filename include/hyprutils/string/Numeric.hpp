@@ -21,6 +21,25 @@ namespace Hyprutils::String {
             return std::unexpected(NUMERIC_PARSE_BAD);
 
         T value{};
+
+        if constexpr (std::integral<T>) {
+            if (sv.size() >= 2 && sv[0] == '0' && (sv[1] == 'x' || sv[1] == 'X')) {
+                if (sv.size() == 2)
+                    return std::unexpected(NUMERIC_PARSE_BAD);
+                const auto hex       = sv.substr(2);
+                const auto [ptr, ec] = std::from_chars(hex.data(), hex.data() + hex.size(), value, 16);
+
+                if (ec == std::errc::invalid_argument)
+                    return std::unexpected(NUMERIC_PARSE_BAD);
+                if (ec == std::errc::result_out_of_range)
+                    return std::unexpected(NUMERIC_PARSE_OUT_OF_RANGE);
+                if (ptr != hex.data() + hex.size())
+                    return std::unexpected(NUMERIC_PARSE_GARBAGE);
+
+                return value;
+            }
+        }
+
         const auto [ptr, ec] = std::from_chars(sv.data(), sv.data() + sv.size(), value);
 
         if (ec == std::errc::invalid_argument)

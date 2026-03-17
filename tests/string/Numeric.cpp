@@ -90,3 +90,54 @@ TEST(Numeric, unsignedTypes) {
     ASSERT_TRUE(r2.has_value());
     EXPECT_EQ(*r2, 0u);
 }
+
+TEST(Numeric, hexSuccess) {
+    auto r = strToNumber<int>("0xAF23");
+    ASSERT_TRUE(r.has_value());
+    EXPECT_EQ(*r, 0xAF23);
+
+    auto r2 = strToNumber<uint32_t>("0xFF");
+    ASSERT_TRUE(r2.has_value());
+    EXPECT_EQ(*r2, 0xFFu);
+
+    auto r3 = strToNumber<uint64_t>("0xDEADBEEF");
+    ASSERT_TRUE(r3.has_value());
+    EXPECT_EQ(*r3, 0xDEADBEEFu);
+
+    // uppercase X prefix
+    auto r4 = strToNumber<int>("0XFF");
+    ASSERT_TRUE(r4.has_value());
+    EXPECT_EQ(*r4, 0xFF);
+
+    // lowercase hex digits
+    auto r5 = strToNumber<uint32_t>("0xdeadbeef");
+    ASSERT_TRUE(r5.has_value());
+    EXPECT_EQ(*r5, 0xDEADBEEFu);
+
+    // zero value
+    auto r6 = strToNumber<int>("0x0");
+    ASSERT_TRUE(r6.has_value());
+    EXPECT_EQ(*r6, 0);
+}
+
+TEST(Numeric, hexErrors) {
+    // incomplete prefix (just "0x")
+    auto r = strToNumber<int>("0x");
+    ASSERT_FALSE(r.has_value());
+    EXPECT_EQ(r.error(), NUMERIC_PARSE_BAD);
+
+    // garbage after valid hex digits
+    auto r2 = strToNumber<int>("0xFF_ZZ");
+    ASSERT_FALSE(r2.has_value());
+    EXPECT_EQ(r2.error(), NUMERIC_PARSE_GARBAGE);
+
+    // out of range for type
+    auto r3 = strToNumber<uint8_t>("0xFFF");
+    ASSERT_FALSE(r3.has_value());
+    EXPECT_EQ(r3.error(), NUMERIC_PARSE_OUT_OF_RANGE);
+
+    // floats do not accept hex prefix
+    auto r4 = strToNumber<double>("0xFF");
+    ASSERT_FALSE(r4.has_value());
+    EXPECT_EQ(r4.error(), NUMERIC_PARSE_GARBAGE);
+}
