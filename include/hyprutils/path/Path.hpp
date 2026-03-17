@@ -1,5 +1,6 @@
 #pragma once
 #include "../string/VarList.hpp"
+#include <expected>
 #include <string>
 #include <optional>
 #include <utility>
@@ -38,5 +39,13 @@ namespace Hyprutils {
 
         using T = std::optional<std::string>;
         std::pair<T, T> findConfig(const std::string programName);
+
+        /** Resolves a path, expanding ~, ., and .. components relative to the given base.
+            If base is empty, the current working directory is used as the base for relative paths.
+            Returns the resolved absolute path, or an error string on failure.
+            @param path the path to resolve (may use ~, ., .., or be absolute)
+            @param base optional base directory for resolving relative paths
+        */
+        std::expected<std::string, std::string> resolvePath(const std::string& path, const std::string& base = "");
     }
 }

@@ -1,6 +1,7 @@
 #include <hyprutils/path/Path.hpp>
 #include <hyprutils/string/VarList.hpp>
 #include <filesystem>
+#include <expected>
 
 using namespace Hyprutils;
 
@@ -77,5 +78,53 @@ namespace Hyprutils::Path {
             return std::make_pair(std::nullopt, home);
 
         return std::make_pair(std::nullopt, std::nullopt);
+    }
+
+    std::expected<std::string, std::string> resolvePath(const std::string& path, const std::string& base) {
+        if (path.empty())
+            return std::unexpected("empty path");
+
+        std::filesystem::path p(path);
+
+        // Expand leading ~ to the home directory
+        if (path[0] == '~') {
+            const auto homeDir = getenv("HOME");
+            if (!homeDir)
+                return std::unexpected("HOME environment variable not set");
+
+            std::string expanded(homeDir);
+            if (path.size() > 1) {
+                if (path[1] != '/')
+                    return std::unexpected("invalid path: ~ must be followed by / or end of path");
+                expanded.append(path.substr(1));
+            }
+            p = std::filesystem::path(expanded);
+        }
+
+        // If still relative, anchor to base (or cwd)
+        if (p.is_relative()) {
+            std::filesystem::path baseP;
+            if (!base.empty()) {
+                baseP = std::filesystem::path(base);
+                if (baseP.is_relative()) {
+                    std::error_code ec;
+                    auto            cwd = std::filesystem::current_path(ec);
+                    if (ec)
+                        return std::unexpected("failed to get current working directory: " + ec.message());
+                    baseP = cwd / baseP;
+                }
+            } else {
+                std::error_code ec;
+                baseP = std::filesystem::current_path(ec);
+                if (ec)
+                    return std::unexpected("failed to get current working directory: " + ec.message());
+            }
+            p = baseP / p;
+        }
+
+        // Lexically normalise (resolves . and .. without hitting the filesystem)
+        p = p.lexically_normal();
+
+        return p.string();
     }
 }
