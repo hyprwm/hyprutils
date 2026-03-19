@@ -44,6 +44,10 @@ std::string Hyprutils::String::trim(const char* in) {
 }
 
 bool Hyprutils::String::isNumber(const std::string& str, bool allowfloat) {
+    return isNumber2(str, allowfloat);
+}
+
+bool Hyprutils::String::isNumber2(const std::string_view& str, bool allowfloat) {
     if (str.empty())
         return false;
 
