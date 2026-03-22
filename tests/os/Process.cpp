@@ -2,6 +2,9 @@
 
 #include <gtest/gtest.h>
 
+#include <sys/types.h>
+#include <signal.h>
+
 using namespace Hyprutils::OS;
 
 TEST(OS, process) {
