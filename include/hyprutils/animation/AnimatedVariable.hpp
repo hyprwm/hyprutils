@@ -149,7 +149,7 @@ namespace Hyprutils {
 
             /* Equivalent to create, except that it allows animated variables to be UP's */
             void create2(const int typeInfo, CAnimationManager* pAnimationManager, Memory::CWeakPointer<CGenericAnimatedVariable<VarType, AnimationContext>> pSelf,
-                        const VarType& initialValue) {
+                         const VarType& initialValue) {
                 m_Begun = initialValue;
                 m_Value = initialValue;
                 m_Goal  = initialValue;

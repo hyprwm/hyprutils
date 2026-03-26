@@ -5,7 +5,20 @@
 
 using namespace Hyprutils::String;
 
-CVarList2::CVarList2(std::string&& in, const size_t lastArgNo, const char delim, const bool removeEmpty, const bool allowEscape) : m_inString(std::move(in)) {
+CVarList2::CVarList2(std::string&& in, const size_t lastArgNo, const char delim, const bool removeEmpty, const bool allowEscape) :
+    m_inStringCopy(std::move(in)), m_inString(m_inStringCopy) {
+    construct(m_inString, lastArgNo, delim, removeEmpty, allowEscape);
+}
+
+CVarList2::CVarList2(std::string_view in, const size_t lastArgNo, const char delim, const bool removeEmpty, const bool allowEscape) : m_inString(in) {
+    construct(m_inString, lastArgNo, delim, removeEmpty, allowEscape);
+}
+
+CVarList2::CVarList2(const char* in, const size_t lastArgNo, const char delim, const bool removeEmpty, const bool allowEscape) : m_inString(in) {
+    construct(m_inString, lastArgNo, delim, removeEmpty, allowEscape);
+}
+
+void CVarList2::construct(std::string_view in, const size_t lastArgNo, const char delim, const bool removeEmpty, const bool allowEscape) {
     if (m_inString.empty())
         return;
 
@@ -57,7 +70,7 @@ CVarList2::CVarList2(std::string&& in, const size_t lastArgNo, const char delim,
                 m_args.emplace_back(ARG);
         } else {
             // we escaped something, fixup the string, add to copies, then emplace
-            std::string cpy = m_inString.substr(argBegin, i - argBegin);
+            std::string cpy = std::string{m_inString.substr(argBegin, i - argBegin)};
             for (size_t i = 0; i < escapedIndices.size(); ++i) {
                 cpy = cpy.substr(0, escapedIndices[i] - i) + cpy.substr(escapedIndices[i] - i + 1);
             }
@@ -80,7 +93,7 @@ CVarList2::CVarList2(std::string&& in, const size_t lastArgNo, const char delim,
                 m_args.emplace_back(ARG);
         } else {
             // we escaped something, fixup the string, add to copies, then emplace
-            std::string cpy = m_inString.substr(argBegin, m_inString.size() - argBegin);
+            std::string cpy = std::string{m_inString.substr(argBegin, m_inString.size() - argBegin)};
             for (size_t i = 0; i < escapedIndices.size(); ++i) {
                 cpy = cpy.substr(0, escapedIndices[i] - i) + cpy.substr(escapedIndices[i] - i + 1);
             }
