@@ -8,6 +8,10 @@
 
 #include <functional>
 #include <chrono>
+#include <cmath>
+#include <concepts>
+#include <string_view>
+#include <type_traits>
 
 namespace Hyprutils {
     namespace Animation {
@@ -16,6 +20,11 @@ namespace Hyprutils {
         class CBaseAnimatedVariable {
           public:
             using CallbackFun = std::function<void(Memory::CWeakPointer<CBaseAnimatedVariable> thisptr)>;
+
+            struct SCurveStepResult {
+                float value    = 1.f;
+                bool  finished = true;
+            };
 
             CBaseAnimatedVariable() {
                 ; // m_bDummy = true;
@@ -57,6 +66,11 @@ namespace Hyprutils {
             /* returns the current curve value. */
             float getCurveValue() const;
 
+            /* steps the current curve by one frame. */
+            SCurveStepResult getCurveStep();
+
+            bool             isSpringCurve() const;
+
             /* checks if an animation is in progress */
             bool isBeingAnimated() const {
                 return m_bIsBeingAnimated;
@@ -84,7 +98,7 @@ namespace Hyprutils {
             void resetAllCallbacks();
 
             void onAnimationEnd();
-            void onAnimationBegin();
+            void onAnimationBegin(bool preserveCurveState = false, float springVelocityScale = 1.F);
 
             /* returns whether the parent CAnimationManager is dead */
             bool isAnimationManagerDead() const;
@@ -104,11 +118,18 @@ namespace Hyprutils {
             Memory::CWeakPointer<CAnimationManager::SAnimationManagerSignals> m_pSignals;
 
           private:
+            void                                           resetSpringState(bool preserveVelocity, float velocityScale);
+            std::string_view                               springNameFromSpec(const std::string& spec) const;
+
             Memory::CWeakPointer<SAnimationPropertyConfig> m_pConfig;
 
             std::chrono::steady_clock::time_point          animationBegin;
+            std::chrono::steady_clock::time_point          springLastStep;
 
             bool                                           m_bDummy = true;
+
+            float                                          m_fSpringValue    = 1.F;
+            float                                          m_fSpringVelocity = 0.F;
 
             bool                                           m_bRemoveEndAfterRan   = true;
             bool                                           m_bRemoveBeginAfterRan = true;
@@ -124,6 +145,12 @@ namespace Hyprutils {
             requires std::is_copy_constructible_v<ValueImpl>;
             { val == val } -> std::same_as<bool>; // requires operator==
             { val = val };                        // requires operator=
+        };
+
+        template <class ValueImpl>
+        concept AnimableType = AnimatedType<ValueImpl> && requires(ValueImpl val, float pointy) {
+            { val - val };
+            { val + ((val - val) * pointy) } -> std::convertible_to<ValueImpl>;
         };
 
         /*
@@ -200,10 +227,25 @@ namespace Hyprutils {
                 if (v == m_Goal)
                     return *this;
 
+                const bool WASANIMATING        = m_bIsBeingAnimated;
+                float      SPRINGVELOCITYSCALE = 1.f;
+
+                if (WASANIMATING && isSpringCurve()) {
+                    if constexpr (std::is_arithmetic_v<VarType>) {
+                        const float OLDDELTA = static_cast<float>(m_Goal - m_Begun);
+                        const float NEWDELTA = static_cast<float>(v - m_Value);
+
+                        if (std::abs(NEWDELTA) > 1e-6f)
+                            SPRINGVELOCITYSCALE = OLDDELTA / NEWDELTA;
+                        else
+                            SPRINGVELOCITYSCALE = 0.f;
+                    }
+                }
+
                 m_Goal  = v;
                 m_Begun = m_Value;
 
-                onAnimationBegin();
+                onAnimationBegin(WASANIMATING && isSpringCurve(), SPRINGVELOCITYSCALE);
 
                 return *this;
             }
@@ -225,6 +267,26 @@ namespace Hyprutils {
                 m_bIsBeingAnimated = true;
 
                 warp();
+            }
+
+            template <class T = VarType>
+                requires AnimableType<T>
+            void update(bool warpNow = false) {
+                if (warpNow || m_Value == m_Goal || !enabled()) {
+                    warp(true, false);
+                    return;
+                }
+
+                const auto STEP = getCurveStep();
+                if (STEP.finished) {
+                    warp(true, false);
+                    return;
+                }
+
+                const auto DELTA = m_Goal - m_Begun;
+                m_Value          = m_Begun + (DELTA * STEP.value);
+
+                onUpdate();
             }
 
             AnimationContext m_Context;

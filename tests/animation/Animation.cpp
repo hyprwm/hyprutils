@@ -51,39 +51,36 @@ class CMyAnimationManager : public CAnimationManager {
             if (!PAV || !PAV->ok() || !PAV->isBeingAnimated())
                 continue;
 
-            const auto SPENT   = PAV->getPercent();
-            const auto PBEZIER = getBezier(PAV->getBezierName());
-
-            if (SPENT >= 1.f || !PAV->enabled()) {
-                PAV->warp(true, false);
-                continue;
-            }
-
-            const auto POINTY = PBEZIER->getYForPoint(SPENT);
-
             switch (PAV->m_Type) {
                 case eAVTypes::INT: {
                     auto avInt = dc<CAnimatedVariable<int>*>(PAV.get());
                     if (!avInt)
                         std::cout << "Dynamic cast upcast failed\n";
 
-                    const auto DELTA = avInt->goal() - avInt->begun();
-                    avInt->value()   = avInt->begun() + (DELTA * POINTY);
+                    avInt->update();
                 } break;
                 case eAVTypes::TEST: {
                     auto avCustom = dc<CAnimatedVariable<SomeTestType>*>(PAV.get());
                     if (!avCustom)
                         std::cout << "Dynamic cast upcast failed\n";
 
-                    if (SPENT >= 1.f)
-                        avCustom->value().done = true;
+                    if (!PAV->enabled()) {
+                        PAV->warp(true, false);
+                        continue;
+                    }
+
+                    const auto STEP = PAV->getCurveStep();
+                    if (STEP.finished) {
+                        PAV->warp(true, false);
+                        continue;
+                    }
+
+                    PAV->onUpdate();
                 } break;
                 default: {
                     std::cout << "What are we even doing?\n";
                 } break;
             }
-
-            PAV->onUpdate();
         }
 
         tickDone();
@@ -392,4 +389,51 @@ TEST(Animation, animation) {
     } // a gets destroyed
 
     EXPECT_EQ(pAnimationManager.get(), nullptr);
+}
+
+TEST(Animation, springRetargetPreservesVelocity) {
+    config();
+
+    pAnimationManager->addSpringWithName("momentum",
+                                         {
+                                             .stiffness       = 120.f,
+                                             .damping         = 8.f,
+                                             .mass            = 1.f,
+                                             .valueEpsilon    = 0.001f,
+                                             .velocityEpsilon = 0.001f,
+                                         });
+
+    animationTree.createNode("spring_global");
+    animationTree.createNode("spring_velocity", "spring_global");
+    animationTree.setConfigForNode("spring_global", 1, 1.f, "spring:momentum");
+
+    PANIMVAR<int> av;
+    pAnimationManager->createAnimation(0, av, "spring_velocity");
+
+    *av = 100;
+
+    int ticks = 0;
+    while (av->value() < 40 && ticks++ < 300) {
+        pAnimationManager->tick();
+    }
+
+    const auto RETARGETPOINT = av->value();
+    EXPECT_GT(RETARGETPOINT, 20);
+
+    PANIMVAR<int> fromRest;
+    pAnimationManager->createAnimation(RETARGETPOINT, fromRest, "spring_velocity");
+
+    *av       = 0;
+    *fromRest = 0;
+    EXPECT_EQ(av->value(), RETARGETPOINT);
+
+    pAnimationManager->tick();
+    EXPECT_GT(av->value(), fromRest->value());
+
+    while (pAnimationManager->shouldTickForNext() && ticks++ < 2000) {
+        pAnimationManager->tick();
+    }
+
+    EXPECT_EQ(av->value(), 0);
+    EXPECT_EQ(fromRest->value(), 0);
 }
