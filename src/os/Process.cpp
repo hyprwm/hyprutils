@@ -77,13 +77,13 @@ bool Hyprutils::OS::CProcess::runSync() {
             setenv(n.c_str(), v.c_str(), 1);
         }
 
-        if (execvp(m_impl->binary.c_str(), argsC.data()) == -1) {
-            for (auto ptr : argsC) {
-                if (ptr)
-                    free(ptr);
-            }
-            _exit(1);
+        execvp(m_impl->binary.c_str(), argsC.data());
+        for (auto ptr : argsC) {
+            if (ptr)
+                free(ptr);
         }
+        _exit(1);
+
     } else {
         // parent
         close(outPipe[1]);
