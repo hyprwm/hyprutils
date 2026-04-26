@@ -171,7 +171,7 @@ CBox Hyprutils::Math::CBox::intersection(const CBox& other) const {
 }
 
 bool Hyprutils::Math::CBox::overlaps(const CBox& other) const {
-    return (other.x + other.w >= x) && (x + w >= other.x) && (other.y + other.h >= y) && (y + h >= other.y);
+    return (other.x + other.w > x) && (x + w > other.x) && (other.y + other.h > y) && (y + h > other.y);
 }
 
 bool Hyprutils::Math::CBox::inside(const CBox& bound) const {
