@@ -271,22 +271,24 @@ namespace Hyprutils {
 
             template <class T = VarType>
                 requires AnimableType<T>
-            void update(bool warpNow = false) {
+            SCurveStepResult update(bool warpNow = false) {
                 if (warpNow || m_Value == m_Goal || !enabled()) {
                     warp(true, false);
-                    return;
+                    return SCurveStepResult{.value = 1.F, .finished = true};
                 }
 
                 const auto STEP = getCurveStep();
                 if (STEP.finished) {
                     warp(true, false);
-                    return;
+                    return STEP;
                 }
 
                 const auto DELTA = m_Goal - m_Begun;
                 m_Value          = m_Begun + (DELTA * STEP.value);
 
                 onUpdate();
+
+                return STEP;
             }
 
             AnimationContext m_Context;
