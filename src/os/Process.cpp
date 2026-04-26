@@ -49,8 +49,8 @@ bool Hyprutils::OS::CProcess::runSync() {
     if (pid == -1) {
         close(outPipe[0]);
         close(outPipe[1]);
-        close(outPipe[0]);
-        close(outPipe[1]);
+        close(errPipe[0]);
+        close(errPipe[1]);
         return false;
     }
 
@@ -232,7 +232,14 @@ bool Hyprutils::OS::CProcess::runAsync() {
             }
 
             execvp(m_impl->binary.c_str(), argsC.data());
-            _exit(0);
+
+
+            for (auto ptr : argsC) {
+                if (ptr)
+                    free(ptr);
+            }
+
+            _exit(1);
         }
         close(socket[0]);
         if (write(socket[1], &grandchild, sizeof(grandchild)) != sizeof(grandchild)) {
