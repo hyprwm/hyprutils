@@ -10,8 +10,16 @@ namespace Hyprutils::Path {
         return basePath + "/hypr/" + programName + ".conf";
     }
 
+    std::string fullConfigPath(std::string basePath, std::string programName, std::string extension) {
+        return basePath + "/hypr/" + programName + "." + extension;
+    }
+
     bool checkConfigExists(std::string basePath, std::string programName) {
         return std::filesystem::exists(fullConfigPath(basePath, programName));
+    }
+
+    bool checkConfigExists(std::string basePath, std::string programName, std::string extension) {
+        return std::filesystem::exists(fullConfigPath(basePath, programName, extension));
     }
 
     std::optional<std::string> getHome() {
@@ -45,32 +53,36 @@ namespace Hyprutils::Path {
 
     using T = std::optional<std::string>;
     std::pair<T, T> findConfig(std::string programName) {
+        return findConfig(programName, "conf");
+    }
+
+    std::pair<T, T> findConfig(std::string programName, std::string extension) {
         bool              xdgConfigHomeExists = false;
         static const auto xdgConfigHome       = getXdgConfigHome();
         if (xdgConfigHome.has_value()) {
             xdgConfigHomeExists = true;
-            if (checkConfigExists(xdgConfigHome.value(), programName))
-                return std::make_pair(fullConfigPath(xdgConfigHome.value(), programName), xdgConfigHome);
+            if (checkConfigExists(xdgConfigHome.value(), programName, extension))
+                return std::make_pair(fullConfigPath(xdgConfigHome.value(), programName, extension), xdgConfigHome);
         }
 
         bool              homeExists = false;
         static const auto home       = getHome();
         if (home.has_value()) {
             homeExists = true;
-            if (checkConfigExists(home.value(), programName))
-                return std::make_pair(fullConfigPath(home.value(), programName), home);
+            if (checkConfigExists(home.value(), programName, extension))
+                return std::make_pair(fullConfigPath(home.value(), programName, extension), home);
         }
 
         static const auto xdgConfigDirs = getXdgConfigDirs();
         if (xdgConfigDirs.has_value()) {
             for (auto& dir : xdgConfigDirs.value()) {
-                if (checkConfigExists(dir, programName))
-                    return std::make_pair(fullConfigPath(dir, programName), std::nullopt);
+                if (checkConfigExists(dir, programName, extension))
+                    return std::make_pair(fullConfigPath(dir, programName, extension), std::nullopt);
             }
         }
 
-        if (checkConfigExists("/etc/xdg", programName))
-            return std::make_pair(fullConfigPath("/etc/xdg", programName), std::nullopt);
+        if (checkConfigExists("/etc/xdg", programName, extension))
+            return std::make_pair(fullConfigPath("/etc/xdg", programName, extension), std::nullopt);
 
         if (xdgConfigHomeExists)
             return std::make_pair(std::nullopt, xdgConfigHome);
