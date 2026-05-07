@@ -13,11 +13,25 @@ namespace Hyprutils {
         */
         bool checkConfigExists(const std::string basePath, const std::string programName);
 
+        /** Check whether a config in the form basePath/hypr/programName.{extension} exists.
+            @param basePath the path where the config will be searched
+            @param programName name of the program (and config file) to search for
+            @param extension extension of the config file
+        */
+        bool checkConfigExists(const std::string basePath, const std::string programName, const std::string extension);
+
         /** Constructs a full config path given the basePath and programName.
             @param basePath the path where the config hypr/programName.conf is located
             @param programName name of the program (and config file)
         */
         std::string fullConfigPath(const std::string basePath, const std::string programName);
+
+        /** Constructs a full config path given the basePath and programName.
+            @param basePath the path where the config hypr/programName.conf is located
+            @param programName name of the program (and config file)
+            @param extension extension of the config file
+        */
+        std::string fullConfigPath(const std::string basePath, const std::string programName, const std::string extension);
 
         /** Retrieves the absolute path of the $HOME env variable.
         */
@@ -39,6 +53,15 @@ namespace Hyprutils {
 
         using T = std::optional<std::string>;
         std::pair<T, T> findConfig(const std::string programName);
+
+        /** Searches for a config according to the XDG Base Directory specification.
+            Returns a pair of the full path to a config and the base path.
+            Returns std::nullopt in case of a non-existent value.
+            @param programName name of the program (and config file)
+            @param extension extension of the config file
+        */
+
+        std::pair<T, T> findConfig(const std::string programName, const std::string extension);
 
         /** Resolves a path, expanding ~, ., and .. components relative to the given base.
             If base is empty, the current working directory is used as the base for relative paths.
