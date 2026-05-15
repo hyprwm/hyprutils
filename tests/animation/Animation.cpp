@@ -7,6 +7,9 @@
 #include <hyprutils/memory/WeakPtr.hpp>
 #include <hyprutils/memory/UniquePtr.hpp>
 
+#include <chrono>
+#include <thread>
+
 #define SP CSharedPointer
 #define WP CWeakPointer
 #define UP CUniquePointer
@@ -436,4 +439,31 @@ TEST(Animation, springRetargetPreservesVelocity) {
 
     EXPECT_EQ(av->value(), 0);
     EXPECT_EQ(fromRest->value(), 0);
+}
+
+TEST(Animation, springAdvancesAcrossLateTicks) {
+    config();
+
+    pAnimationManager->addSpringWithName("late",
+                                         {
+                                             .stiffness       = 100.f,
+                                             .damping         = 20.f,
+                                             .mass            = 1.f,
+                                             .valueEpsilon    = 0.001f,
+                                             .velocityEpsilon = 0.001f,
+                                         });
+
+    animationTree.createNode("late_tick_global");
+    animationTree.createNode("late_tick", "late_tick_global");
+    animationTree.setConfigForNode("late_tick_global", 1, 1.f, "spring:late");
+
+    PANIMVAR<int> av;
+    pAnimationManager->createAnimation(0, av, "late_tick");
+
+    *av = 100;
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(120));
+    pAnimationManager->tick();
+
+    EXPECT_GT(av->value(), 25);
 }
