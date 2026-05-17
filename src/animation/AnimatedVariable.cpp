@@ -1,6 +1,7 @@
 #include <hyprutils/animation/AnimatedVariable.hpp>
 #include <hyprutils/animation/AnimationManager.hpp>
 #include <hyprutils/memory/WeakPtr.hpp>
+#include "animation/Spring.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -14,54 +15,6 @@ static constexpr std::string_view SPRINGPREFIX      = "spring:";
 
 #define SP CSharedPointer
 #define WP CWeakPointer
-
-static void advanceSpring(float& value, float& velocity, const SSpringCurve& spring, float dt) {
-    if (dt <= 0.F)
-        return;
-
-    const float MASS      = std::max(spring.mass, 0.0001F);
-    const float STIFFNESS = std::max(spring.stiffness, 0.0001F);
-    const float DAMPING   = std::max(spring.damping, 0.F);
-
-    const float DISPLACEMENT = value - 1.F;
-    const float OMEGA0       = std::sqrt(STIFFNESS / MASS);
-    const float GAMMA        = DAMPING / (2.F * MASS);
-
-    if (GAMMA < OMEGA0) {
-        const float OMEGAD = std::sqrt((OMEGA0 * OMEGA0) - (GAMMA * GAMMA));
-        const float EXP    = std::exp(-GAMMA * dt);
-        const float SIN    = std::sin(OMEGAD * dt);
-        const float COS    = std::cos(OMEGAD * dt);
-
-        const float NEW_DISPLACEMENT = EXP * ((DISPLACEMENT * COS) + (((velocity + (GAMMA * DISPLACEMENT)) / OMEGAD) * SIN));
-        const float NEW_VELOCITY     = EXP * ((velocity * COS) - (((GAMMA * velocity) + (OMEGA0 * OMEGA0 * DISPLACEMENT)) / OMEGAD) * SIN);
-
-        value    = 1.F + NEW_DISPLACEMENT;
-        velocity = NEW_VELOCITY;
-        return;
-    }
-
-    const float CRITICAL_EPSILON = std::max(OMEGA0, 1.F) * 0.0001F;
-    if (std::abs(GAMMA - OMEGA0) <= CRITICAL_EPSILON) {
-        const float EXP = std::exp(-GAMMA * dt);
-        const float B   = velocity + (GAMMA * DISPLACEMENT);
-
-        value    = 1.F + (EXP * (DISPLACEMENT + (B * dt)));
-        velocity = EXP * (velocity - (GAMMA * B * dt));
-        return;
-    }
-
-    const float ROOT = std::sqrt((GAMMA * GAMMA) - (OMEGA0 * OMEGA0));
-    const float R1   = -GAMMA + ROOT;
-    const float R2   = -GAMMA - ROOT;
-    const float A    = (velocity - (R2 * DISPLACEMENT)) / (R1 - R2);
-    const float B    = DISPLACEMENT - A;
-    const float E1   = std::exp(R1 * dt);
-    const float E2   = std::exp(R2 * dt);
-
-    value    = 1.F + (A * E1) + (B * E2);
-    velocity = (A * R1 * E1) + (B * R2 * E2);
-}
 
 void CBaseAnimatedVariable::create(CAnimationManager* pManager, int typeInfo, SP<CBaseAnimatedVariable> pSelf) {
     m_Type  = typeInfo;
@@ -170,16 +123,10 @@ CBaseAnimatedVariable::SCurveStepResult CBaseAnimatedVariable::getCurveStep() {
         return {.value = 1.F, .finished = true};
 
     const auto NOW = std::chrono::steady_clock::now();
-    float      dt  = std::chrono::duration<float>(NOW - springLastStep).count();
+    float      dt  = Details::springDeltaTime(NOW, springLastStep);
     springLastStep = NOW;
 
-    constexpr float MINDELTA = 1.F / 240.F;
-    if (dt <= 0.F)
-        dt = MINDELTA;
-    else
-        dt = std::max(dt, MINDELTA);
-
-    advanceSpring(m_fSpringValue, m_fSpringVelocity, *SPRING, dt);
+    Details::advanceSpring(m_fSpringValue, m_fSpringVelocity, *SPRING, dt);
 
     const bool FINISHED = std::abs(1.F - m_fSpringValue) <= SPRING->valueEpsilon && std::abs(m_fSpringVelocity) <= SPRING->velocityEpsilon;
     if (FINISHED) {

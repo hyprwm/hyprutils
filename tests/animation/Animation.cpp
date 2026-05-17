@@ -6,9 +6,9 @@
 #include <hyprutils/animation/AnimatedVariable.hpp>
 #include <hyprutils/memory/WeakPtr.hpp>
 #include <hyprutils/memory/UniquePtr.hpp>
+#include "animation/Spring.hpp"
 
 #include <chrono>
-#include <thread>
 
 #define SP CSharedPointer
 #define WP CWeakPointer
@@ -394,76 +394,54 @@ TEST(Animation, animation) {
     EXPECT_EQ(pAnimationManager.get(), nullptr);
 }
 
-TEST(Animation, springRetargetPreservesVelocity) {
-    config();
+TEST(Animation, springDeltaUsesElapsedTime) {
+    const auto START = std::chrono::steady_clock::time_point{} + std::chrono::seconds(1);
 
-    pAnimationManager->addSpringWithName("momentum",
-                                         {
-                                             .stiffness       = 120.f,
-                                             .damping         = 8.f,
-                                             .mass            = 1.f,
-                                             .valueEpsilon    = 0.001f,
-                                             .velocityEpsilon = 0.001f,
-                                         });
-
-    animationTree.createNode("spring_global");
-    animationTree.createNode("spring_velocity", "spring_global");
-    animationTree.setConfigForNode("spring_global", 1, 1.f, "spring:momentum");
-
-    PANIMVAR<int> av;
-    pAnimationManager->createAnimation(0, av, "spring_velocity");
-
-    *av = 100;
-
-    int ticks = 0;
-    while (av->value() < 40 && ticks++ < 300) {
-        pAnimationManager->tick();
-    }
-
-    const auto RETARGETPOINT = av->value();
-    EXPECT_GT(RETARGETPOINT, 20);
-
-    PANIMVAR<int> fromRest;
-    pAnimationManager->createAnimation(RETARGETPOINT, fromRest, "spring_velocity");
-
-    *av       = 0;
-    *fromRest = 0;
-    EXPECT_EQ(av->value(), RETARGETPOINT);
-
-    pAnimationManager->tick();
-    EXPECT_GT(av->value(), fromRest->value());
-
-    while (pAnimationManager->shouldTickForNext() && ticks++ < 2000) {
-        pAnimationManager->tick();
-    }
-
-    EXPECT_EQ(av->value(), 0);
-    EXPECT_EQ(fromRest->value(), 0);
+    EXPECT_NEAR(Details::springDeltaTime(START + std::chrono::milliseconds(1), START), 0.001F, 0.000001F);
+    EXPECT_NEAR(Details::springDeltaTime(START + std::chrono::milliseconds(120), START), 0.120F, 0.000001F);
+    EXPECT_EQ(Details::springDeltaTime(START, START + std::chrono::milliseconds(1)), 0.F);
 }
 
 TEST(Animation, springAdvancesAcrossLateTicks) {
-    config();
+    const SSpringCurve SPRING = {
+        .stiffness       = 100.f,
+        .damping         = 20.f,
+        .mass            = 1.f,
+        .valueEpsilon    = 0.001f,
+        .velocityEpsilon = 0.001f,
+    };
 
-    pAnimationManager->addSpringWithName("late",
-                                         {
-                                             .stiffness       = 100.f,
-                                             .damping         = 20.f,
-                                             .mass            = 1.f,
-                                             .valueEpsilon    = 0.001f,
-                                             .velocityEpsilon = 0.001f,
-                                         });
+    float lateValue      = 0.F;
+    float lateVelocity   = 0.F;
+    float cappedValue    = 0.F;
+    float cappedVelocity = 0.F;
 
-    animationTree.createNode("late_tick_global");
-    animationTree.createNode("late_tick", "late_tick_global");
-    animationTree.setConfigForNode("late_tick_global", 1, 1.f, "spring:late");
+    Details::advanceSpring(lateValue, lateVelocity, SPRING, 0.120F);
+    Details::advanceSpring(cappedValue, cappedVelocity, SPRING, 0.050F);
 
-    PANIMVAR<int> av;
-    pAnimationManager->createAnimation(0, av, "late_tick");
+    EXPECT_GT(lateValue, cappedValue);
+    EXPECT_GT(lateValue, 0.25F);
+}
 
-    *av = 100;
+TEST(Animation, springDoesNotAdvanceFasterThanElapsedTime) {
+    const SSpringCurve SPRING = {
+        .stiffness       = 38.f,
+        .damping         = 8.f,
+        .mass            = 2.4f,
+        .valueEpsilon    = 0.001f,
+        .velocityEpsilon = 0.001f,
+    };
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(120));
-    pAnimationManager->tick();
+    float repeatedValue    = 0.F;
+    float repeatedVelocity = 0.F;
+    float singleValue      = 0.F;
+    float singleVelocity   = 0.F;
 
-    EXPECT_GT(av->value(), 25);
+    for (size_t i = 0; i < 132; ++i)
+        Details::advanceSpring(repeatedValue, repeatedVelocity, SPRING, 0.001F);
+
+    Details::advanceSpring(singleValue, singleVelocity, SPRING, 0.132F);
+
+    EXPECT_NEAR(repeatedValue, singleValue, 0.0001F);
+    EXPECT_LT(repeatedValue, 0.5F);
 }
