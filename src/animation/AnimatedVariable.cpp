@@ -123,10 +123,10 @@ CBaseAnimatedVariable::SCurveStepResult CBaseAnimatedVariable::getCurveStep() {
         return {.value = 1.F, .finished = true};
 
     const auto NOW = std::chrono::steady_clock::now();
-    float      dt  = Details::springDeltaTime(NOW, springLastStep);
+    const auto DT  = NOW - springLastStep;
     springLastStep = NOW;
 
-    Details::advanceSpring(m_fSpringValue, m_fSpringVelocity, *SPRING, dt);
+    Details::advanceSpring(m_fSpringValue, m_fSpringVelocity, *SPRING, DT);
 
     const bool FINISHED = std::abs(1.F - m_fSpringValue) <= SPRING->valueEpsilon && std::abs(m_fSpringVelocity) <= SPRING->velocityEpsilon;
     if (FINISHED) {

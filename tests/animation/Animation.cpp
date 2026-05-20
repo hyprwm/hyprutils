@@ -394,12 +394,30 @@ TEST(Animation, animation) {
     EXPECT_EQ(pAnimationManager.get(), nullptr);
 }
 
-TEST(Animation, springDeltaUsesElapsedTime) {
-    const auto START = std::chrono::steady_clock::time_point{} + std::chrono::seconds(1);
+TEST(Animation, springAdvanceUsesElapsedTime) {
+    const SSpringCurve SPRING = {
+        .stiffness       = 100.f,
+        .damping         = 20.f,
+        .mass            = 1.f,
+        .valueEpsilon    = 0.001f,
+        .velocityEpsilon = 0.001f,
+    };
 
-    EXPECT_NEAR(Details::springDeltaTime(START + std::chrono::milliseconds(1), START), 0.001F, 0.000001F);
-    EXPECT_NEAR(Details::springDeltaTime(START + std::chrono::milliseconds(120), START), 0.120F, 0.000001F);
-    EXPECT_EQ(Details::springDeltaTime(START, START + std::chrono::milliseconds(1)), 0.F);
+    float oneMsValue        = 0.F;
+    float oneMsVelocity     = 0.F;
+    float hundredMsValue    = 0.F;
+    float hundredMsVelocity = 0.F;
+    float negativeValue     = 0.F;
+    float negativeVelocity  = 0.F;
+
+    Details::advanceSpring(oneMsValue, oneMsVelocity, SPRING, std::chrono::milliseconds(1));
+    Details::advanceSpring(hundredMsValue, hundredMsVelocity, SPRING, std::chrono::milliseconds(120));
+    Details::advanceSpring(negativeValue, negativeVelocity, SPRING, std::chrono::milliseconds(-1));
+
+    EXPECT_GT(oneMsValue, 0.F);
+    EXPECT_GT(hundredMsValue, oneMsValue);
+    EXPECT_EQ(negativeValue, 0.F);
+    EXPECT_EQ(negativeVelocity, 0.F);
 }
 
 TEST(Animation, springAdvancesAcrossLateTicks) {
@@ -416,8 +434,8 @@ TEST(Animation, springAdvancesAcrossLateTicks) {
     float cappedValue    = 0.F;
     float cappedVelocity = 0.F;
 
-    Details::advanceSpring(lateValue, lateVelocity, SPRING, 0.120F);
-    Details::advanceSpring(cappedValue, cappedVelocity, SPRING, 0.050F);
+    Details::advanceSpring(lateValue, lateVelocity, SPRING, std::chrono::milliseconds(120));
+    Details::advanceSpring(cappedValue, cappedVelocity, SPRING, std::chrono::milliseconds(50));
 
     EXPECT_GT(lateValue, cappedValue);
     EXPECT_GT(lateValue, 0.25F);
@@ -438,9 +456,9 @@ TEST(Animation, springDoesNotAdvanceFasterThanElapsedTime) {
     float singleVelocity   = 0.F;
 
     for (size_t i = 0; i < 132; ++i)
-        Details::advanceSpring(repeatedValue, repeatedVelocity, SPRING, 0.001F);
+        Details::advanceSpring(repeatedValue, repeatedVelocity, SPRING, std::chrono::milliseconds(1));
 
-    Details::advanceSpring(singleValue, singleVelocity, SPRING, 0.132F);
+    Details::advanceSpring(singleValue, singleVelocity, SPRING, std::chrono::milliseconds(132));
 
     EXPECT_NEAR(repeatedValue, singleValue, 0.0001F);
     EXPECT_LT(repeatedValue, 0.5F);
