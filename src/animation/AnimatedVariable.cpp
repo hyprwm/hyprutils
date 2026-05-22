@@ -1,6 +1,7 @@
 #include <hyprutils/animation/AnimatedVariable.hpp>
 #include <hyprutils/animation/AnimationManager.hpp>
 #include <hyprutils/memory/WeakPtr.hpp>
+#include "animation/Spring.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -122,29 +123,10 @@ CBaseAnimatedVariable::SCurveStepResult CBaseAnimatedVariable::getCurveStep() {
         return {.value = 1.F, .finished = true};
 
     const auto NOW = std::chrono::steady_clock::now();
-    float      dt  = std::chrono::duration<float>(NOW - springLastStep).count();
+    const auto DT  = NOW - springLastStep;
     springLastStep = NOW;
 
-    constexpr float MINDELTA = 1.F / 240.F;
-    if (dt <= 0.F)
-        dt = MINDELTA;
-    else
-        dt = std::clamp(dt, MINDELTA, 0.05F);
-
-    if (dt > 0.F) {
-        constexpr const float FIXEDSTEP = 1.F / 240.F;
-        const int             SUBSTEPS  = std::clamp(static_cast<int>(std::ceil(dt / FIXEDSTEP)), 1, 16);
-        const float           STEPTIME  = dt / SUBSTEPS;
-        const float           MASS      = std::max(SPRING->mass, 0.0001f);
-
-        for (int i = 0; i < SUBSTEPS; ++i) {
-            const float displacement = m_fSpringValue - 1.f;
-            const float acceleration = ((-SPRING->stiffness * displacement) - (SPRING->damping * m_fSpringVelocity)) / MASS;
-
-            m_fSpringVelocity += acceleration * STEPTIME;
-            m_fSpringValue += m_fSpringVelocity * STEPTIME;
-        }
-    }
+    Details::advanceSpring(m_fSpringValue, m_fSpringVelocity, *SPRING, DT);
 
     const bool FINISHED = std::abs(1.F - m_fSpringValue) <= SPRING->valueEpsilon && std::abs(m_fSpringVelocity) <= SPRING->velocityEpsilon;
     if (FINISHED) {

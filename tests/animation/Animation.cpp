@@ -6,6 +6,9 @@
 #include <hyprutils/animation/AnimatedVariable.hpp>
 #include <hyprutils/memory/WeakPtr.hpp>
 #include <hyprutils/memory/UniquePtr.hpp>
+#include "animation/Spring.hpp"
+
+#include <chrono>
 
 #define SP CSharedPointer
 #define WP CWeakPointer
@@ -391,49 +394,72 @@ TEST(Animation, animation) {
     EXPECT_EQ(pAnimationManager.get(), nullptr);
 }
 
-TEST(Animation, springRetargetPreservesVelocity) {
-    config();
+TEST(Animation, springAdvanceUsesElapsedTime) {
+    const SSpringCurve SPRING = {
+        .stiffness       = 100.f,
+        .damping         = 20.f,
+        .mass            = 1.f,
+        .valueEpsilon    = 0.001f,
+        .velocityEpsilon = 0.001f,
+    };
 
-    pAnimationManager->addSpringWithName("momentum",
-                                         {
-                                             .stiffness       = 120.f,
-                                             .damping         = 8.f,
-                                             .mass            = 1.f,
-                                             .valueEpsilon    = 0.001f,
-                                             .velocityEpsilon = 0.001f,
-                                         });
+    float oneMsValue        = 0.F;
+    float oneMsVelocity     = 0.F;
+    float hundredMsValue    = 0.F;
+    float hundredMsVelocity = 0.F;
+    float negativeValue     = 0.F;
+    float negativeVelocity  = 0.F;
 
-    animationTree.createNode("spring_global");
-    animationTree.createNode("spring_velocity", "spring_global");
-    animationTree.setConfigForNode("spring_global", 1, 1.f, "spring:momentum");
+    Details::advanceSpring(oneMsValue, oneMsVelocity, SPRING, std::chrono::milliseconds(1));
+    Details::advanceSpring(hundredMsValue, hundredMsVelocity, SPRING, std::chrono::milliseconds(120));
+    Details::advanceSpring(negativeValue, negativeVelocity, SPRING, std::chrono::milliseconds(-1));
 
-    PANIMVAR<int> av;
-    pAnimationManager->createAnimation(0, av, "spring_velocity");
+    EXPECT_GT(oneMsValue, 0.F);
+    EXPECT_GT(hundredMsValue, oneMsValue);
+    EXPECT_EQ(negativeValue, 0.F);
+    EXPECT_EQ(negativeVelocity, 0.F);
+}
 
-    *av = 100;
+TEST(Animation, springAdvancesAcrossLateTicks) {
+    const SSpringCurve SPRING = {
+        .stiffness       = 100.f,
+        .damping         = 20.f,
+        .mass            = 1.f,
+        .valueEpsilon    = 0.001f,
+        .velocityEpsilon = 0.001f,
+    };
 
-    int ticks = 0;
-    while (av->value() < 40 && ticks++ < 300) {
-        pAnimationManager->tick();
-    }
+    float lateValue      = 0.F;
+    float lateVelocity   = 0.F;
+    float cappedValue    = 0.F;
+    float cappedVelocity = 0.F;
 
-    const auto RETARGETPOINT = av->value();
-    EXPECT_GT(RETARGETPOINT, 20);
+    Details::advanceSpring(lateValue, lateVelocity, SPRING, std::chrono::milliseconds(120));
+    Details::advanceSpring(cappedValue, cappedVelocity, SPRING, std::chrono::milliseconds(50));
 
-    PANIMVAR<int> fromRest;
-    pAnimationManager->createAnimation(RETARGETPOINT, fromRest, "spring_velocity");
+    EXPECT_GT(lateValue, cappedValue);
+    EXPECT_GT(lateValue, 0.25F);
+}
 
-    *av       = 0;
-    *fromRest = 0;
-    EXPECT_EQ(av->value(), RETARGETPOINT);
+TEST(Animation, springDoesNotAdvanceFasterThanElapsedTime) {
+    const SSpringCurve SPRING = {
+        .stiffness       = 38.f,
+        .damping         = 8.f,
+        .mass            = 2.4f,
+        .valueEpsilon    = 0.001f,
+        .velocityEpsilon = 0.001f,
+    };
 
-    pAnimationManager->tick();
-    EXPECT_GT(av->value(), fromRest->value());
+    float repeatedValue    = 0.F;
+    float repeatedVelocity = 0.F;
+    float singleValue      = 0.F;
+    float singleVelocity   = 0.F;
 
-    while (pAnimationManager->shouldTickForNext() && ticks++ < 2000) {
-        pAnimationManager->tick();
-    }
+    for (size_t i = 0; i < 132; ++i)
+        Details::advanceSpring(repeatedValue, repeatedVelocity, SPRING, std::chrono::milliseconds(1));
 
-    EXPECT_EQ(av->value(), 0);
-    EXPECT_EQ(fromRest->value(), 0);
+    Details::advanceSpring(singleValue, singleVelocity, SPRING, std::chrono::milliseconds(132));
+
+    EXPECT_NEAR(repeatedValue, singleValue, 0.0001F);
+    EXPECT_LT(repeatedValue, 0.5F);
 }
