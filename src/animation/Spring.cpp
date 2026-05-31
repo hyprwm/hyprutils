@@ -1,11 +1,12 @@
-#include "animation/Spring.hpp"
+#include <hyprutils/animation/Spring.hpp>
 
 #include <algorithm>
 #include <cmath>
 
+using namespace Hyprutils;
 using namespace Hyprutils::Animation;
 
-void Details::advanceSpring(float& value, float& velocity, const SSpringCurve& spring, std::chrono::duration<float> elapsed) {
+void Animation::advanceSpring(float& value, float& velocity, const SSpringCurve& spring, std::chrono::duration<float> elapsed) {
     const float DT = std::max(elapsed.count(), 0.F);
     if (DT <= 0.F)
         return;
