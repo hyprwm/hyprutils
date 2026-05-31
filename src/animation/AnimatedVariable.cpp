@@ -1,7 +1,7 @@
 #include <hyprutils/animation/AnimatedVariable.hpp>
 #include <hyprutils/animation/AnimationManager.hpp>
 #include <hyprutils/memory/WeakPtr.hpp>
-#include "animation/Spring.hpp"
+#include <hyprutils/animation/Spring.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -126,7 +126,7 @@ CBaseAnimatedVariable::SCurveStepResult CBaseAnimatedVariable::getCurveStep() {
     const auto DT  = NOW - springLastStep;
     springLastStep = NOW;
 
-    Details::advanceSpring(m_fSpringValue, m_fSpringVelocity, *SPRING, DT);
+    advanceSpring(m_fSpringValue, m_fSpringVelocity, *SPRING, DT);
 
     const bool FINISHED = std::abs(1.F - m_fSpringValue) <= SPRING->valueEpsilon && std::abs(m_fSpringVelocity) <= SPRING->velocityEpsilon;
     if (FINISHED) {

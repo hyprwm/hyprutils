@@ -6,7 +6,7 @@
 #include <hyprutils/animation/AnimatedVariable.hpp>
 #include <hyprutils/memory/WeakPtr.hpp>
 #include <hyprutils/memory/UniquePtr.hpp>
-#include "animation/Spring.hpp"
+#include <hyprutils/animation/Spring.hpp>
 
 #include <chrono>
 
@@ -410,9 +410,9 @@ TEST(Animation, springAdvanceUsesElapsedTime) {
     float negativeValue     = 0.F;
     float negativeVelocity  = 0.F;
 
-    Details::advanceSpring(oneMsValue, oneMsVelocity, SPRING, std::chrono::milliseconds(1));
-    Details::advanceSpring(hundredMsValue, hundredMsVelocity, SPRING, std::chrono::milliseconds(120));
-    Details::advanceSpring(negativeValue, negativeVelocity, SPRING, std::chrono::milliseconds(-1));
+    advanceSpring(oneMsValue, oneMsVelocity, SPRING, std::chrono::milliseconds(1));
+    advanceSpring(hundredMsValue, hundredMsVelocity, SPRING, std::chrono::milliseconds(120));
+    advanceSpring(negativeValue, negativeVelocity, SPRING, std::chrono::milliseconds(-1));
 
     EXPECT_GT(oneMsValue, 0.F);
     EXPECT_GT(hundredMsValue, oneMsValue);
@@ -434,8 +434,8 @@ TEST(Animation, springAdvancesAcrossLateTicks) {
     float cappedValue    = 0.F;
     float cappedVelocity = 0.F;
 
-    Details::advanceSpring(lateValue, lateVelocity, SPRING, std::chrono::milliseconds(120));
-    Details::advanceSpring(cappedValue, cappedVelocity, SPRING, std::chrono::milliseconds(50));
+    advanceSpring(lateValue, lateVelocity, SPRING, std::chrono::milliseconds(120));
+    advanceSpring(cappedValue, cappedVelocity, SPRING, std::chrono::milliseconds(50));
 
     EXPECT_GT(lateValue, cappedValue);
     EXPECT_GT(lateValue, 0.25F);
@@ -456,9 +456,9 @@ TEST(Animation, springDoesNotAdvanceFasterThanElapsedTime) {
     float singleVelocity   = 0.F;
 
     for (size_t i = 0; i < 132; ++i)
-        Details::advanceSpring(repeatedValue, repeatedVelocity, SPRING, std::chrono::milliseconds(1));
+        advanceSpring(repeatedValue, repeatedVelocity, SPRING, std::chrono::milliseconds(1));
 
-    Details::advanceSpring(singleValue, singleVelocity, SPRING, std::chrono::milliseconds(132));
+    advanceSpring(singleValue, singleVelocity, SPRING, std::chrono::milliseconds(132));
 
     EXPECT_NEAR(repeatedValue, singleValue, 0.0001F);
     EXPECT_LT(repeatedValue, 0.5F);
