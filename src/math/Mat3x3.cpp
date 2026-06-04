@@ -109,7 +109,8 @@ Mat3x3& Mat3x3::scale(const float scale_) {
 }
 
 Mat3x3& Mat3x3::translate(const Vector2D& offset) {
-    multiply(std::array<float, 9>{1.0f, 0.0f, sc<float>(offset.x), 0.0f, 1.0f, sc<float>(offset.y), 0.0f, 0.0f, 1.0f});
+    matrix[2] += offset.x;
+    matrix[5] += offset.y;
     return *this;
 }
 
