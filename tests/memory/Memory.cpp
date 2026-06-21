@@ -19,6 +19,20 @@ using namespace Hyprutils::Memory;
 #define NTHREADS   8
 #define ITERATIONS 10000
 
+namespace {
+    class Peepee {};
+    class Poopoo {};
+}
+
+template <typename A, typename B>
+concept EqualityComparable = requires(A a, B b) { a == b; };
+
+static_assert(!EqualityComparable<SP<Peepee>, SP<Poopoo>>);
+static_assert(!EqualityComparable<WP<Peepee>, WP<Poopoo>>);
+static_assert(!EqualityComparable<UP<Peepee>, UP<Poopoo>>);
+static_assert(!EqualityComparable<ASP<Peepee>, ASP<Poopoo>>);
+static_assert(!EqualityComparable<AWP<Peepee>, AWP<Poopoo>>);
+
 static void testAtomicImpl() {
     {
         // Using makeShared here could lead to invalid refcounts.
@@ -43,7 +57,7 @@ static void testAtomicImpl() {
         // Actual count is not incremented in a thread-safe manner here, so we can't check it.
         // We just want to check that the concurent refcounting doesn't cause any memory corruption.
         shared.reset();
-        EXPECT_EQ(shared, false);
+        EXPECT_FALSE(shared);
     }
 
     {
@@ -73,7 +87,7 @@ static void testAtomicImpl() {
         EXPECT_EQ(weak.valid(), false);
 
         auto shared2 = weak.lock();
-        EXPECT_EQ(shared, false);
+        EXPECT_FALSE(shared);
         EXPECT_EQ(shared2.get(), nullptr);
         EXPECT_EQ(shared.strongRef(), 0);
         EXPECT_EQ(weak.valid(), false);

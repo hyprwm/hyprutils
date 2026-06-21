@@ -203,8 +203,8 @@ namespace Hyprutils::Memory {
             return m_ptr.get();
         }
 
-        operator bool() const {
-            return m_ptr;
+        explicit operator bool() const {
+            return static_cast<bool>(m_ptr);
         }
 
         bool operator==(const CAtomicSharedPointer& rhs) const {
@@ -366,8 +366,8 @@ namespace Hyprutils::Memory {
             return m_ptr.get();
         }
 
-        operator bool() const {
-            return m_ptr;
+        explicit operator bool() const {
+            return static_cast<bool>(m_ptr);
         }
 
         bool operator==(const CAtomicWeakPointer& rhs) const {
