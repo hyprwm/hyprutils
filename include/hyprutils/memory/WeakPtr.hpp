@@ -105,6 +105,23 @@ namespace Hyprutils {
                 return *this;
             }
 
+            template <typename U>
+            validHierarchy<const CWeakPointer<U>&> operator=(CWeakPointer<U>&& rhs) noexcept {
+                std::swap(impl_, rhs.impl_);
+                std::swap(m_data, rhs.m_data);
+                return *this;
+            }
+
+            CWeakPointer& operator=(CWeakPointer&& rhs) noexcept {
+                if (this == &rhs)
+                    return *this;
+
+                std::swap(impl_, rhs.impl_);
+                std::swap(m_data, rhs.m_data);
+
+                return *this;
+            }
+
             /* create a weak ptr from a shared ptr with assignment */
             template <typename U>
             validHierarchy<const CWeakPointer<U>&> operator=(const CSharedPointer<U>& rhs) {
