@@ -67,7 +67,7 @@ namespace Hyprutils {
                 return *this;
             }
 
-            operator bool() const {
+            explicit operator bool() const {
                 return impl_;
             }
 
