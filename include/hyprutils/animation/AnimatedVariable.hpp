@@ -264,6 +264,7 @@ namespace Hyprutils {
             /* Sets the actual value and goal*/
             void setValueAndWarp(const VarType& v) {
                 m_Goal             = v;
+                m_Begun            = v;
                 m_bIsBeingAnimated = true;
 
                 warp();
