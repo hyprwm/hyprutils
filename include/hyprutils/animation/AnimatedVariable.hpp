@@ -224,10 +224,8 @@ namespace Hyprutils {
             }
 
             CGenericAnimatedVariable& operator=(const VarType& v) {
-                if (v == m_Goal) {
-                    m_Begun = v;
+                if (v == m_Goal)
                     return *this;
-                }
 
                 const bool WASANIMATING        = m_bIsBeingAnimated;
                 float      SPRINGVELOCITYSCALE = 1.f;
