@@ -27,7 +27,7 @@ namespace Hyprutils {
                     return;
 
                 impl_  = ref.impl_;
-                m_data = ref.m_data;
+                m_data = Impl_::dataPointer(sc<T*>(ref.get()));
                 incrementWeak();
             }
 
@@ -38,7 +38,7 @@ namespace Hyprutils {
                     return;
 
                 impl_  = ref.impl_;
-                m_data = ref.impl_->getData();
+                m_data = Impl_::dataPointer(sc<T*>(ref.get()));
                 incrementWeak();
             }
 
@@ -49,7 +49,7 @@ namespace Hyprutils {
                     return;
 
                 impl_  = ref.impl_;
-                m_data = ref.m_data;
+                m_data = Impl_::dataPointer(sc<T*>(ref.get()));
                 incrementWeak();
             }
 
@@ -72,8 +72,10 @@ namespace Hyprutils {
 
             template <typename U, typename = isConstructible<U>>
             CWeakPointer(CWeakPointer<U>&& ref) noexcept {
-                std::swap(impl_, ref.impl_);
-                std::swap(m_data, ref.m_data);
+                impl_      = ref.impl_;
+                m_data     = Impl_::dataPointer(sc<T*>(ref.get()));
+                ref.impl_  = nullptr;
+                ref.m_data = nullptr;
             }
 
             CWeakPointer(CWeakPointer&& ref) noexcept {
@@ -84,12 +86,14 @@ namespace Hyprutils {
             /* create a weak ptr from another weak ptr with assignment */
             template <typename U>
             validHierarchy<const CWeakPointer<U>&> operator=(const CWeakPointer<U>& rhs) {
-                if (impl_ == rhs.impl_)
+                if (impl_ == rhs.impl_) {
+                    m_data = Impl_::dataPointer(sc<T*>(rhs.get()));
                     return *this;
+                }
 
                 decrementWeak();
                 impl_  = rhs.impl_;
-                m_data = rhs.m_data;
+                m_data = Impl_::dataPointer(sc<T*>(rhs.get()));
                 incrementWeak();
                 return *this;
             }
@@ -107,8 +111,11 @@ namespace Hyprutils {
 
             template <typename U>
             validHierarchy<const CWeakPointer<U>&> operator=(CWeakPointer<U>&& rhs) noexcept {
+                auto* rhsData = rhs.get();
+
                 std::swap(impl_, rhs.impl_);
                 std::swap(m_data, rhs.m_data);
+                m_data = Impl_::dataPointer(sc<T*>(rhsData));
                 return *this;
             }
 
@@ -125,12 +132,14 @@ namespace Hyprutils {
             /* create a weak ptr from a shared ptr with assignment */
             template <typename U>
             validHierarchy<const CWeakPointer<U>&> operator=(const CSharedPointer<U>& rhs) {
-                if (rc<uintptr_t>(impl_) == rc<uintptr_t>(rhs.impl_))
+                if (rc<uintptr_t>(impl_) == rc<uintptr_t>(rhs.impl_)) {
+                    m_data = Impl_::dataPointer(sc<T*>(rhs.get()));
                     return *this;
+                }
 
                 decrementWeak();
                 impl_  = rhs.impl_;
-                m_data = rhs.m_data;
+                m_data = Impl_::dataPointer(sc<T*>(rhs.get()));
                 incrementWeak();
                 return *this;
             }
@@ -250,10 +259,10 @@ namespace Hyprutils {
         CWeakPointer<T> dynamicPointerCast(const CWeakPointer<U>& ref) {
             if (!ref)
                 return nullptr;
-            T* newPtr = dynamic_cast<T*>(sc<U*>(ref.impl_->getData()));
+            T* newPtr = dynamic_cast<T*>(ref.get());
             if (!newPtr)
                 return nullptr;
-            return CWeakPointer<T>(ref.impl_, newPtr);
+            return CWeakPointer<T>(ref.impl_, Impl_::dataPointer(newPtr));
         }
     }
 }
