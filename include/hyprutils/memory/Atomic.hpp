@@ -54,7 +54,7 @@ namespace Hyprutils::Memory {
         using validHierarchy = std::enable_if_t<std::is_assignable_v<CAtomicSharedPointer<T>&, X>, CAtomicSharedPointer&>;
 
       public:
-        explicit CAtomicSharedPointer(T* object) noexcept : m_ptr(new Atomic_::impl(sc<void*>(object), _delete), sc<void*>(object)) {
+        explicit CAtomicSharedPointer(T* object) noexcept : m_ptr(new Atomic_::impl(Impl_::dataPointer(object), _delete), Impl_::dataPointer(object)) {
             ;
         }
 
@@ -426,26 +426,26 @@ namespace Hyprutils::Memory {
 
     template <typename T, typename U>
     CAtomicSharedPointer<T> reinterpretPointerCast(const CAtomicSharedPointer<U>& ref) {
-        return CAtomicSharedPointer<T>(ref.impl(), ref.m_data);
+        return CAtomicSharedPointer<T>(ref.impl(), Impl_::dataPointer(ref.get()));
     }
 
     template <typename T, typename U>
     CAtomicSharedPointer<T> dynamicPointerCast(const CAtomicSharedPointer<U>& ref) {
         if (!ref)
             return nullptr;
-        T* newPtr = dynamic_cast<T*>(sc<U*>(ref.impl()->getData()));
+        T* newPtr = dynamic_cast<T*>(ref.get());
         if (!newPtr)
             return nullptr;
-        return CAtomicSharedPointer<T>(ref.impl(), newPtr);
+        return CAtomicSharedPointer<T>(ref.impl(), Impl_::dataPointer(newPtr));
     }
 
     template <typename T, typename U>
     CAtomicWeakPointer<T> dynamicPointerCast(const CAtomicWeakPointer<U>& ref) {
         if (!ref)
             return nullptr;
-        T* newPtr = dynamic_cast<T*>(sc<U*>(ref.impl()->getData()));
+        T* newPtr = dynamic_cast<T*>(ref.get());
         if (!newPtr)
             return nullptr;
-        return CAtomicWeakPointer<T>(ref.impl(), newPtr);
+        return CAtomicWeakPointer<T>(ref.impl(), Impl_::dataPointer(newPtr));
     }
 }

@@ -6,6 +6,11 @@
 namespace Hyprutils {
     namespace Memory {
         namespace Impl_ {
+            template <typename T>
+            constexpr void* dataPointer(T* ptr) noexcept {
+                return const_cast<void*>(static_cast<const void*>(ptr));
+            }
+
             class impl_base {
               public:
                 using DeleteFn = void (*)(void*);

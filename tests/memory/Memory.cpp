@@ -162,6 +162,35 @@ class CChildA : public InterfaceA {
     int m_childAInt = 4;
 };
 
+class IVirtualRoot {
+  public:
+    virtual ~IVirtualRoot() = default;
+    int m_rootInt          = 5;
+};
+
+class IVirtualLeft : public virtual IVirtualRoot {
+  public:
+    virtual ~IVirtualLeft() = default;
+    int m_leftInt          = 6;
+};
+
+class IVirtualRight : public virtual IVirtualRoot {
+  public:
+    virtual ~IVirtualRight() = default;
+    int m_rightInt          = 7;
+};
+
+class CVirtualChild : public IVirtualLeft, public IVirtualRight {
+  public:
+    virtual ~CVirtualChild() = default;
+    int m_virtualChildInt   = 8;
+};
+
+class CConstObject {
+  public:
+    int m_value = 9;
+};
+
 static void testHierarchy() {
     // Same test for atomic and non-atomic
     {
@@ -257,6 +286,132 @@ static void testHierarchy() {
     }
 }
 
+static void testVirtualHierarchy() {
+    {
+        SP<CVirtualChild> child = makeShared<CVirtualChild>();
+
+        SP<IVirtualRoot>  root  = child;
+        SP<IVirtualRight> right = dynamicPointerCast<IVirtualRight>(root);
+        SP<CVirtualChild> recastChild = dynamicPointerCast<CVirtualChild>(root);
+
+        EXPECT_TRUE(root);
+        EXPECT_TRUE(right);
+        EXPECT_TRUE(recastChild);
+        EXPECT_EQ(root->m_rootInt, 5);
+        EXPECT_EQ(right->m_rightInt, 7);
+        EXPECT_EQ(recastChild->m_virtualChildInt, 8);
+
+        SP<IVirtualRoot> rootFromCast = dynamicPointerCast<IVirtualRoot>(child);
+        EXPECT_TRUE(rootFromCast);
+        EXPECT_EQ(rootFromCast->m_rootInt, 5);
+
+        WP<IVirtualRoot>  rootWeak  = child;
+        WP<IVirtualRight> rightWeak = dynamicPointerCast<IVirtualRight>(rootWeak);
+
+        EXPECT_TRUE(rootWeak);
+        EXPECT_TRUE(rightWeak);
+        EXPECT_EQ(rootWeak->m_rootInt, 5);
+        EXPECT_EQ(rightWeak->m_rightInt, 7);
+        EXPECT_EQ(rightWeak.lock()->m_rightInt, 7);
+    }
+
+    {
+        ASP<CVirtualChild> child = makeAtomicShared<CVirtualChild>();
+
+        ASP<IVirtualRoot>  root  = child;
+        ASP<IVirtualRight> right = dynamicPointerCast<IVirtualRight>(root);
+        ASP<CVirtualChild> recastChild = dynamicPointerCast<CVirtualChild>(root);
+
+        EXPECT_TRUE(root);
+        EXPECT_TRUE(right);
+        EXPECT_TRUE(recastChild);
+        EXPECT_EQ(root->m_rootInt, 5);
+        EXPECT_EQ(right->m_rightInt, 7);
+        EXPECT_EQ(recastChild->m_virtualChildInt, 8);
+
+        ASP<IVirtualRoot> rootFromCast = dynamicPointerCast<IVirtualRoot>(child);
+        EXPECT_TRUE(rootFromCast);
+        EXPECT_EQ(rootFromCast->m_rootInt, 5);
+
+        AWP<IVirtualRoot>  rootWeak  = root;
+        AWP<IVirtualRight> rightWeak = dynamicPointerCast<IVirtualRight>(rootWeak);
+
+        EXPECT_TRUE(rootWeak);
+        EXPECT_TRUE(rightWeak);
+        EXPECT_EQ(rootWeak->m_rootInt, 5);
+        EXPECT_EQ(rightWeak->m_rightInt, 7);
+        EXPECT_EQ(rightWeak.lock()->m_rightInt, 7);
+    }
+}
+
+static void testConstPointers() {
+    {
+        SP<const CConstObject> shared = makeShared<const CConstObject>();
+        WP<const CConstObject> weak   = shared;
+
+        EXPECT_TRUE(shared);
+        EXPECT_TRUE(weak);
+        EXPECT_EQ(shared->m_value, 9);
+        EXPECT_EQ(weak->m_value, 9);
+    }
+
+    {
+        UP<const CConstObject> unique = makeUnique<const CConstObject>();
+        WP<const CConstObject> weak   = unique;
+
+        EXPECT_TRUE(unique);
+        EXPECT_TRUE(weak);
+        EXPECT_EQ(unique->m_value, 9);
+        EXPECT_EQ(weak->m_value, 9);
+    }
+
+    {
+        SP<const CVirtualChild> child = makeShared<const CVirtualChild>();
+
+        SP<const IVirtualRoot>  root  = child;
+        SP<const IVirtualRight> right = dynamicPointerCast<const IVirtualRight>(root);
+        SP<const CVirtualChild> recastChild = dynamicPointerCast<const CVirtualChild>(root);
+
+        EXPECT_TRUE(root);
+        EXPECT_TRUE(right);
+        EXPECT_TRUE(recastChild);
+        EXPECT_EQ(root->m_rootInt, 5);
+        EXPECT_EQ(right->m_rightInt, 7);
+        EXPECT_EQ(recastChild->m_virtualChildInt, 8);
+
+        WP<const IVirtualRoot>  rootWeak  = child;
+        WP<const IVirtualRight> rightWeak = dynamicPointerCast<const IVirtualRight>(rootWeak);
+
+        EXPECT_TRUE(rootWeak);
+        EXPECT_TRUE(rightWeak);
+        EXPECT_EQ(rootWeak->m_rootInt, 5);
+        EXPECT_EQ(rightWeak->m_rightInt, 7);
+    }
+
+    {
+        ASP<const CVirtualChild> child = makeAtomicShared<const CVirtualChild>();
+
+        ASP<const IVirtualRoot>  root  = child;
+        ASP<const IVirtualRight> right = dynamicPointerCast<const IVirtualRight>(root);
+        ASP<const CVirtualChild> recastChild = dynamicPointerCast<const CVirtualChild>(root);
+
+        EXPECT_TRUE(root);
+        EXPECT_TRUE(right);
+        EXPECT_TRUE(recastChild);
+        EXPECT_EQ(root->m_rootInt, 5);
+        EXPECT_EQ(right->m_rightInt, 7);
+        EXPECT_EQ(recastChild->m_virtualChildInt, 8);
+
+        AWP<const IVirtualRoot>  rootWeak  = root;
+        AWP<const IVirtualRight> rightWeak = dynamicPointerCast<const IVirtualRight>(rootWeak);
+
+        EXPECT_TRUE(rootWeak);
+        EXPECT_TRUE(rightWeak);
+        EXPECT_EQ(rootWeak->m_rootInt, 5);
+        EXPECT_EQ(rightWeak->m_rightInt, 7);
+    }
+}
+
 class CSelfDestruct {
   public:
     SP<CSelfDestruct> self;
@@ -333,6 +488,10 @@ TEST(Memory, memory) {
     testAtomicImpl();
 
     testHierarchy();
+
+    testVirtualHierarchy();
+
+    testConstPointers();
 
     testSelfDestruct();
 }

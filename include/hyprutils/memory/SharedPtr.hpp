@@ -28,13 +28,13 @@ namespace Hyprutils {
 
             /* creates a new shared pointer managing a resource
                avoid calling. Could duplicate ownership. Prefer makeShared */
-            explicit CSharedPointer(T* object) noexcept : impl_(new Impl_::impl_base(sc<void*>(object), _delete)), m_data(sc<void*>(object)) {
+            explicit CSharedPointer(T* object) noexcept : impl_(new Impl_::impl_base(Impl_::dataPointer(object), _delete)), m_data(Impl_::dataPointer(object)) {
                 increment();
             }
 
             /* creates a shared pointer from a reference */
             template <typename U, typename = isConstructible<U>>
-            CSharedPointer(const CSharedPointer<U>& ref) noexcept : impl_(ref.impl_), m_data(ref.m_data) {
+            CSharedPointer(const CSharedPointer<U>& ref) noexcept : impl_(ref.impl_), m_data(Impl_::dataPointer(sc<T*>(ref.get()))) {
                 increment();
             }
 
@@ -44,8 +44,10 @@ namespace Hyprutils {
 
             template <typename U, typename = isConstructible<U>>
             CSharedPointer(CSharedPointer<U>&& ref) noexcept {
-                std::swap(impl_, ref.impl_);
-                std::swap(m_data, ref.m_data);
+                impl_       = ref.impl_;
+                m_data      = Impl_::dataPointer(sc<T*>(ref.get()));
+                ref.impl_   = nullptr;
+                ref.m_data  = nullptr;
             }
 
             CSharedPointer(CSharedPointer&& ref) noexcept {
@@ -72,12 +74,14 @@ namespace Hyprutils {
 
             template <typename U>
             validHierarchy<const CSharedPointer<U>&> operator=(const CSharedPointer<U>& rhs) {
-                if (impl_ == rhs.impl_)
+                if (impl_ == rhs.impl_) {
+                    m_data = Impl_::dataPointer(sc<T*>(rhs.get()));
                     return *this;
+                }
 
                 decrement(impl_);
                 impl_  = rhs.impl_;
-                m_data = rhs.m_data;
+                m_data = Impl_::dataPointer(sc<T*>(rhs.get()));
                 increment();
                 return *this;
             }
@@ -95,8 +99,11 @@ namespace Hyprutils {
 
             template <typename U>
             validHierarchy<const CSharedPointer<U>&> operator=(CSharedPointer<U>&& rhs) {
+                auto* rhsData = rhs.get();
+
                 std::swap(impl_, rhs.impl_);
                 std::swap(m_data, rhs.m_data);
+                m_data = Impl_::dataPointer(sc<T*>(rhsData));
                 return *this;
             }
 
@@ -206,10 +213,10 @@ namespace Hyprutils {
         CSharedPointer<T> dynamicPointerCast(const CSharedPointer<U>& ref) {
             if (!ref)
                 return nullptr;
-            T* newPtr = dynamic_cast<T*>(sc<U*>(ref.impl_->getData()));
+            T* newPtr = dynamic_cast<T*>(ref.get());
             if (!newPtr)
                 return nullptr;
-            return CSharedPointer<T>(ref.impl_, newPtr);
+            return CSharedPointer<T>(ref.impl_, Impl_::dataPointer(newPtr));
         }
     }
 }
