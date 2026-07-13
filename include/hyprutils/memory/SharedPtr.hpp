@@ -44,10 +44,10 @@ namespace Hyprutils {
 
             template <typename U, typename = isConstructible<U>>
             CSharedPointer(CSharedPointer<U>&& ref) noexcept {
-                impl_       = ref.impl_;
-                m_data      = Impl_::dataPointer(sc<T*>(ref.get()));
-                ref.impl_   = nullptr;
-                ref.m_data  = nullptr;
+                impl_      = ref.impl_;
+                m_data     = Impl_::dataPointer(sc<T*>(ref.get()));
+                ref.impl_  = nullptr;
+                ref.m_data = nullptr;
             }
 
             CSharedPointer(CSharedPointer&& ref) noexcept {
@@ -121,6 +121,14 @@ namespace Hyprutils {
             // different typed pointers can be equal if the object is the same
             bool operator==(const CSharedPointer& rhs) const {
                 return impl_ == rhs.impl_;
+            }
+
+            bool operator==(std::nullptr_t) const {
+                return !(impl_ && impl_->dataNonNull());
+            }
+
+            bool operator!=(std::nullptr_t) const {
+                return impl_ && impl_->dataNonNull();
             }
 
             bool operator()(const CSharedPointer& lhs, const CSharedPointer& rhs) const {
