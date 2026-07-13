@@ -342,6 +342,41 @@ static void testVirtualHierarchy() {
         EXPECT_EQ(rightWeak->m_rightInt, 7);
         EXPECT_EQ(rightWeak.lock()->m_rightInt, 7);
     }
+
+    {
+        UP<CVirtualChild> child = makeUnique<CVirtualChild>();
+        EXPECT_TRUE(child);
+        EXPECT_EQ(child->m_virtualChildInt, 8);
+
+        UP<IVirtualRight> right = makeUnique<CVirtualChild>();
+        UP<IVirtualRoot>  root  = makeUnique<CVirtualChild>();
+
+        EXPECT_TRUE(right);
+        EXPECT_TRUE(root);
+        EXPECT_EQ(right->m_rightInt, 7);
+        EXPECT_EQ(root->m_rootInt, 5);
+
+        UP<IVirtualRoot> rootMoved = std::move(root);
+        EXPECT_TRUE(rootMoved);
+        EXPECT_FALSE(root);
+        EXPECT_EQ(rootMoved->m_rootInt, 5);
+
+        UP<IVirtualRight> rightAssigned;
+        rightAssigned = makeUnique<CVirtualChild>();
+        EXPECT_TRUE(rightAssigned);
+        EXPECT_EQ(rightAssigned->m_rightInt, 7);
+
+        WP<IVirtualRoot>  rootWeak  = right;
+        WP<IVirtualRight> rightWeak = right;
+
+        EXPECT_TRUE(rootWeak);
+        EXPECT_TRUE(rightWeak);
+        EXPECT_EQ(rootWeak->m_rootInt, 5);
+        EXPECT_EQ(rightWeak->m_rightInt, 7);
+
+        // unique pointers cannot be locked
+        EXPECT_FALSE(rightWeak.lock());
+    }
 }
 
 static void testConstPointers() {
