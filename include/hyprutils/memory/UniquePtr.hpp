@@ -22,7 +22,8 @@ namespace Hyprutils {
 
             /* creates a new unique pointer managing a resource
                avoid calling. Could duplicate ownership. Prefer makeUnique */
-            explicit CUniquePointer(T* object) noexcept : impl_(new Impl_::impl_base(Impl_::dataPointer(object), [](void* p) { std::default_delete<T>{}(sc<T*>(p)); }, false)) {
+            explicit CUniquePointer(T* object) noexcept :
+                impl_(new Impl_::impl_base(Impl_::dataPointer(object), [](void* p) { std::default_delete<T>{}(sc<T*>(p)); }, false)), m_data(Impl_::dataPointer(object)) {
                 increment();
             }
 
@@ -33,11 +34,15 @@ namespace Hyprutils {
 
             template <typename U, typename = isConstructible<U>>
             CUniquePointer(CUniquePointer<U>&& ref) noexcept {
-                std::swap(impl_, ref.impl_);
+                impl_      = ref.impl_;
+                m_data     = Impl_::dataPointer(sc<T*>(ref.get()));
+                ref.impl_  = nullptr;
+                ref.m_data = nullptr;
             }
 
             CUniquePointer(CUniquePointer&& ref) noexcept {
                 std::swap(impl_, ref.impl_);
+                std::swap(m_data, ref.m_data);
             }
 
             /* creates an empty unique pointer with no implementation */
@@ -58,12 +63,17 @@ namespace Hyprutils {
 
             template <typename U>
             validHierarchy<const CUniquePointer<U>&> operator=(CUniquePointer<U>&& rhs) {
+                auto* rhsData = rhs.get();
+
                 std::swap(impl_, rhs.impl_);
+                std::swap(m_data, rhs.m_data);
+                m_data = Impl_::dataPointer(sc<T*>(rhsData));
                 return *this;
             }
 
             CUniquePointer& operator=(CUniquePointer&& rhs) noexcept {
                 std::swap(impl_, rhs.impl_);
+                std::swap(m_data, rhs.m_data);
                 return *this;
             }
 
@@ -71,8 +81,24 @@ namespace Hyprutils {
                 return impl_;
             }
 
+            bool operator==(const CUniquePointer& rhs) const {
+                return impl_ == rhs.impl_;
+            }
+
+            bool operator==(std::nullptr_t) const {
+                return !impl_;
+            }
+
+            bool operator!=(std::nullptr_t) const {
+                return impl_ != nullptr;
+            }
+
             bool operator()(const CUniquePointer& lhs, const CUniquePointer& rhs) const {
                 return rc<uintptr_t>(lhs.impl_) < rc<uintptr_t>(rhs.impl_);
+            }
+
+            bool operator<(const CUniquePointer& rhs) const {
+                return rc<uintptr_t>(impl_) < rc<uintptr_t>(rhs.impl_);
             }
 
             T* operator->() const {
@@ -85,14 +111,18 @@ namespace Hyprutils {
 
             void reset() {
                 decrement();
-                impl_ = nullptr;
+                impl_  = nullptr;
+                m_data = nullptr;
             }
 
             T* get() const {
-                return impl_ ? sc<T*>(impl_->getData()) : nullptr;
+                return impl_ && impl_->dataNonNull() ? sc<T*>(m_data) : nullptr;
             }
 
             Impl_::impl_base* impl_ = nullptr;
+
+            // Never use directly: raw data ptr, could be UAF
+            void* m_data = nullptr;
 
           private:
             /* 
