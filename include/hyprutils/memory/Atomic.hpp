@@ -301,6 +301,9 @@ namespace Hyprutils::Memory {
         validHierarchy<const CAtomicWeakPointer<U>&> operator=(const CAtomicWeakPointer<U>& rhs) {
             reset();
 
+            if (!rhs.m_ptr.impl_)
+                return *this;
+
             auto lg = rhs.implLockGuard();
             m_ptr   = rhs.m_ptr;
             return *this;
@@ -311,6 +314,9 @@ namespace Hyprutils::Memory {
                 return *this;
 
             reset();
+
+            if (!rhs.m_ptr.impl_)
+                return *this;
 
             auto lg = rhs.implLockGuard();
             m_ptr   = rhs.m_ptr;
