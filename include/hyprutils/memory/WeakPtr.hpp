@@ -3,8 +3,7 @@
 #include "./SharedPtr.hpp"
 #include "./UniquePtr.hpp"
 #include "./Casts.hpp"
-
-#include <cassert>
+#include "../misc/HyprAssert.hpp"
 
 /*
     This is a Hyprland implementation of std::weak_ptr.
@@ -179,7 +178,7 @@ namespace Hyprutils {
                     return {};
 
                 // a weak ptr over a CUniquePointer can never be locked: a shared ptr would
-                assert(impl_->lockable() && "tried to lock a CWeakPointer over a CUniquePointer");
+                HYPRUTILS_ASSERT_MSG(impl_->lockable(), "tried to lock a CWeakPointer over a CUniquePointer");
 
                 if (!impl_->lockable())
                     return {};
