@@ -165,25 +165,25 @@ class CChildA : public InterfaceA {
 class IVirtualRoot {
   public:
     virtual ~IVirtualRoot() = default;
-    int m_rootInt          = 5;
+    int m_rootInt           = 5;
 };
 
 class IVirtualLeft : public virtual IVirtualRoot {
   public:
     virtual ~IVirtualLeft() = default;
-    int m_leftInt          = 6;
+    int m_leftInt           = 6;
 };
 
 class IVirtualRight : public virtual IVirtualRoot {
   public:
     virtual ~IVirtualRight() = default;
-    int m_rightInt          = 7;
+    int m_rightInt           = 7;
 };
 
 class CVirtualChild : public IVirtualLeft, public IVirtualRight {
   public:
     virtual ~CVirtualChild() = default;
-    int m_virtualChildInt   = 8;
+    int m_virtualChildInt    = 8;
 };
 
 class CConstObject {
@@ -290,8 +290,8 @@ static void testVirtualHierarchy() {
     {
         SP<CVirtualChild> child = makeShared<CVirtualChild>();
 
-        SP<IVirtualRoot>  root  = child;
-        SP<IVirtualRight> right = dynamicPointerCast<IVirtualRight>(root);
+        SP<IVirtualRoot>  root        = child;
+        SP<IVirtualRight> right       = dynamicPointerCast<IVirtualRight>(root);
         SP<CVirtualChild> recastChild = dynamicPointerCast<CVirtualChild>(root);
 
         EXPECT_TRUE(root);
@@ -318,8 +318,8 @@ static void testVirtualHierarchy() {
     {
         ASP<CVirtualChild> child = makeAtomicShared<CVirtualChild>();
 
-        ASP<IVirtualRoot>  root  = child;
-        ASP<IVirtualRight> right = dynamicPointerCast<IVirtualRight>(root);
+        ASP<IVirtualRoot>  root        = child;
+        ASP<IVirtualRight> right       = dynamicPointerCast<IVirtualRight>(root);
         ASP<CVirtualChild> recastChild = dynamicPointerCast<CVirtualChild>(root);
 
         EXPECT_TRUE(root);
@@ -374,8 +374,8 @@ static void testVirtualHierarchy() {
         EXPECT_EQ(rootWeak->m_rootInt, 5);
         EXPECT_EQ(rightWeak->m_rightInt, 7);
 
-        // unique pointers cannot be locked
-        EXPECT_FALSE(rightWeak.lock());
+        // locking a weak ptr over a unique ptr is not allowed
+        EXPECT_DEBUG_DEATH(EXPECT_EQ(rightWeak.lock(), nullptr), "");
     }
 }
 
@@ -403,8 +403,8 @@ static void testConstPointers() {
     {
         SP<const CVirtualChild> child = makeShared<const CVirtualChild>();
 
-        SP<const IVirtualRoot>  root  = child;
-        SP<const IVirtualRight> right = dynamicPointerCast<const IVirtualRight>(root);
+        SP<const IVirtualRoot>  root        = child;
+        SP<const IVirtualRight> right       = dynamicPointerCast<const IVirtualRight>(root);
         SP<const CVirtualChild> recastChild = dynamicPointerCast<const CVirtualChild>(root);
 
         EXPECT_TRUE(root);
@@ -426,8 +426,8 @@ static void testConstPointers() {
     {
         ASP<const CVirtualChild> child = makeAtomicShared<const CVirtualChild>();
 
-        ASP<const IVirtualRoot>  root  = child;
-        ASP<const IVirtualRight> right = dynamicPointerCast<const IVirtualRight>(root);
+        ASP<const IVirtualRoot>  root        = child;
+        ASP<const IVirtualRight> right       = dynamicPointerCast<const IVirtualRight>(root);
         ASP<const CVirtualChild> recastChild = dynamicPointerCast<const CVirtualChild>(root);
 
         EXPECT_TRUE(root);
@@ -489,8 +489,8 @@ TEST(Memory, memory) {
     EXPECT_EQ(weakUnique.expired(), false);
     EXPECT_EQ(intUnique.impl_->wref(), 1);
 
-    SP<int> sharedFromUnique = weakUnique.lock();
-    EXPECT_EQ(sharedFromUnique, nullptr);
+    // locking a weak ptr over a unique ptr is not allowed
+    EXPECT_DEBUG_DEATH(EXPECT_EQ(weakUnique.lock(), nullptr), "");
 
     std::vector<SP<int>> sps;
     sps.push_back(intPtr);
