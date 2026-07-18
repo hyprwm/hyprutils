@@ -264,7 +264,11 @@ namespace Hyprutils {
 
         template <typename T, typename U>
         CWeakPointer<T> dynamicPointerCast(const CWeakPointer<U>& ref) {
-            if (!ref)
+            // expired() (unlike !ref / !valid()) is also true while the referent
+            // is mid-destruction: its data pointer is still non-null but the
+            // derived subobjects are already gone, so its vptr no longer denotes
+            // a U. dynamic_cast'ing that is undefined behaviour, so bail here.
+            if (!ref || ref.expired())
                 return nullptr;
             T* newPtr = dynamic_cast<T*>(ref.get());
             if (!newPtr)
