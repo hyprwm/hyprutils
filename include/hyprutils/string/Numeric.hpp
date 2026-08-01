@@ -99,4 +99,4 @@ namespace Hyprutils::String {
         return value;
 #endif
     }
-};
+}

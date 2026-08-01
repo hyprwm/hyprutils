@@ -10,162 +10,160 @@
     to be locked.
 */
 
-namespace Hyprutils {
-    namespace Memory {
-        template <typename T>
-        class CUniquePointer {
-          public:
-            template <typename X>
-            using validHierarchy = std::enable_if_t<std::is_assignable_v<CUniquePointer<T>&, X>, CUniquePointer&>;
-            template <typename X>
-            using isConstructible = std::enable_if_t<std::is_constructible_v<T&, X&>>;
+namespace Hyprutils::Memory {
+    template <typename T>
+    class CUniquePointer {
+      public:
+        template <typename X>
+        using validHierarchy = std::enable_if_t<std::is_assignable_v<CUniquePointer<T>&, X>, CUniquePointer&>;
+        template <typename X>
+        using isConstructible = std::enable_if_t<std::is_constructible_v<T&, X&>>;
 
-            /* creates a new unique pointer managing a resource
+        /* creates a new unique pointer managing a resource
                avoid calling. Could duplicate ownership. Prefer makeUnique */
-            explicit CUniquePointer(T* object) noexcept :
-                impl_(new Impl_::impl_base(Impl_::dataPointer(object), [](void* p) { std::default_delete<T>{}(sc<T*>(p)); }, false)), m_data(Impl_::dataPointer(object)) {
-                increment();
-            }
+        explicit CUniquePointer(T* object) noexcept :
+            impl_(new Impl_::impl_base(Impl_::dataPointer(object), [](void* p) { std::default_delete<T>{}(sc<T*>(p)); }, false)), m_data(Impl_::dataPointer(object)) {
+            increment();
+        }
 
-            /* creates a shared pointer from a reference */
-            template <typename U, typename = isConstructible<U>>
-            CUniquePointer(const CUniquePointer<U>& ref) = delete;
-            CUniquePointer(const CUniquePointer& ref)    = delete;
+        /* creates a shared pointer from a reference */
+        template <typename U, typename = isConstructible<U>>
+        CUniquePointer(const CUniquePointer<U>& ref) = delete;
+        CUniquePointer(const CUniquePointer& ref)    = delete;
 
-            template <typename U, typename = isConstructible<U>>
-            CUniquePointer(CUniquePointer<U>&& ref) noexcept {
-                impl_      = ref.impl_;
-                m_data     = Impl_::dataPointer(sc<T*>(ref.get()));
-                ref.impl_  = nullptr;
-                ref.m_data = nullptr;
-            }
+        template <typename U, typename = isConstructible<U>>
+        CUniquePointer(CUniquePointer<U>&& ref) noexcept {
+            impl_      = ref.impl_;
+            m_data     = Impl_::dataPointer(sc<T*>(ref.get()));
+            ref.impl_  = nullptr;
+            ref.m_data = nullptr;
+        }
 
-            CUniquePointer(CUniquePointer&& ref) noexcept {
-                std::swap(impl_, ref.impl_);
-                std::swap(m_data, ref.m_data);
-            }
+        CUniquePointer(CUniquePointer&& ref) noexcept {
+            std::swap(impl_, ref.impl_);
+            std::swap(m_data, ref.m_data);
+        }
 
-            /* creates an empty unique pointer with no implementation */
-            CUniquePointer() noexcept = default;
+        /* creates an empty unique pointer with no implementation */
+        CUniquePointer() noexcept = default;
 
-            /* creates an empty unique pointer with no implementation */
-            CUniquePointer(std::nullptr_t) noexcept {
-                ; // empty
-            }
+        /* creates an empty unique pointer with no implementation */
+        CUniquePointer(std::nullptr_t) noexcept {
+            ; // empty
+        }
 
-            ~CUniquePointer() {
-                decrement();
-            }
+        ~CUniquePointer() {
+            decrement();
+        }
 
-            template <typename U>
-            validHierarchy<const CUniquePointer<U>&> operator=(const CUniquePointer<U>& rhs) = delete;
-            CUniquePointer&                          operator=(const CUniquePointer& rhs)    = delete;
+        template <typename U>
+        validHierarchy<const CUniquePointer<U>&> operator=(const CUniquePointer<U>& rhs) = delete;
+        CUniquePointer&                          operator=(const CUniquePointer& rhs)    = delete;
 
-            template <typename U>
-            validHierarchy<const CUniquePointer<U>&> operator=(CUniquePointer<U>&& rhs) {
-                auto* rhsData = rhs.get();
+        template <typename U>
+        validHierarchy<const CUniquePointer<U>&> operator=(CUniquePointer<U>&& rhs) {
+            auto* rhsData = rhs.get();
 
-                std::swap(impl_, rhs.impl_);
-                std::swap(m_data, rhs.m_data);
-                m_data = Impl_::dataPointer(sc<T*>(rhsData));
-                return *this;
-            }
+            std::swap(impl_, rhs.impl_);
+            std::swap(m_data, rhs.m_data);
+            m_data = Impl_::dataPointer(sc<T*>(rhsData));
+            return *this;
+        }
 
-            CUniquePointer& operator=(CUniquePointer&& rhs) noexcept {
-                std::swap(impl_, rhs.impl_);
-                std::swap(m_data, rhs.m_data);
-                return *this;
-            }
+        CUniquePointer& operator=(CUniquePointer&& rhs) noexcept {
+            std::swap(impl_, rhs.impl_);
+            std::swap(m_data, rhs.m_data);
+            return *this;
+        }
 
-            explicit operator bool() const {
-                return impl_;
-            }
+        explicit operator bool() const {
+            return impl_;
+        }
 
-            bool operator==(const CUniquePointer& rhs) const {
-                return impl_ == rhs.impl_;
-            }
+        bool operator==(const CUniquePointer& rhs) const {
+            return impl_ == rhs.impl_;
+        }
 
-            bool operator==(std::nullptr_t) const {
-                return !impl_;
-            }
+        bool operator==(std::nullptr_t) const {
+            return !impl_;
+        }
 
-            bool operator!=(std::nullptr_t) const {
-                return impl_ != nullptr;
-            }
+        bool operator!=(std::nullptr_t) const {
+            return impl_ != nullptr;
+        }
 
-            bool operator()(const CUniquePointer& lhs, const CUniquePointer& rhs) const {
-                return rc<uintptr_t>(lhs.impl_) < rc<uintptr_t>(rhs.impl_);
-            }
+        bool operator()(const CUniquePointer& lhs, const CUniquePointer& rhs) const {
+            return rc<uintptr_t>(lhs.impl_) < rc<uintptr_t>(rhs.impl_);
+        }
 
-            bool operator<(const CUniquePointer& rhs) const {
-                return rc<uintptr_t>(impl_) < rc<uintptr_t>(rhs.impl_);
-            }
+        bool operator<(const CUniquePointer& rhs) const {
+            return rc<uintptr_t>(impl_) < rc<uintptr_t>(rhs.impl_);
+        }
 
-            T* operator->() const {
-                return get();
-            }
+        T* operator->() const {
+            return get();
+        }
 
-            T& operator*() const {
-                return *get();
-            }
+        T& operator*() const {
+            return *get();
+        }
 
-            void reset() {
-                decrement();
-                impl_  = nullptr;
-                m_data = nullptr;
-            }
+        void reset() {
+            decrement();
+            impl_  = nullptr;
+            m_data = nullptr;
+        }
 
-            T* get() const {
-                return impl_ && impl_->dataNonNull() ? sc<T*>(m_data) : nullptr;
-            }
+        T* get() const {
+            return impl_ && impl_->dataNonNull() ? sc<T*>(m_data) : nullptr;
+        }
 
-            Impl_::impl_base* impl_ = nullptr;
+        Impl_::impl_base* impl_ = nullptr;
 
-            // Never use directly: raw data ptr, could be UAF
-            void* m_data = nullptr;
+        // Never use directly: raw data ptr, could be UAF
+        void* m_data = nullptr;
 
-          private:
-            /* 
+      private:
+        /* 
                 no-op if there is no impl_
                 may delete the stored object if ref == 0
                 may delete and reset impl_ if ref == 0 and weak == 0
             */
-            void decrement() {
-                if (!impl_)
-                    return;
+        void decrement() {
+            if (!impl_)
+                return;
 
-                impl_->dec();
+            impl_->dec();
 
-                // if ref == 0, we can destroy impl
-                if (impl_->ref() == 0)
-                    destroyImpl();
-            }
-            /* no-op if there is no impl_ */
-            void increment() {
-                if (!impl_)
-                    return;
-
-                impl_->inc();
-            }
-
-            /* destroy the pointed-to object 
-               if able, will also destroy impl */
-            void destroyImpl() {
-                // destroy the impl contents
-                impl_->destroy();
-
-                // check for weak refs, if zero, we can also delete impl_
-                if (impl_->wref() == 0) {
-                    delete impl_;
-                    impl_ = nullptr;
-                }
-            }
-        };
-
-        template <typename U, typename... Args>
-        [[nodiscard]] inline CUniquePointer<U> makeUnique(Args&&... args) {
-            return CUniquePointer<U>(new U(std::forward<Args>(args)...));
+            // if ref == 0, we can destroy impl
+            if (impl_->ref() == 0)
+                destroyImpl();
         }
+        /* no-op if there is no impl_ */
+        void increment() {
+            if (!impl_)
+                return;
+
+            impl_->inc();
+        }
+
+        /* destroy the pointed-to object 
+               if able, will also destroy impl */
+        void destroyImpl() {
+            // destroy the impl contents
+            impl_->destroy();
+
+            // check for weak refs, if zero, we can also delete impl_
+            if (impl_->wref() == 0) {
+                delete impl_;
+                impl_ = nullptr;
+            }
+        }
+    };
+
+    template <typename U, typename... Args>
+    [[nodiscard]] inline CUniquePointer<U> makeUnique(Args&&... args) {
+        return CUniquePointer<U>(new U(std::forward<Args>(args)...));
     }
 }
 

@@ -9,8 +9,8 @@
 #include <unordered_map>
 #include <vector>
 
-namespace Hyprutils {
-    namespace Animation {
+
+    namespace Hyprutils::Animation {
         class CBaseAnimatedVariable;
 
         struct SSpringCurve {
@@ -71,4 +71,4 @@ namespace Hyprutils {
             Memory::CUniquePointer<SAnimationManagerSignals> m_events;
         };
     }
-}
+

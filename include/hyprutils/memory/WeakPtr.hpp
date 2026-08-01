@@ -11,270 +11,268 @@
     See SharedPtr.hpp for more info on how it's different.
 */
 
-namespace Hyprutils {
-    namespace Memory {
-        template <typename T>
-        class CWeakPointer {
-          public:
-            template <typename X>
-            using validHierarchy = std::enable_if_t<std::is_assignable_v<CWeakPointer<T>&, X>, CWeakPointer&>;
-            template <typename X>
-            using isConstructible = std::enable_if_t<std::is_constructible_v<T&, X&>>;
+namespace Hyprutils::Memory {
+    template <typename T>
+    class CWeakPointer {
+      public:
+        template <typename X>
+        using validHierarchy = std::enable_if_t<std::is_assignable_v<CWeakPointer<T>&, X>, CWeakPointer&>;
+        template <typename X>
+        using isConstructible = std::enable_if_t<std::is_constructible_v<T&, X&>>;
 
-            /* create a weak ptr from a reference */
-            template <typename U, typename = isConstructible<U>>
-            CWeakPointer(const CSharedPointer<U>& ref) noexcept {
-                if (!ref.impl_)
-                    return;
+        /* create a weak ptr from a reference */
+        template <typename U, typename = isConstructible<U>>
+        CWeakPointer(const CSharedPointer<U>& ref) noexcept {
+            if (!ref.impl_)
+                return;
 
-                impl_  = ref.impl_;
-                m_data = Impl_::dataPointer(sc<T*>(ref.get()));
-                incrementWeak();
-            }
+            impl_  = ref.impl_;
+            m_data = Impl_::dataPointer(sc<T*>(ref.get()));
+            incrementWeak();
+        }
 
-            /* create a weak ptr from a reference */
-            template <typename U, typename = isConstructible<U>>
-            CWeakPointer(const CUniquePointer<U>& ref) noexcept {
-                if (!ref.impl_)
-                    return;
+        /* create a weak ptr from a reference */
+        template <typename U, typename = isConstructible<U>>
+        CWeakPointer(const CUniquePointer<U>& ref) noexcept {
+            if (!ref.impl_)
+                return;
 
-                impl_  = ref.impl_;
-                m_data = Impl_::dataPointer(sc<T*>(ref.get()));
-                incrementWeak();
-            }
+            impl_  = ref.impl_;
+            m_data = Impl_::dataPointer(sc<T*>(ref.get()));
+            incrementWeak();
+        }
 
-            /* create a weak ptr from another weak ptr */
-            template <typename U, typename = isConstructible<U>>
-            CWeakPointer(const CWeakPointer<U>& ref) noexcept {
-                if (!ref.impl_)
-                    return;
+        /* create a weak ptr from another weak ptr */
+        template <typename U, typename = isConstructible<U>>
+        CWeakPointer(const CWeakPointer<U>& ref) noexcept {
+            if (!ref.impl_)
+                return;
 
-                impl_  = ref.impl_;
-                m_data = Impl_::dataPointer(sc<T*>(ref.get()));
-                incrementWeak();
-            }
+            impl_  = ref.impl_;
+            m_data = Impl_::dataPointer(sc<T*>(ref.get()));
+            incrementWeak();
+        }
 
-            CWeakPointer(const CWeakPointer& ref) noexcept {
-                if (!ref.impl_)
-                    return;
+        CWeakPointer(const CWeakPointer& ref) noexcept {
+            if (!ref.impl_)
+                return;
 
-                impl_  = ref.impl_;
-                m_data = ref.m_data;
-                incrementWeak();
-            }
+            impl_  = ref.impl_;
+            m_data = ref.m_data;
+            incrementWeak();
+        }
 
-            CWeakPointer(Impl_::impl_base* implementation, void* data) noexcept : impl_(implementation), m_data(data) {
-                incrementWeak();
-            }
+        CWeakPointer(Impl_::impl_base* implementation, void* data) noexcept : impl_(implementation), m_data(data) {
+            incrementWeak();
+        }
 
-            CWeakPointer(std::nullptr_t) noexcept {
-                ; // empty
-            }
+        CWeakPointer(std::nullptr_t) noexcept {
+            ; // empty
+        }
 
-            template <typename U, typename = isConstructible<U>>
-            CWeakPointer(CWeakPointer<U>&& ref) noexcept {
-                impl_      = ref.impl_;
-                m_data     = Impl_::dataPointer(sc<T*>(ref.get()));
-                ref.impl_  = nullptr;
-                ref.m_data = nullptr;
-            }
+        template <typename U, typename = isConstructible<U>>
+        CWeakPointer(CWeakPointer<U>&& ref) noexcept {
+            impl_      = ref.impl_;
+            m_data     = Impl_::dataPointer(sc<T*>(ref.get()));
+            ref.impl_  = nullptr;
+            ref.m_data = nullptr;
+        }
 
-            CWeakPointer(CWeakPointer&& ref) noexcept {
-                std::swap(impl_, ref.impl_);
-                std::swap(m_data, ref.m_data);
-            }
+        CWeakPointer(CWeakPointer&& ref) noexcept {
+            std::swap(impl_, ref.impl_);
+            std::swap(m_data, ref.m_data);
+        }
 
-            /* create a weak ptr from another weak ptr with assignment */
-            template <typename U>
-            validHierarchy<const CWeakPointer<U>&> operator=(const CWeakPointer<U>& rhs) {
-                if (impl_ == rhs.impl_) {
-                    m_data = Impl_::dataPointer(sc<T*>(rhs.get()));
-                    return *this;
-                }
-
-                decrementWeak();
-                impl_  = rhs.impl_;
+        /* create a weak ptr from another weak ptr with assignment */
+        template <typename U>
+        validHierarchy<const CWeakPointer<U>&> operator=(const CWeakPointer<U>& rhs) {
+            if (impl_ == rhs.impl_) {
                 m_data = Impl_::dataPointer(sc<T*>(rhs.get()));
-                incrementWeak();
                 return *this;
             }
 
-            CWeakPointer<T>& operator=(const CWeakPointer& rhs) {
-                if (impl_ == rhs.impl_)
-                    return *this;
+            decrementWeak();
+            impl_  = rhs.impl_;
+            m_data = Impl_::dataPointer(sc<T*>(rhs.get()));
+            incrementWeak();
+            return *this;
+        }
 
-                decrementWeak();
-                impl_  = rhs.impl_;
-                m_data = rhs.m_data;
-                incrementWeak();
+        CWeakPointer<T>& operator=(const CWeakPointer& rhs) {
+            if (impl_ == rhs.impl_)
                 return *this;
-            }
 
-            template <typename U>
-            validHierarchy<const CWeakPointer<U>&> operator=(CWeakPointer<U>&& rhs) noexcept {
-                auto* rhsData = rhs.get();
+            decrementWeak();
+            impl_  = rhs.impl_;
+            m_data = rhs.m_data;
+            incrementWeak();
+            return *this;
+        }
 
-                std::swap(impl_, rhs.impl_);
-                std::swap(m_data, rhs.m_data);
-                m_data = Impl_::dataPointer(sc<T*>(rhsData));
+        template <typename U>
+        validHierarchy<const CWeakPointer<U>&> operator=(CWeakPointer<U>&& rhs) noexcept {
+            auto* rhsData = rhs.get();
+
+            std::swap(impl_, rhs.impl_);
+            std::swap(m_data, rhs.m_data);
+            m_data = Impl_::dataPointer(sc<T*>(rhsData));
+            return *this;
+        }
+
+        CWeakPointer& operator=(CWeakPointer&& rhs) noexcept {
+            if (this == &rhs)
                 return *this;
-            }
 
-            CWeakPointer& operator=(CWeakPointer&& rhs) noexcept {
-                if (this == &rhs)
-                    return *this;
+            std::swap(impl_, rhs.impl_);
+            std::swap(m_data, rhs.m_data);
 
-                std::swap(impl_, rhs.impl_);
-                std::swap(m_data, rhs.m_data);
+            return *this;
+        }
 
-                return *this;
-            }
-
-            /* create a weak ptr from a shared ptr with assignment */
-            template <typename U>
-            validHierarchy<const CWeakPointer<U>&> operator=(const CSharedPointer<U>& rhs) {
-                if (rc<uintptr_t>(impl_) == rc<uintptr_t>(rhs.impl_)) {
-                    m_data = Impl_::dataPointer(sc<T*>(rhs.get()));
-                    return *this;
-                }
-
-                decrementWeak();
-                impl_  = rhs.impl_;
+        /* create a weak ptr from a shared ptr with assignment */
+        template <typename U>
+        validHierarchy<const CWeakPointer<U>&> operator=(const CSharedPointer<U>& rhs) {
+            if (rc<uintptr_t>(impl_) == rc<uintptr_t>(rhs.impl_)) {
                 m_data = Impl_::dataPointer(sc<T*>(rhs.get()));
-                incrementWeak();
                 return *this;
             }
 
-            /* create an empty weak ptr */
-            CWeakPointer() noexcept = default;
+            decrementWeak();
+            impl_  = rhs.impl_;
+            m_data = Impl_::dataPointer(sc<T*>(rhs.get()));
+            incrementWeak();
+            return *this;
+        }
 
-            ~CWeakPointer() {
-                decrementWeak();
-            }
+        /* create an empty weak ptr */
+        CWeakPointer() noexcept = default;
 
-            /*  expired MAY return true even if the pointer is still stored.
+        ~CWeakPointer() {
+            decrementWeak();
+        }
+
+        /*  expired MAY return true even if the pointer is still stored.
                 the situation would be e.g. self-weak pointer in a destructor.
                 for pointer validity, use valid() */
-            bool expired() const {
-                return !impl_ || !impl_->dataNonNull() || impl_->destroying();
-            }
+        bool expired() const {
+            return !impl_ || !impl_->dataNonNull() || impl_->destroying();
+        }
 
-            /*  this means the pointed-to object is not yet deleted and can still be
+        /*  this means the pointed-to object is not yet deleted and can still be
                 referenced, but it might be in the process of being deleted. 
                 check !expired() if you want to check whether it's valid and
                 assignable to a SP. */
-            bool valid() const {
-                return impl_ && impl_->dataNonNull();
-            }
-
-            void reset() {
-                decrementWeak();
-                impl_  = nullptr;
-                m_data = nullptr;
-            }
-
-            CSharedPointer<T> lock() const {
-                if (!impl_ || !impl_->dataNonNull() || impl_->destroying())
-                    return {};
-
-                // a weak ptr over a CUniquePointer can never be locked: a shared ptr would
-                HYPRUTILS_ASSERT_MSG(impl_->lockable(), "tried to lock a CWeakPointer over a CUniquePointer");
-
-                if (!impl_->lockable())
-                    return {};
-
-                return CSharedPointer<T>(impl_, m_data);
-            }
-
-            /* this returns valid() */
-            explicit operator bool() const {
-                return valid();
-            }
-
-            bool operator==(const CWeakPointer<T>& rhs) const {
-                return impl_ == rhs.impl_;
-            }
-
-            bool operator==(const CSharedPointer<T>& rhs) const {
-                return impl_ == rhs.impl_;
-            }
-
-            bool operator==(const CUniquePointer<T>& rhs) const {
-                return impl_ == rhs.impl_;
-            }
-
-            bool operator==(std::nullptr_t) const {
-                return !valid();
-            }
-
-            bool operator!=(std::nullptr_t) const {
-                return valid();
-            }
-
-            bool operator()(const CWeakPointer& lhs, const CWeakPointer& rhs) const {
-                return rc<uintptr_t>(lhs.impl_) < rc<uintptr_t>(rhs.impl_);
-            }
-
-            bool operator<(const CWeakPointer& rhs) const {
-                return rc<uintptr_t>(impl_) < rc<uintptr_t>(rhs.impl_);
-            }
-
-            T* get() const {
-                return impl_ && impl_->dataNonNull() ? sc<T*>(m_data) : nullptr;
-            }
-
-            T* operator->() const {
-                return get();
-            }
-
-            T& operator*() const {
-                return *get();
-            }
-
-            Impl_::impl_base* impl_ = nullptr;
-
-            // Never use directly: raw data ptr, could be UAF
-            void* m_data = nullptr;
-
-          private:
-            /* no-op if there is no impl_ */
-            void decrementWeak() {
-                if (!impl_)
-                    return;
-
-                impl_->decWeak();
-
-                // we need to check for ->destroying,
-                // because otherwise we could destroy here
-                // and have a shared_ptr destroy the same thing
-                // later (in situations where we have a weak_ptr to self)
-                if (impl_->wref() == 0 && impl_->ref() == 0 && !impl_->destroying()) {
-                    delete impl_;
-                    impl_ = nullptr;
-                }
-            }
-            /* no-op if there is no impl_ */
-            void incrementWeak() {
-                if (!impl_)
-                    return;
-
-                impl_->incWeak();
-            }
-        };
-
-        template <typename T, typename U>
-        CWeakPointer<T> dynamicPointerCast(const CWeakPointer<U>& ref) {
-            // expired() (unlike !ref / !valid()) is also true while the referent
-            // is mid-destruction: its data pointer is still non-null but the
-            // derived subobjects are already gone, so its vptr no longer denotes
-            // a U. dynamic_cast'ing that is undefined behaviour, so bail here.
-            if (!ref || ref.expired())
-                return nullptr;
-            T* newPtr = dynamic_cast<T*>(ref.get());
-            if (!newPtr)
-                return nullptr;
-            return CWeakPointer<T>(ref.impl_, Impl_::dataPointer(newPtr));
+        bool valid() const {
+            return impl_ && impl_->dataNonNull();
         }
+
+        void reset() {
+            decrementWeak();
+            impl_  = nullptr;
+            m_data = nullptr;
+        }
+
+        CSharedPointer<T> lock() const {
+            if (!impl_ || !impl_->dataNonNull() || impl_->destroying())
+                return {};
+
+            // a weak ptr over a CUniquePointer can never be locked: a shared ptr would
+            HYPRUTILS_ASSERT_MSG(impl_->lockable(), "tried to lock a CWeakPointer over a CUniquePointer");
+
+            if (!impl_->lockable())
+                return {};
+
+            return CSharedPointer<T>(impl_, m_data);
+        }
+
+        /* this returns valid() */
+        explicit operator bool() const {
+            return valid();
+        }
+
+        bool operator==(const CWeakPointer<T>& rhs) const {
+            return impl_ == rhs.impl_;
+        }
+
+        bool operator==(const CSharedPointer<T>& rhs) const {
+            return impl_ == rhs.impl_;
+        }
+
+        bool operator==(const CUniquePointer<T>& rhs) const {
+            return impl_ == rhs.impl_;
+        }
+
+        bool operator==(std::nullptr_t) const {
+            return !valid();
+        }
+
+        bool operator!=(std::nullptr_t) const {
+            return valid();
+        }
+
+        bool operator()(const CWeakPointer& lhs, const CWeakPointer& rhs) const {
+            return rc<uintptr_t>(lhs.impl_) < rc<uintptr_t>(rhs.impl_);
+        }
+
+        bool operator<(const CWeakPointer& rhs) const {
+            return rc<uintptr_t>(impl_) < rc<uintptr_t>(rhs.impl_);
+        }
+
+        T* get() const {
+            return impl_ && impl_->dataNonNull() ? sc<T*>(m_data) : nullptr;
+        }
+
+        T* operator->() const {
+            return get();
+        }
+
+        T& operator*() const {
+            return *get();
+        }
+
+        Impl_::impl_base* impl_ = nullptr;
+
+        // Never use directly: raw data ptr, could be UAF
+        void* m_data = nullptr;
+
+      private:
+        /* no-op if there is no impl_ */
+        void decrementWeak() {
+            if (!impl_)
+                return;
+
+            impl_->decWeak();
+
+            // we need to check for ->destroying,
+            // because otherwise we could destroy here
+            // and have a shared_ptr destroy the same thing
+            // later (in situations where we have a weak_ptr to self)
+            if (impl_->wref() == 0 && impl_->ref() == 0 && !impl_->destroying()) {
+                delete impl_;
+                impl_ = nullptr;
+            }
+        }
+        /* no-op if there is no impl_ */
+        void incrementWeak() {
+            if (!impl_)
+                return;
+
+            impl_->incWeak();
+        }
+    };
+
+    template <typename T, typename U>
+    CWeakPointer<T> dynamicPointerCast(const CWeakPointer<U>& ref) {
+        // expired() (unlike !ref / !valid()) is also true while the referent
+        // is mid-destruction: its data pointer is still non-null but the
+        // derived subobjects are already gone, so its vptr no longer denotes
+        // a U. dynamic_cast'ing that is undefined behaviour, so bail here.
+        if (!ref || ref.expired())
+            return nullptr;
+        T* newPtr = dynamic_cast<T*>(ref.get());
+        if (!newPtr)
+            return nullptr;
+        return CWeakPointer<T>(ref.impl_, Impl_::dataPointer(newPtr));
     }
 }
 

@@ -16,4 +16,4 @@ namespace Hyprutils::I18n {
     };
 
     std::string extractLocale(std::string locale);
-};
+}

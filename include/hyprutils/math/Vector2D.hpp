@@ -6,108 +6,106 @@
 #include <format>
 #include <string>
 
-namespace Hyprutils {
-    namespace Math {
-        class Vector2D {
-          public:
-            constexpr Vector2D(double xx, double yy) : x(xx), y(yy) {
-                ;
-            }
-            constexpr Vector2D(int xx, int yy) : x(Hyprutils::Memory::sc<double>(xx)), y(Hyprutils::Memory::sc<double>(yy)) {
-                ;
-            }
-            constexpr Vector2D() = default;
-            ~Vector2D()          = default;
+namespace Hyprutils::Math {
+    class Vector2D {
+      public:
+        constexpr Vector2D(double xx, double yy) : x(xx), y(yy) {
+            ;
+        }
+        constexpr Vector2D(int xx, int yy) : x(Hyprutils::Memory::sc<double>(xx)), y(Hyprutils::Memory::sc<double>(yy)) {
+            ;
+        }
+        constexpr Vector2D() = default;
+        ~Vector2D()          = default;
 
-            double x = 0;
-            double y = 0;
+        double x = 0;
+        double y = 0;
 
-            // returns the scale
-            double             normalize();
+        // returns the scale
+        double             normalize();
 
-            constexpr Vector2D operator+(const Vector2D& a) const {
-                return Vector2D(this->x + a.x, this->y + a.y);
-            }
-            constexpr Vector2D operator-(const Vector2D& a) const {
-                return Vector2D(this->x - a.x, this->y - a.y);
-            }
-            constexpr Vector2D operator-() const {
-                return Vector2D(-this->x, -this->y);
-            }
-            constexpr Vector2D operator*(const double& a) const {
-                return Vector2D(this->x * a, this->y * a);
-            }
-            constexpr Vector2D operator/(const double& a) const {
-                return Vector2D(this->x / a, this->y / a);
-            }
+        constexpr Vector2D operator+(const Vector2D& a) const {
+            return Vector2D(this->x + a.x, this->y + a.y);
+        }
+        constexpr Vector2D operator-(const Vector2D& a) const {
+            return Vector2D(this->x - a.x, this->y - a.y);
+        }
+        constexpr Vector2D operator-() const {
+            return Vector2D(-this->x, -this->y);
+        }
+        constexpr Vector2D operator*(const double& a) const {
+            return Vector2D(this->x * a, this->y * a);
+        }
+        constexpr Vector2D operator/(const double& a) const {
+            return Vector2D(this->x / a, this->y / a);
+        }
 
-            constexpr bool operator==(const Vector2D& a) const {
-                return a.x == x && a.y == y;
-            }
+        constexpr bool operator==(const Vector2D& a) const {
+            return a.x == x && a.y == y;
+        }
 
-            constexpr bool operator!=(const Vector2D& a) const {
-                return a.x != x || a.y != y;
-            }
+        constexpr bool operator!=(const Vector2D& a) const {
+            return a.x != x || a.y != y;
+        }
 
-            constexpr Vector2D operator*(const Vector2D& a) const {
-                return Vector2D(this->x * a.x, this->y * a.y);
-            }
+        constexpr Vector2D operator*(const Vector2D& a) const {
+            return Vector2D(this->x * a.x, this->y * a.y);
+        }
 
-            constexpr Vector2D operator/(const Vector2D& a) const {
-                return Vector2D(this->x / a.x, this->y / a.y);
-            }
+        constexpr Vector2D operator/(const Vector2D& a) const {
+            return Vector2D(this->x / a.x, this->y / a.y);
+        }
 
-            constexpr bool operator>(const Vector2D& a) const {
-                return this->x > a.x && this->y > a.y;
-            }
+        constexpr bool operator>(const Vector2D& a) const {
+            return this->x > a.x && this->y > a.y;
+        }
 
-            constexpr bool operator<(const Vector2D& a) const {
-                return this->x < a.x && this->y < a.y;
-            }
-            constexpr Vector2D& operator+=(const Vector2D& a) {
-                this->x += a.x;
-                this->y += a.y;
-                return *this;
-            }
-            constexpr Vector2D& operator-=(const Vector2D& a) {
-                this->x -= a.x;
-                this->y -= a.y;
-                return *this;
-            }
-            constexpr Vector2D& operator*=(const Vector2D& a) {
-                this->x *= a.x;
-                this->y *= a.y;
-                return *this;
-            }
-            constexpr Vector2D& operator/=(const Vector2D& a) {
-                this->x /= a.x;
-                this->y /= a.y;
-                return *this;
-            }
-            constexpr Vector2D& operator*=(const double& a) {
-                this->x *= a;
-                this->y *= a;
-                return *this;
-            }
-            constexpr Vector2D& operator/=(const double& a) {
-                this->x /= a;
-                this->y /= a;
-                return *this;
-            }
+        constexpr bool operator<(const Vector2D& a) const {
+            return this->x < a.x && this->y < a.y;
+        }
+        constexpr Vector2D& operator+=(const Vector2D& a) {
+            this->x += a.x;
+            this->y += a.y;
+            return *this;
+        }
+        constexpr Vector2D& operator-=(const Vector2D& a) {
+            this->x -= a.x;
+            this->y -= a.y;
+            return *this;
+        }
+        constexpr Vector2D& operator*=(const Vector2D& a) {
+            this->x *= a.x;
+            this->y *= a.y;
+            return *this;
+        }
+        constexpr Vector2D& operator/=(const Vector2D& a) {
+            this->x /= a.x;
+            this->y /= a.y;
+            return *this;
+        }
+        constexpr Vector2D& operator*=(const double& a) {
+            this->x *= a;
+            this->y *= a;
+            return *this;
+        }
+        constexpr Vector2D& operator/=(const double& a) {
+            this->x /= a;
+            this->y /= a;
+            return *this;
+        }
 
-            double   distance(const Vector2D& other) const;
-            double   distanceSq(const Vector2D& other) const;
-            double   size() const;
-            Vector2D clamp(const Vector2D& min, const Vector2D& max = Vector2D{-1, -1}) const;
+        double   distance(const Vector2D& other) const;
+        double   distanceSq(const Vector2D& other) const;
+        double   size() const;
+        Vector2D clamp(const Vector2D& min, const Vector2D& max = Vector2D{-1, -1}) const;
 
-            Vector2D floor() const;
-            Vector2D round() const;
+        Vector2D floor() const;
+        Vector2D round() const;
 
-            Vector2D getComponentMax(const Vector2D& other) const;
+        Vector2D getComponentMax(const Vector2D& other) const;
 
-            Vector2D transform(eTransform transform, const Vector2D& monitorSize) const;
-        };
-    }
+        Vector2D transform(eTransform transform, const Vector2D& monitorSize) const;
+    };
 }
 
 // absolutely ridiculous formatter spec parsing
