@@ -1,0 +1,73 @@
+name: Docs
+
+# PRs build only, to catch broken references before they reach main.
+# Pushes to main, and manual runs on main, build and deploy.
+on:
+  push:
+    branches: [main]
+    paths:
+      - docs/**
+      - VERSION
+      - .github/workflows/docs.yml
+  pull_request:
+    paths:
+      - docs/**
+      - VERSION
+      - .github/workflows/docs.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    name: "Docs: Build"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          # this job executes repo-controlled python (conf.py and any sphinx
+          # extension it loads), so don't leave the token in .git/config
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v9
+        with:
+          enable-cache: true
+          cache-dependency-glob: docs/uv.lock
+
+      # --locked fails if docs/uv.lock is out of date with docs/pyproject.toml.
+      # -W turns Sphinx warnings into errors, so a broken reference fails here.
+      - name: Build docs
+        working-directory: docs
+        run: uv run --locked sphinx-build -W --keep-going -b html . _build/html
+
+      # allowlist the trusted triggers
+      - name: Upload artifact
+        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/_build/html
+
+  deploy:
+    name: "Docs: Deploy"
+    needs: build
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
