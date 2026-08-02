@@ -18,13 +18,18 @@ version = ".".join(release.split(".")[:2])
 # -- General configuration ---------------------------------------------------
 
 extensions = [
+    "myst_parser",
     "sphinx_copybutton",
     "sphinx_design",
 ]
 
 exclude_patterns = ["_build", ".venv", "Thumbs.db", ".DS_Store"]
 
-# Everything here is C++, so default to it for `code-block` and inline roles.
+# deflist: term/definition lists. colon_fence: ::: directives, which can wrap
+# ``` code fences without counting backticks.
+myst_enable_extensions = ["deflist", "colon_fence"]
+
+# Everything here is C++, so default to it for code fences and inline roles.
 primary_domain = "cpp"
 highlight_language = "cpp"
 
