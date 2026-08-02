@@ -14,7 +14,7 @@ jobs:
 
     steps:
       - name: Check out template
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           persist-credentials: false
 
@@ -27,7 +27,7 @@ jobs:
             >/dev/null
 
       - name: Enforce central Vouch list
-        uses: mitchellh/vouch/action/check-pr@v1
+        uses: mitchellh/vouch/action/check-pr@d66fa29a64600490892131ad87597c30c91fcac4 # v1.5.0
         with:
           pr-number: ${{ github.event.pull_request.number }}
           repo: ${{ github.repository }}
