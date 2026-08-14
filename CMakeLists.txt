@@ -10,6 +10,7 @@ project(
   DESCRIPTION "Small C++ library for utilities used across the Hypr* ecosystem")
 
 include(CTest)
+include(CheckIncludeFile)
 include(GNUInstallDirs)
 
 set(PREFIX ${CMAKE_INSTALL_PREFIX})
@@ -54,6 +55,16 @@ target_include_directories(
 set_target_properties(hyprutils PROPERTIES VERSION ${hyprutils_VERSION}
                                            SOVERSION 13)
 target_link_libraries(hyprutils PkgConfig::deps)
+
+check_include_file("sys/epoll.h" HAS_EPOLL)
+check_include_file("sys/eventfd.h" HAS_EVENTFD)
+check_include_file("sys/timerfd.h" HAS_TIMERFD)
+pkg_check_modules(epoll IMPORTED_TARGET epoll-shim)
+if((NOT HAS_EPOLL OR NOT HAS_EVENTFD OR NOT HAS_TIMERFD) AND epoll_FOUND)
+  target_link_libraries(hyprutils PRIVATE PkgConfig::epoll)
+elseif(NOT HAS_EPOLL OR NOT HAS_EVENTFD OR NOT HAS_TIMERFD)
+  message(FATAL_ERROR "epoll, eventfd, and timerfd are required")
+endif()
 
 if(BUILD_TESTING)
   # GTest
