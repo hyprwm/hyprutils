@@ -12,7 +12,7 @@ namespace Hyprutils::EventLoop {
 
     class CFDSource : public IFDSource {
       public:
-        CFDSource(CEventLoop& loop, uint64_t id, OS::CFileDescriptor&& fd, FdEventMask mask, std::function<void(IFDSource&, FdEventMask)>&& callback);
+        CFDSource(CEventLoop& loop, uintptr_t id, OS::CFileDescriptor&& fd, FdEventMask mask, std::function<void(IFDSource&, FdEventMask)>&& callback);
 
         virtual ~CFDSource() = default;
 
@@ -21,14 +21,14 @@ namespace Hyprutils::EventLoop {
         virtual const OS::CFileDescriptor&       fd() const override;
 
         FdEventMask                              mask() const;
-        uint64_t                                 id() const;
+        uintptr_t                                id() const;
         bool                                     removed() const;
         void                                     call(FdEventMask events);
         void                                     detach();
 
       private:
         CEventLoop*                                                          m_loop = nullptr;
-        uint64_t                                                             m_id   = 0;
+        uintptr_t                                                            m_id   = 0;
         OS::CFileDescriptor                                                  m_fd;
         FdEventMask                                                          m_mask = eEventMask::EMPTY;
         Memory::CSharedPointer<std::function<void(IFDSource&, FdEventMask)>> m_callback;

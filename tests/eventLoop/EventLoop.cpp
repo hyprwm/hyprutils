@@ -26,10 +26,30 @@ namespace {
         CFileDescriptor write;
     };
 
+    void configureFD(int fd) {
+        const int descriptorFlags = fcntl(fd, F_GETFD);
+        ASSERT_GE(descriptorFlags, 0);
+        ASSERT_EQ(fcntl(fd, F_SETFD, descriptorFlags | FD_CLOEXEC), 0);
+
+        const int statusFlags = fcntl(fd, F_GETFL);
+        ASSERT_GE(statusFlags, 0);
+        ASSERT_EQ(fcntl(fd, F_SETFL, statusFlags | O_NONBLOCK), 0);
+    }
+
     SPipe makePipe() {
         std::array<int, 2> fds = {-1, -1};
-        EXPECT_EQ(pipe2(fds.data(), O_CLOEXEC | O_NONBLOCK), 0);
+        EXPECT_EQ(pipe(fds.data()), 0);
+        configureFD(fds[0]);
+        configureFD(fds[1]);
         return {CFileDescriptor{fds[0]}, CFileDescriptor{fds[1]}};
+    }
+
+    std::array<CFileDescriptor, 2> makeSocketPair() {
+        std::array<int, 2> sockets = {-1, -1};
+        EXPECT_EQ(socketpair(AF_UNIX, SOCK_STREAM, 0, sockets.data()), 0);
+        configureFD(sockets[0]);
+        configureFD(sockets[1]);
+        return {CFileDescriptor{sockets[0]}, CFileDescriptor{sockets[1]}};
     }
 
     bool readable(int fd, int timeout = 1000) {
@@ -109,13 +129,10 @@ TEST(EventLoop, DynamicSourcesAndMasks) {
     ASSERT_TRUE(loop->dispatch());
     EXPECT_EQ(calls, 2);
 
-    std::array<int, 2> sockets = {-1, -1};
-    ASSERT_EQ(socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0, sockets.data()), 0);
-    CFileDescriptor socketA{sockets[0]};
-    CFileDescriptor socketB{sockets[1]};
-    int             writableCalls = 0;
+    auto sockets       = makeSocketPair();
+    int  writableCalls = 0;
 
-    auto            writable = loop->addFD(std::move(socketA), eEventMask::WRITABLE, [&](IFDSource& source, FdEventMask events) {
+    auto writable = loop->addFD(std::move(sockets[0]), eEventMask::WRITABLE, [&](IFDSource& source, FdEventMask events) {
         EXPECT_TRUE(events & eEventMask::WRITABLE);
         ++writableCalls;
         EXPECT_TRUE(source.setMask(eEventMask::EMPTY));
@@ -123,6 +140,9 @@ TEST(EventLoop, DynamicSourcesAndMasks) {
     ASSERT_TRUE(writable);
     ASSERT_TRUE(loop->dispatch());
     EXPECT_EQ(writableCalls, 1);
+    ASSERT_TRUE((*writable)->setMask(eEventMask::WRITABLE));
+    ASSERT_TRUE(loop->dispatch());
+    EXPECT_EQ(writableCalls, 2);
     EXPECT_FALSE((*writable)->setMask(eEventMask::ERROR));
 }
 
@@ -146,17 +166,14 @@ TEST(EventLoop, MutableCallbacksAndHangup) {
     ASSERT_TRUE(loop->dispatch());
     EXPECT_EQ(states, (std::vector<int>{1, 2}));
 
-    std::array<int, 2> sockets = {-1, -1};
-    ASSERT_EQ(socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0, sockets.data()), 0);
-    CFileDescriptor socketA{sockets[0]};
-    CFileDescriptor socketB{sockets[1]};
-    bool            hungUp       = false;
-    auto            hangupSource = loop->addFD(std::move(socketA), eEventMask::READABLE, [&](IFDSource& self, FdEventMask events) {
+    auto sockets      = makeSocketPair();
+    bool hungUp       = false;
+    auto hangupSource = loop->addFD(std::move(sockets[0]), eEventMask::READABLE, [&](IFDSource& self, FdEventMask events) {
         hungUp = static_cast<bool>(events & eEventMask::HUP);
         self.remove();
     });
     ASSERT_TRUE(hangupSource);
-    ASSERT_EQ(shutdown(socketB.get(), SHUT_WR), 0);
+    ASSERT_EQ(shutdown(sockets[1].get(), SHUT_WR), 0);
     ASSERT_TRUE(loop->dispatch());
     EXPECT_TRUE(hungUp);
 }

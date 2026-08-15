@@ -2,16 +2,16 @@
 
 #include <hyprutils/eventLoop/Executor.hpp>
 #include <hyprutils/memory/Atomic.hpp>
-#include <hyprutils/os/FileDescriptor.hpp>
 
 #include <deque>
+#include <functional>
 #include <mutex>
 
 namespace Hyprutils::EventLoop {
     struct SExecutorState {
         std::mutex                        mutex;
         std::deque<std::function<void()>> callbacks;
-        OS::CFileDescriptor               eventFD;
+        std::function<void()>             wake;
         bool                              active = true;
     };
 

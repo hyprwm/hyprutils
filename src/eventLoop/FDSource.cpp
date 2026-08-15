@@ -5,7 +5,7 @@
 using namespace Hyprutils::EventLoop;
 using namespace Hyprutils::OS;
 
-CFDSource::CFDSource(CEventLoop& loop, uint64_t id, CFileDescriptor&& fd, FdEventMask mask, std::function<void(IFDSource&, FdEventMask)>&& callback) :
+CFDSource::CFDSource(CEventLoop& loop, uintptr_t id, CFileDescriptor&& fd, FdEventMask mask, std::function<void(IFDSource&, FdEventMask)>&& callback) :
     m_loop(&loop), m_id(id), m_fd(std::move(fd)), m_mask(mask), m_callback(Memory::makeShared<std::function<void(IFDSource&, FdEventMask)>>(std::move(callback))) {}
 
 std::expected<void, std::string> CFDSource::setMask(FdEventMask mask) {
@@ -31,7 +31,7 @@ FdEventMask CFDSource::mask() const {
     return m_mask;
 }
 
-uint64_t CFDSource::id() const {
+uintptr_t CFDSource::id() const {
     return m_id;
 }
 

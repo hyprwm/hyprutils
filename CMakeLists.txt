@@ -10,7 +10,6 @@ project(
   DESCRIPTION "Small C++ library for utilities used across the Hypr* ecosystem")
 
 include(CTest)
-include(CheckIncludeFile)
 include(GNUInstallDirs)
 
 set(PREFIX ${CMAKE_INSTALL_PREFIX})
@@ -43,6 +42,17 @@ endif()
 
 file(GLOB_RECURSE SRCFILES CONFIGURE_DEPENDS "src/*.cpp" "include/*.hpp")
 file(GLOB_RECURSE PUBLIC_HEADERS CONFIGURE_DEPENDS "include/*.hpp")
+list(FILTER SRCFILES EXCLUDE REGEX "eventLoop/backend/(Epoll|Kqueue)\\.cpp$")
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  list(APPEND SRCFILES "${CMAKE_CURRENT_SOURCE_DIR}/src/eventLoop/backend/Epoll.cpp")
+elseif(CMAKE_SYSTEM_NAME MATCHES "FreeBSD|OpenBSD|NetBSD|DragonFly")
+  find_package(Threads REQUIRED)
+  set(EVENT_LOOP_LIBRARIES Threads::Threads)
+  list(APPEND SRCFILES "${CMAKE_CURRENT_SOURCE_DIR}/src/eventLoop/backend/Kqueue.cpp")
+else()
+  message(FATAL_ERROR "Unsupported event-loop platform: ${CMAKE_SYSTEM_NAME}")
+endif()
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(deps REQUIRED IMPORTED_TARGET pixman-1)
@@ -54,17 +64,7 @@ target_include_directories(
   PRIVATE "./src")
 set_target_properties(hyprutils PROPERTIES VERSION ${hyprutils_VERSION}
                                            SOVERSION 13)
-target_link_libraries(hyprutils PkgConfig::deps)
-
-check_include_file("sys/epoll.h" HAS_EPOLL)
-check_include_file("sys/eventfd.h" HAS_EVENTFD)
-check_include_file("sys/timerfd.h" HAS_TIMERFD)
-pkg_check_modules(epoll IMPORTED_TARGET epoll-shim)
-if((NOT HAS_EPOLL OR NOT HAS_EVENTFD OR NOT HAS_TIMERFD) AND epoll_FOUND)
-  target_link_libraries(hyprutils PRIVATE PkgConfig::epoll)
-elseif(NOT HAS_EPOLL OR NOT HAS_EVENTFD OR NOT HAS_TIMERFD)
-  message(FATAL_ERROR "epoll, eventfd, and timerfd are required")
-endif()
+target_link_libraries(hyprutils PkgConfig::deps ${EVENT_LOOP_LIBRARIES})
 
 if(BUILD_TESTING)
   # GTest

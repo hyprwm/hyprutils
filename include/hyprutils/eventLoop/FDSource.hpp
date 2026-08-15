@@ -16,7 +16,8 @@ namespace Hyprutils::EventLoop {
         IFDSource& operator=(const IFDSource&) = delete;
         IFDSource& operator=(IFDSource&&)      = delete;
 
-        // HUP and ERROR are always reported and cannot be requested in mask.
+        // HUP and ERROR are reported while enabled and cannot be requested in mask.
+        // An empty mask disables the source completely.
         virtual std::expected<void, std::string> setMask(FdEventMask mask) = 0;
         virtual void                             remove()                  = 0;
         virtual const OS::CFileDescriptor&       fd() const                = 0;

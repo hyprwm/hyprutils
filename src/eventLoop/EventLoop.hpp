@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "Executor.hpp"
+#include "backend/Backend.hpp"
 
 namespace Hyprutils::EventLoop {
     class CFDSource;
@@ -38,34 +39,31 @@ namespace Hyprutils::EventLoop {
         void                                                timerChanged(bool cleanup = true);
 
       private:
-        std::expected<Memory::CSharedPointer<CFDSource>, std::string>   addFDInternal(OS::CFileDescriptor&& fd, FdEventMask mask,
-                                                                                      std::function<void(IFDSource&, FdEventMask)>&& callback);
-        std::expected<void, std::string>                                dispatchCycle(int timeout);
-        std::expected<void, std::string>                                drainReady(int timeout);
-        void                                                            dispatchTimers();
-        void                                                            dispatchIdles();
-        void                                                            dispatchPostHooks();
-        void                                                            drainExecutor();
-        void                                                            wakeIdle();
-        void                                                            drainEventFD(int fd);
-        void                                                            detachAll();
+        std::expected<Memory::CSharedPointer<CFDSource>, std::string>    addFDInternal(OS::CFileDescriptor&& fd, FdEventMask mask,
+                                                                                       std::function<void(IFDSource&, FdEventMask)>&& callback);
+        std::expected<void, std::string>                                 dispatchCycle(int timeout);
+        std::expected<void, std::string>                                 drainReady(int timeout);
+        void                                                             dispatchTimers();
+        void                                                             dispatchIdles();
+        void                                                             dispatchPostHooks();
+        void                                                             drainExecutor();
+        void                                                             wakeIdle();
+        void                                                             detachAll();
 
-        OS::CFileDescriptor                                             m_epollFD;
-        int                                                             m_timerFD     = -1;
-        int                                                             m_idleFD      = -1;
-        uint64_t                                                        m_nextID      = 1;
-        bool                                                            m_dispatching = false;
-        bool                                                            m_running     = false;
-        std::optional<std::string>                                      m_pendingError;
+        Memory::CUniquePointer<CEventLoopBackend>                        m_backend;
+        uintptr_t                                                        m_nextID      = 1;
+        bool                                                             m_dispatching = false;
+        bool                                                             m_running     = false;
+        std::optional<std::string>                                       m_pendingError;
 
-        Memory::CWeakPointer<CEventLoop>                                m_self;
+        Memory::CWeakPointer<CEventLoop>                                 m_self;
 
-        std::unordered_map<uint64_t, Memory::CSharedPointer<CFDSource>> m_sources;
-        std::vector<Memory::CWeakPointer<CTimer>>                       m_timers;
-        std::vector<Memory::CWeakPointer<CPostDispatchHook>>            m_postHooks;
-        std::deque<std::function<void()>>                               m_idles;
+        std::unordered_map<uintptr_t, Memory::CSharedPointer<CFDSource>> m_sources;
+        std::vector<Memory::CWeakPointer<CTimer>>                        m_timers;
+        std::vector<Memory::CWeakPointer<CPostDispatchHook>>             m_postHooks;
+        std::deque<std::function<void()>>                                m_idles;
 
-        Memory::CAtomicSharedPointer<SExecutorState>                    m_executorState;
-        Memory::CAtomicSharedPointer<ILoopExecutor>                     m_executor;
+        Memory::CAtomicSharedPointer<SExecutorState>                     m_executorState;
+        Memory::CAtomicSharedPointer<ILoopExecutor>                      m_executor;
     };
 }

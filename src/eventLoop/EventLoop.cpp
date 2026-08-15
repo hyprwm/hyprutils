@@ -7,13 +7,6 @@
 #include <hyprutils/utils/ScopeGuard.hpp>
 
 #include <algorithm>
-#include <cerrno>
-#include <cstring>
-#include <limits>
-#include <sys/epoll.h>
-#include <sys/eventfd.h>
-#include <sys/timerfd.h>
-#include <unistd.h>
 #include <utility>
 
 using namespace Hyprutils::EventLoop;
@@ -23,45 +16,12 @@ using namespace Hyprutils::Utils;
 
 // A broken or permanently ready level-triggered source must not starve idles,
 // post-dispatch hooks, or executor work forever.
-static constexpr size_t MAX_EVENTS_PER_DISPATCH = 256;
+static constexpr size_t                 MAX_EVENTS_PER_DISPATCH = 256;
 
-static std::string      systemError(const std::string& operation) {
-    return operation + ": " + std::strerror(errno);
-}
-
-static std::expected<uint32_t, std::string> epollMask(FdEventMask mask) {
+static std::expected<void, std::string> validateMask(FdEventMask mask) {
     if ((mask & eEventMask::HUP) || (mask & eEventMask::ERROR))
         return std::unexpected("HUP and ERROR are reported events and cannot be requested");
-
-    uint32_t events = 0;
-    if (mask & eEventMask::READABLE)
-        events |= EPOLLIN;
-    if (mask & eEventMask::WRITABLE)
-        events |= EPOLLOUT;
-    events |= EPOLLRDHUP;
-    return events;
-}
-
-static FdEventMask eventMask(uint32_t events) {
-    FdEventMask mask = eEventMask::EMPTY;
-    if (events & EPOLLIN)
-        mask |= eEventMask::READABLE;
-    if (events & EPOLLOUT)
-        mask |= eEventMask::WRITABLE;
-    if (events & (EPOLLHUP | EPOLLRDHUP))
-        mask |= eEventMask::HUP;
-    if (events & EPOLLERR)
-        mask |= eEventMask::ERROR;
-    return mask;
-}
-
-static void signalEventFD(int fd) {
-    const uint64_t value = 1;
-    while (write(fd, &value, sizeof(value)) < 0) {
-        if (errno == EINTR)
-            continue;
-        return;
-    }
+    return {};
 }
 
 std::expected<CSharedPointer<IEventLoop>, std::string> IEventLoop::create() {
@@ -81,59 +41,14 @@ void CEventLoop::setSelf(const CSharedPointer<CEventLoop>& self) {
 }
 
 std::expected<void, std::string> CEventLoop::init() {
-    m_epollFD = CFileDescriptor{epoll_create1(EPOLL_CLOEXEC)};
+    auto backend = CEventLoopBackend::create();
+    if (!backend)
+        return std::unexpected(backend.error());
+    m_backend = std::move(*backend);
 
-    if (!m_epollFD.isValid())
-        return std::unexpected(systemError("epoll_create1"));
-
-    CFileDescriptor timerFD{timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC | TFD_NONBLOCK)};
-
-    if (!timerFD.isValid())
-        return std::unexpected(systemError("timerfd_create"));
-
-    m_timerFD = timerFD.get();
-
-    auto timerSource = addFDInternal(std::move(timerFD), eEventMask::READABLE, [this](IFDSource&, FdEventMask events) {
-        if (!(events & eEventMask::READABLE))
-            return;
-        drainEventFD(m_timerFD);
-        dispatchTimers();
-    });
-    if (!timerSource)
-        return std::unexpected(timerSource.error());
-
-    CFileDescriptor idleFD{eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK)};
-
-    if (!idleFD.isValid())
-        return std::unexpected(systemError("eventfd"));
-
-    m_idleFD = idleFD.get();
-
-    auto idleSource = addFDInternal(std::move(idleFD), eEventMask::READABLE, [this](IFDSource&, FdEventMask events) {
-        if (events & eEventMask::READABLE)
-            drainEventFD(m_idleFD);
-    });
-    if (!idleSource)
-        return std::unexpected(idleSource.error());
-
-    m_executorState          = makeAtomicShared<SExecutorState>();
-    m_executorState->eventFD = CFileDescriptor{eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK)};
-
-    if (!m_executorState->eventFD.isValid())
-        return std::unexpected(systemError("eventfd"));
-
-    auto executorFD = m_executorState->eventFD.duplicate();
-    if (!executorFD.isValid())
-        return std::unexpected(systemError("fcntl"));
-
-    auto executorSource = addFDInternal(std::move(executorFD), eEventMask::READABLE, [this](IFDSource&, FdEventMask events) {
-        if (events & eEventMask::READABLE)
-            drainExecutor();
-    });
-    if (!executorSource)
-        return std::unexpected(executorSource.error());
-
-    m_executor = CAtomicSharedPointer<ILoopExecutor>{new CLoopExecutor{m_executorState}};
+    m_executorState       = makeAtomicShared<SExecutorState>();
+    m_executorState->wake = [backend = m_backend.get()] { backend->signalWake(); };
+    m_executor            = CAtomicSharedPointer<ILoopExecutor>{new CLoopExecutor{m_executorState}};
     return {};
 }
 
@@ -147,23 +62,15 @@ std::expected<CSharedPointer<IFDSource>, std::string> CEventLoop::addFD(CFileDes
 std::expected<CSharedPointer<CFDSource>, std::string> CEventLoop::addFDInternal(CFileDescriptor&& fd, FdEventMask mask, std::function<void(IFDSource&, FdEventMask)>&& callback) {
     if (!fd.isValid())
         return std::unexpected("cannot add an invalid file descriptor");
-
     if (!callback)
         return std::unexpected("cannot add a file descriptor without a callback");
+    if (auto result = validateMask(mask); !result)
+        return std::unexpected(result.error());
 
-    const auto events = epollMask(mask);
-    if (!events)
-        return std::unexpected(events.error());
-
-    const auto  id     = m_nextID++;
-    auto        source = makeShared<CFDSource>(*this, id, std::move(fd), mask, std::move(callback));
-    epoll_event event  = {
-        .events = *events,
-        .data   = {.u64 = id},
-    };
-
-    if (epoll_ctl(m_epollFD.get(), EPOLL_CTL_ADD, source->fd().get(), &event) < 0)
-        return std::unexpected(systemError("epoll_ctl(ADD)"));
+    const auto id     = m_nextID++;
+    auto       source = makeShared<CFDSource>(*this, id, std::move(fd), mask, std::move(callback));
+    if (auto result = m_backend->addFD(id, source->fd().get(), mask); !result)
+        return std::unexpected(result.error());
 
     m_sources.emplace(id, source);
     return source;
@@ -199,7 +106,7 @@ CAtomicSharedPointer<ILoopExecutor> CEventLoop::executor() {
 }
 
 int CEventLoop::fd() const {
-    return m_epollFD.get();
+    return m_backend ? m_backend->fd() : -1;
 }
 
 std::expected<void, std::string> CEventLoop::dispatch() {
@@ -229,10 +136,8 @@ void CEventLoop::stop() {
 
 std::expected<void, std::string> CEventLoop::dispatchCycle(int timeout) {
     auto keepAlive = m_self.lock();
-
     if (!keepAlive)
         return std::unexpected("event loop is being destroyed");
-
     if (m_dispatching)
         return std::unexpected("event loop dispatch is not reentrant");
 
@@ -246,44 +151,59 @@ std::expected<void, std::string> CEventLoop::dispatchCycle(int timeout) {
     if (m_pendingError)
         return std::unexpected(*m_pendingError);
 
-    auto result = drainReady(timeout);
-    if (!result)
+    if (auto result = drainReady(timeout); !result)
         return result;
-
     if (m_pendingError)
         return std::unexpected(*m_pendingError);
 
     dispatchIdles();
     dispatchPostHooks();
-
     return {};
 }
 
 std::expected<void, std::string> CEventLoop::drainReady(int timeout) {
-    std::vector<epoll_event> events;
-    size_t                   dispatched = 0;
+    size_t dispatched = 0;
 
     while (true) {
-        events.resize(std::max<size_t>(16, m_sources.size()));
-
-        int count = epoll_wait(m_epollFD.get(), events.data(), events.size(), timeout);
-        if (count < 0) {
-            if (errno == EINTR)
-                continue;
-            return std::unexpected(systemError("epoll_wait"));
-        }
-
-        if (count == 0)
+        auto events = m_backend->wait(timeout, MAX_EVENTS_PER_DISPATCH - dispatched);
+        if (!events)
+            return std::unexpected(events.error());
+        if (events->empty())
             return {};
 
         timeout = 0;
-        for (int i = 0; i < count; ++i) {
-            const auto sourceIt = m_sources.find(events[i].data.u64);
-            if (sourceIt == m_sources.end())
-                continue;
+        for (const auto& event : *events) {
+            if (event.type == eBackendEventType::TIMER)
+                dispatchTimers();
+            else if (event.type == eBackendEventType::WAKE)
+                drainExecutor();
+            else {
+                const auto sourceIt = m_sources.find(event.sourceID);
+                if (sourceIt == m_sources.end())
+                    continue;
 
-            auto source = sourceIt->second;
-            source->call(eventMask(events[i].events));
+                auto source = sourceIt->second;
+                if (!source->mask())
+                    continue;
+
+                const auto reported = event.events & (source->mask() | eEventMask::HUP | eEventMask::ERROR);
+                {
+                    CScopeGuard rearmGuard([this, id = event.sourceID, source] {
+                        const auto current = m_sources.find(id);
+
+                        if (current == m_sources.end() || current->second != source)
+                            return;
+
+                        if (auto result = m_backend->rearmFD(id, source->fd().get(), source->mask()); !result) {
+                            m_pendingError = result.error();
+                            wakeIdle();
+                        }
+                    });
+
+                    if (reported)
+                        source->call(reported);
+                }
+            }
 
             if (m_pendingError)
                 return std::unexpected(*m_pendingError);
@@ -296,22 +216,14 @@ std::expected<void, std::string> CEventLoop::drainReady(int timeout) {
 
 std::expected<void, std::string> CEventLoop::updateSourceMask(CFDSource& source, FdEventMask mask) {
     const auto sourceIt = m_sources.find(source.id());
+
     if (sourceIt == m_sources.end() || sourceIt->second.get() != &source)
         return std::unexpected("file descriptor source has been removed");
 
-    const auto events = epollMask(mask);
-    if (!events)
-        return std::unexpected(events.error());
+    if (auto result = validateMask(mask); !result)
+        return result;
 
-    epoll_event event = {
-        .events = *events,
-        .data   = {.u64 = source.id()},
-    };
-
-    if (epoll_ctl(m_epollFD.get(), EPOLL_CTL_MOD, source.fd().get(), &event) < 0)
-        return std::unexpected(systemError("epoll_ctl(MOD)"));
-
-    return {};
+    return m_backend->updateFD(source.id(), source.fd().get(), mask);
 }
 
 void CEventLoop::removeSource(CFDSource& source) {
@@ -320,14 +232,13 @@ void CEventLoop::removeSource(CFDSource& source) {
         return;
 
     auto keepAlive = sourceIt->second;
-    if (m_epollFD.isValid() && source.fd().isValid())
-        epoll_ctl(m_epollFD.get(), EPOLL_CTL_DEL, source.fd().get(), nullptr);
+    m_backend->removeFD(source.id(), source.fd().get());
     m_sources.erase(sourceIt);
     keepAlive->detach();
 }
 
 void CEventLoop::timerChanged(bool cleanup) {
-    if (m_timerFD < 0)
+    if (!m_backend)
         return;
 
     // A timer destructor calls this while its shared-pointer control block is still
@@ -338,30 +249,16 @@ void CEventLoop::timerChanged(bool cleanup) {
     std::optional<Timestamp> next;
     for (const auto& weakTimer : m_timers) {
         const auto timer = weakTimer.lock();
+
         if (!timer || !timer->expiresAt())
             continue;
+
         if (!next || *timer->expiresAt() < *next)
             next = timer->expiresAt();
     }
 
-    itimerspec spec = {};
-    if (next) {
-        auto remaining = *next - std::chrono::steady_clock::now();
-        if (remaining <= Duration::zero())
-            remaining = std::chrono::nanoseconds{1};
-
-        auto seconds = std::chrono::duration_cast<std::chrono::seconds>(remaining);
-        if (seconds.count() > std::numeric_limits<time_t>::max())
-            seconds = std::chrono::seconds{std::numeric_limits<time_t>::max()};
-        const auto nanos = std::chrono::duration_cast<std::chrono::nanoseconds>(remaining - seconds);
-        spec.it_value    = {
-            .tv_sec  = seconds.count(),
-            .tv_nsec = std::min<int64_t>(nanos.count(), 999999999),
-        };
-    }
-
-    if (timerfd_settime(m_timerFD, 0, &spec, nullptr) < 0) {
-        m_pendingError = systemError("timerfd_settime");
+    if (auto result = m_backend->armTimer(next); !result) {
+        m_pendingError = result.error();
         wakeIdle();
     }
 }
@@ -380,6 +277,7 @@ void CEventLoop::dispatchTimers() {
     for (const auto& timer : expired) {
         if (timer.strongRef() == 1 || !timer->expired())
             continue;
+
         timer->fire();
     }
 }
@@ -387,9 +285,9 @@ void CEventLoop::dispatchTimers() {
 void CEventLoop::dispatchIdles() {
     auto idles = std::move(m_idles);
     m_idles.clear();
-
-    for (auto& idle : idles)
+    for (auto& idle : idles) {
         idle();
+    }
 }
 
 void CEventLoop::dispatchPostHooks() {
@@ -409,8 +307,6 @@ void CEventLoop::dispatchPostHooks() {
 }
 
 void CEventLoop::drainExecutor() {
-    drainEventFD(m_executorState->eventFD.get());
-
     std::deque<std::function<void()>> callbacks;
     {
         std::lock_guard lock(m_executorState->mutex);
@@ -422,13 +318,8 @@ void CEventLoop::drainExecutor() {
 }
 
 void CEventLoop::wakeIdle() {
-    if (m_idleFD >= 0)
-        signalEventFD(m_idleFD);
-}
-
-void CEventLoop::drainEventFD(int fd) {
-    uint64_t value = 0;
-    while (read(fd, &value, sizeof(value)) < 0 && errno == EINTR) {}
+    if (m_backend)
+        m_backend->signalWake();
 }
 
 void CEventLoop::detachAll() {
@@ -439,13 +330,15 @@ void CEventLoop::detachAll() {
         std::lock_guard lock(m_executorState->mutex);
         m_executorState->active = false;
         discardedCallbacks.swap(m_executorState->callbacks);
-        m_executorState->eventFD.reset();
+        m_executorState->wake = {};
     }
 
     for (const auto& weakTimer : m_timers) {
         if (auto timer = weakTimer.lock())
             timer->detach();
     }
+
+    m_backend.reset();
 
     for (auto& [id, source] : m_sources)
         source->detach();
@@ -456,7 +349,4 @@ void CEventLoop::detachAll() {
     m_idles.clear();
     m_executor.reset();
     m_executorState.reset();
-    m_timerFD = -1;
-    m_idleFD  = -1;
-    m_epollFD.reset();
 }

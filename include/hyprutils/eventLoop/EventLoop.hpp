@@ -32,8 +32,9 @@ namespace Hyprutils::EventLoop {
 
         static std::expected<Memory::CSharedPointer<IEventLoop>, std::string> create();
 
-        // The event loop takes ownership of fd. HUP and ERROR are always reported and
-        // must not be included in mask. Readiness callbacks must make progress because
+        // The event loop takes ownership of fd. HUP and ERROR are reported while the
+        // source is enabled and must not be included in mask. An empty mask disables the
+        // source completely. Readiness callbacks must make progress because
         // dispatch() drains level-triggered events until quiet (with a fairness limit).
         virtual std::expected<Memory::CSharedPointer<IFDSource>, std::string> addFD(OS::CFileDescriptor&& fd, FdEventMask mask,
                                                                                     std::function<void(IFDSource&, FdEventMask)>&& callback) = 0;
@@ -51,7 +52,7 @@ namespace Hyprutils::EventLoop {
         // This is the only event-loop object intended for cross-thread use.
         virtual Memory::CAtomicSharedPointer<ILoopExecutor> executor() = 0;
 
-        // The returned epoll descriptor remains owned by the event loop.
+        // The returned poll-readable descriptor remains owned by the event loop.
         virtual int                              fd() const  = 0;
         virtual std::expected<void, std::string> dispatch()  = 0;
         virtual std::expected<void, std::string> enterLoop() = 0;
