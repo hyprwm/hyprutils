@@ -231,10 +231,10 @@ void CEventLoopBackend::runWorker(SBackendState* state) {
             if (syncTarget > 0)
                 state->syncCompleted = std::max(state->syncCompleted, syncTarget);
         }
-        if (syncTarget > 0)
-            state->syncCV.notify_all();
         if (!readyFDs.empty() || timerReady || syncTarget > 0 || wokeThisRound)
             notify(*state);
+        if (syncTarget > 0)
+            state->syncCV.notify_all();
     }
 }
 
