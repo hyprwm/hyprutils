@@ -217,6 +217,7 @@ void CEventLoopBackend::runWorker(SBackendState* state) {
         if (state->stopping)
             return;
 
+        bool wokeThisRound = false;
         {
             std::lock_guard lock(state->pendingMutex);
             for (const auto& [sourceID, mask] : readyFDs) {
@@ -224,6 +225,7 @@ void CEventLoopBackend::runWorker(SBackendState* state) {
                 pendingIt->second |= mask;
             }
             state->timerPending  = state->timerPending || timerReady;
+            wokeThisRound        = state->wakeRequested;
             state->wakePending   = state->wakePending || state->wakeRequested;
             state->wakeRequested = false;
             if (syncTarget > 0)
@@ -231,7 +233,7 @@ void CEventLoopBackend::runWorker(SBackendState* state) {
         }
         if (syncTarget > 0)
             state->syncCV.notify_all();
-        if (!readyFDs.empty() || timerReady || syncTarget > 0)
+        if (!readyFDs.empty() || timerReady || syncTarget > 0 || wokeThisRound)
             notify(*state);
     }
 }
