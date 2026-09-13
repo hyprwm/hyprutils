@@ -16,7 +16,9 @@ std::string Hyprutils::I18n::extractLocale(std::string locale) {
     if (locale == "*")
         return "en_US";
 
-    if (locale.contains('='))
+    if (locale.contains("LC_MESSAGES="))
+        locale = locale.substr(locale.find("LC_MESSAGES=") + 12);
+    else if (locale.contains('='))
         locale = locale.substr(locale.find('=') + 1);
 
     if (locale.contains('.'))
