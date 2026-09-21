@@ -16,11 +16,13 @@ std::string Hyprutils::I18n::extractLocale(std::string locale) {
     if (locale == "*")
         return "en_US";
 
-    if (locale.contains('='))
-        locale = locale.substr(locale.find('=') + 1);
+    if (size_t pos = locale.find("LC_MESSAGES="); pos != std::string::npos)
+        locale = locale.substr(pos + 12);
+    else if (size_t pos = locale.find('='); pos != std::string::npos)
+        locale = locale.substr(pos + 1);
 
-    if (locale.contains('.'))
-        locale = locale.substr(0, locale.find('.'));
+    if (size_t pos = locale.find('.'); pos != std::string::npos)
+        locale = locale.substr(0, pos);
 
     return locale;
 }
