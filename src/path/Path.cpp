@@ -1,5 +1,6 @@
 #include <hyprutils/path/Path.hpp>
 #include <hyprutils/string/VarList.hpp>
+#include <cstdlib>
 #include <filesystem>
 #include <expected>
 
@@ -49,6 +50,18 @@ namespace Hyprutils::Path {
             return std::nullopt;
 
         return xdgConfigHome;
+    }
+
+    std::optional<std::string> getDataDir(const std::string& appName) {
+        const auto dataHome = std::getenv("XDG_DATA_HOME");
+        if (dataHome && std::filesystem::path(dataHome).is_absolute())
+            return (std::filesystem::path(dataHome) / appName).string();
+
+        const auto homeDir = std::getenv("HOME");
+        if (!homeDir || !std::filesystem::path(homeDir).is_absolute())
+            return std::nullopt;
+
+        return (std::filesystem::path(homeDir) / ".local/share" / appName).string();
     }
 
     using T = std::optional<std::string>;

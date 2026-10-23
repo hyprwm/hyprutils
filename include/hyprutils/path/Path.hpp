@@ -44,6 +44,11 @@ namespace Hyprutils::Path {
     */
     std::optional<std::string> getXdgConfigHome();
 
+    /** Retrieves a data path for storing persistent data based on appName. appName must
+     *  be valid to put inside a path.
+     */
+    std::optional<std::string> getDataDir(const std::string& appName);
+
     /** Searches for a config according to the XDG Base Directory specification.
         Returns a pair of the full path to a config and the base path.
         Returns std::nullopt in case of a non-existent value.

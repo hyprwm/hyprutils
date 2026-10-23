@@ -1,5 +1,6 @@
 #include <hyprutils/path/Path.hpp>
 
+#include <cstdlib>
 #include <filesystem>
 #include <gtest/gtest.h>
 
@@ -57,4 +58,64 @@ TEST(Path, resolvePath_errors) {
     EXPECT_FALSE(resolvePath("").has_value());
 
     EXPECT_FALSE(resolvePath("~nohome").has_value());
+}
+
+class DataDirTest : public testing::Test {
+  protected:
+    void SetUp() override {
+        if (const auto homeDir = std::getenv("HOME"))
+            m_oldHome = homeDir;
+        if (const auto dataHome = std::getenv("XDG_DATA_HOME"))
+            m_oldDataHome = dataHome;
+
+        ASSERT_EQ(setenv("HOME", "/home/test", 1), 0);
+        ASSERT_EQ(unsetenv("XDG_DATA_HOME"), 0);
+    }
+
+    void TearDown() override {
+        if (m_oldHome)
+            setenv("HOME", m_oldHome->c_str(), 1);
+        else
+            unsetenv("HOME");
+
+        if (m_oldDataHome)
+            setenv("XDG_DATA_HOME", m_oldDataHome->c_str(), 1);
+        else
+            unsetenv("XDG_DATA_HOME");
+    }
+
+    std::optional<std::string> m_oldHome;
+    std::optional<std::string> m_oldDataHome;
+};
+
+TEST_F(DataDirTest, UsesXdgDataHome) {
+    ASSERT_EQ(setenv("XDG_DATA_HOME", "/custom/data", 1), 0);
+    EXPECT_EQ(getDataDir("hyprpaper").value(), "/custom/data/hyprpaper");
+    EXPECT_EQ(getDataDir("hyprland").value(), "/custom/data/hyprland");
+
+    ASSERT_EQ(setenv("XDG_DATA_HOME", "/other/data/", 1), 0);
+    ASSERT_EQ(unsetenv("HOME"), 0);
+    EXPECT_EQ(getDataDir("hyprpaper").value(), "/other/data/hyprpaper");
+}
+
+TEST_F(DataDirTest, FallsBackToHome) {
+    EXPECT_EQ(getDataDir("hyprpaper").value(), "/home/test/.local/share/hyprpaper");
+
+    for (const auto dataHome : {"", "relative/data"}) {
+        ASSERT_EQ(setenv("XDG_DATA_HOME", dataHome, 1), 0);
+        EXPECT_EQ(getDataDir("hyprpaper").value(), "/home/test/.local/share/hyprpaper");
+    }
+
+    ASSERT_EQ(setenv("HOME", "/home/other/", 1), 0);
+    EXPECT_EQ(getDataDir("hyprpaper").value(), "/home/other/.local/share/hyprpaper");
+}
+
+TEST_F(DataDirTest, RequiresAbsoluteBase) {
+    ASSERT_EQ(unsetenv("HOME"), 0);
+    EXPECT_FALSE(getDataDir("hyprpaper").has_value());
+
+    for (const auto homeDir : {"", "relative/home"}) {
+        ASSERT_EQ(setenv("HOME", homeDir, 1), 0);
+        EXPECT_FALSE(getDataDir("hyprpaper").has_value());
+    }
 }
