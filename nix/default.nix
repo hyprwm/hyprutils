@@ -36,10 +36,9 @@ customStdenv.mkDerivation {
     pkg-config
   ];
 
-  buildInputs = flatten [
-    gtest
-    pixman
-  ];
+  propagatedBuildInputs = [ pixman ];
+
+  buildInputs = [ gtest ];
 
   outputs = [
     "out"
