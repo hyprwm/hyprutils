@@ -47,6 +47,8 @@ namespace {
 
         fs::path m_directory;
     };
+
+    class KVStateSyncFailureTest : public KVStateFileBackendTest, public testing::WithParamInterface<bool> {};
 }
 
 TEST_F(KVStateFileBackendTest, MissingReadDoesNotCreateFiles) {
@@ -134,6 +136,163 @@ TEST_F(KVStateFileBackendTest, ReplacementIsAtomicAndPrivate) {
     EXPECT_EQ(*result, std::optional<std::string>{"replacement"});
     EXPECT_EQ(directoryEntries(m_directory), (std::set<fs::path>{"state"}));
 }
+
+TEST_F(KVStateFileBackendTest, SynchronizesFlushedFileBeforeRenameAndParentAfterwards) {
+    const auto path   = m_directory / "state";
+    auto       reader = makeKVStateFileBackend(path);
+    ASSERT_TRUE(reader->write("original"));
+    struct stat parentStatus{};
+    ASSERT_EQ(::stat(m_directory.c_str(), &parentStatus), 0);
+
+    int  syncs   = 0;
+    auto backend = makeKVStateFileBackend(path, [&](int fd) {
+        ++syncs;
+        struct stat status{};
+        EXPECT_EQ(::fstat(fd, &status), 0);
+        const auto visible = reader->read();
+        EXPECT_TRUE(visible);
+        if (syncs == 1) {
+            EXPECT_TRUE(S_ISREG(status.st_mode));
+            EXPECT_EQ(status.st_mode & 0777, 0600);
+            if (visible) {
+                EXPECT_EQ(*visible, std::optional<std::string>{"original"});
+            }
+
+            size_t temporaries = 0;
+            for (const auto& entry : fs::directory_iterator(m_directory)) {
+                if (!entry.is_directory())
+                    continue;
+                ++temporaries;
+                EXPECT_EQ(entry.status().permissions() & fs::perms::mask, fs::perms::owner_all);
+                const auto  temporary = entry.path() / "state";
+                struct stat temporaryStatus{};
+                EXPECT_EQ(::stat(temporary.c_str(), &temporaryStatus), 0);
+                EXPECT_EQ(status.st_dev, temporaryStatus.st_dev);
+                EXPECT_EQ(status.st_ino, temporaryStatus.st_ino);
+                std::ifstream contents(temporary, std::ios::binary);
+                EXPECT_EQ(std::string(std::istreambuf_iterator<char>{contents}, std::istreambuf_iterator<char>{}), "replacement");
+                EXPECT_FALSE(contents.bad());
+            }
+            EXPECT_EQ(temporaries, 1U);
+        } else {
+            EXPECT_EQ(syncs, 2);
+            EXPECT_TRUE(S_ISDIR(status.st_mode));
+            EXPECT_EQ(status.st_dev, parentStatus.st_dev);
+            EXPECT_EQ(status.st_ino, parentStatus.st_ino);
+            if (visible) {
+                EXPECT_EQ(*visible, std::optional<std::string>{"replacement"});
+            }
+        }
+        return ::fsync(fd);
+    });
+
+    ASSERT_TRUE(backend->write("replacement"));
+    EXPECT_EQ(syncs, 2);
+    EXPECT_EQ(directoryEntries(m_directory), (std::set<fs::path>{"state"}));
+}
+
+TEST_F(KVStateFileBackendTest, InterruptedFileAndDirectorySyncAreRetried) {
+    int  syncs   = 0;
+    auto backend = makeKVStateFileBackend(m_directory / "state", [&](int fd) {
+        if (++syncs % 2) {
+            errno = EINTR;
+            return -1;
+        }
+        return ::fsync(fd);
+    });
+
+    ASSERT_TRUE(backend->write("contents"));
+    EXPECT_EQ(syncs, 4);
+    const auto result = backend->read();
+    ASSERT_TRUE(result);
+    EXPECT_EQ(*result, std::optional<std::string>{"contents"});
+}
+
+TEST_P(KVStateSyncFailureTest, ReportsSyncErrorAndCleansTemporaryForCreationAndReplacement) {
+    const bool failDirectory = GetParam();
+    const auto path          = m_directory / "state";
+    auto       reader        = makeKVStateFileBackend(path);
+    for (const bool existing : {false, true}) {
+        SCOPED_TRACE(existing);
+        if (existing) {
+            ASSERT_TRUE(reader->write("original"));
+        }
+
+        int        syncs   = 0;
+        auto       backend = makeKVStateFileBackend(path, [&](int fd) {
+            ++syncs;
+            struct stat status{};
+            EXPECT_EQ(::fstat(fd, &status), 0);
+            if (sc<bool>(S_ISDIR(status.st_mode)) == failDirectory) {
+                errno = ENOSPC;
+                return -1;
+            }
+            return ::fsync(fd);
+        });
+
+        const auto result = backend->write("replacement");
+        ASSERT_FALSE(result);
+        EXPECT_EQ(result.error(), std::error_code(ENOSPC, std::generic_category()));
+        EXPECT_EQ(syncs, failDirectory ? 2 : 1);
+        const auto visible = reader->read();
+        ASSERT_TRUE(visible);
+        if (failDirectory)
+            EXPECT_EQ(*visible, std::optional<std::string>{"replacement"});
+        else if (existing)
+            EXPECT_EQ(*visible, std::optional<std::string>{"original"});
+        else
+            EXPECT_FALSE(visible->has_value());
+        EXPECT_EQ(directoryEntries(m_directory), (existing || failDirectory ? std::set<fs::path>{"state"} : std::set<fs::path>{}));
+    }
+}
+
+TEST_P(KVStateSyncFailureTest, FailedSavePreservesMemoryAndRejectsLaterMutations) {
+    const bool failDirectory = GetParam();
+    const auto path          = m_directory / "state";
+    {
+        CKVStateFile original{path};
+        ASSERT_TRUE(original.insert("entry", {{"value", "original"}}));
+    }
+
+    int  syncs   = 0;
+    auto backend = makeKVStateFileBackend(path, [&](int fd) {
+        ++syncs;
+        struct stat status{};
+        EXPECT_EQ(::fstat(fd, &status), 0);
+        if (sc<bool>(S_ISDIR(status.st_mode)) == failDirectory) {
+            errno = EIO;
+            return -1;
+        }
+        return ::fsync(fd);
+    });
+    auto state   = SKVStateFileAccess::create(std::move(backend), [] { return CKVStateEntry::TimePoint{}; });
+    ASSERT_TRUE(state->good());
+    auto* entry = state->get("entry");
+    ASSERT_NE(entry, nullptr);
+    const auto modified = entry->lastModified();
+
+    EXPECT_FALSE(entry->set("value", "replacement"));
+    EXPECT_FALSE(state->good());
+    EXPECT_EQ(state->size(), 1U);
+    EXPECT_EQ(state->get("entry"), entry);
+    EXPECT_EQ(entry->get("value"), std::optional<std::string_view>{"original"});
+    EXPECT_EQ(entry->lastModified(), modified);
+    EXPECT_FALSE(entry->set("value", "later"));
+    EXPECT_FALSE(state->insert("later", {}));
+    EXPECT_FALSE(state->remove("entry"));
+    EXPECT_EQ(state->pruneOld(0), 0U);
+    EXPECT_EQ(syncs, failDirectory ? 2 : 1);
+
+    CKVStateFile loaded{path};
+    ASSERT_TRUE(loaded.good());
+    const auto* persisted = loaded.get("entry");
+    ASSERT_NE(persisted, nullptr);
+    EXPECT_EQ(persisted->get("value"), std::optional<std::string_view>{failDirectory ? "replacement" : "original"});
+    EXPECT_EQ(persisted->lastModified(), failDirectory ? modified + std::chrono::milliseconds{1} : modified);
+    EXPECT_EQ(directoryEntries(m_directory), (std::set<fs::path>{"state"}));
+}
+
+INSTANTIATE_TEST_SUITE_P(KVState, KVStateSyncFailureTest, testing::Bool(), [](const testing::TestParamInfo<bool>& info) { return info.param ? "Directory" : "File"; });
 
 TEST_F(KVStateFileBackendTest, BinaryPayloadSpansReadAndWriteBuffers) {
     std::string contents(256 * 1024, '\0');

@@ -53,7 +53,9 @@ namespace Hyprutils::State {
      * This is a persistent, on-disk file that can be accessed.
      * Creating it will populate it with data if it already exists
      * A missing file is an empty store. A failed load leaves an empty, bad store.
-     * Mutations persist immediately. A failed save preserves the previous state and marks the store bad.
+     * Mutations save immediately, syncing the file before atomic replacement and its parent directory afterwards.
+     * A failed save preserves the previous in-memory state and marks the store bad, but does not guarantee on-disk rollback.
+     * If replacement succeeds but directory synchronization fails, the new state is visible but its durability is uncertain.
      * Bad stores reject further mutations. Only one writer per file is supported; access is not thread-safe.
      */
     class CKVStateFile {

@@ -1,16 +1,20 @@
 #include "KVStateFile.hpp"
 
 #include <hyprutils/memory/Casts.hpp>
+#include <hyprutils/os/FileDescriptor.hpp>
 #include <hyprutils/utils/ScopeGuard.hpp>
 
 #include <algorithm>
+#include <cerrno>
 #include <filesystem>
 #include <format>
 #include <fstream>
 #include <random>
+#include <unistd.h>
 
 using namespace Hyprutils::State;
 using namespace Hyprutils::Memory;
+using namespace Hyprutils::OS;
 using namespace Hyprutils::Utils;
 
 static std::unexpected<std::error_code> ioError() {
@@ -31,7 +35,8 @@ static std::expected<void, std::error_code> writeAll(std::ofstream& stream, std:
 namespace {
     class CKVStateFileBackend final : public IKVStateFileBackend {
       public:
-        explicit CKVStateFileBackend(std::filesystem::path path) : m_path(std::filesystem::absolute(path, m_pathError)) {}
+        explicit CKVStateFileBackend(std::filesystem::path path, KVStateFileSync sync) :
+            m_path(std::filesystem::absolute(path, m_pathError)), m_sync(sync ? std::move(sync) : ::fsync) {}
 
         std::expected<std::optional<std::string>, std::error_code> read() override {
             if (m_pathError)
@@ -73,6 +78,10 @@ namespace {
             if (!std::filesystem::is_directory(parentStatus))
                 return std::unexpected(std::make_error_code(std::errc::not_a_directory));
 
+            CFileDescriptor parent{::open(m_path.parent_path().c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC)};
+            if (!parent.isValid())
+                return std::unexpected(std::error_code(errno, std::generic_category()));
+
             std::random_device random;
             const auto         directory = m_path.parent_path() / std::format(".hyprutils-kvstate-{:08x}{:08x}", random(), random());
             const auto         temporary = directory / "state";
@@ -104,6 +113,12 @@ namespace {
             if (const auto result = writeAll(stream, contents); !result)
                 return result;
 
+            stream.flush();
+            if (!stream)
+                return ioError();
+            if (const auto result = synchronize(stream.native_handle()); !result)
+                return result;
+
             stream.close();
             if (!stream)
                 return ioError();
@@ -111,15 +126,25 @@ namespace {
             if (error)
                 return std::unexpected(error);
 
-            return {};
+            // The replacement is already visible; a sync failure cannot roll it back.
+            return synchronize(parent.get());
         }
 
       private:
+        std::expected<void, std::error_code> synchronize(int fd) {
+            while (m_sync(fd) < 0) {
+                if (errno != EINTR)
+                    return std::unexpected(std::error_code(errno, std::generic_category()));
+            }
+            return {};
+        }
+
         std::error_code       m_pathError;
         std::filesystem::path m_path;
+        KVStateFileSync       m_sync;
     };
 }
 
-CUniquePointer<IKVStateFileBackend> Hyprutils::State::makeKVStateFileBackend(std::filesystem::path path) {
-    return makeUnique<CKVStateFileBackend>(std::move(path));
+CUniquePointer<IKVStateFileBackend> Hyprutils::State::makeKVStateFileBackend(std::filesystem::path path, KVStateFileSync sync) {
+    return makeUnique<CKVStateFileBackend>(std::move(path), std::move(sync));
 }
