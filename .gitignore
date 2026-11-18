@@ -46,3 +46,8 @@ cmake_install.cmake
 compile_commands.json
 hyprutils.pc
 .envrc
+
+# docs
+!docs/Makefile
+docs/_build/
+docs/.venv/

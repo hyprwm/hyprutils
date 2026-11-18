@@ -1,0 +1,18 @@
+[project]
+name = "hyprutils-docs"
+version = "0"
+description = "Sphinx documentation for hyprutils"
+requires-python = ">=3.11"
+dependencies = [
+    "sphinx>=8.1",
+    "furo>=2024.8.6",
+    "sphinx-copybutton>=0.5.2",
+    "sphinx-design>=0.6.1",
+]
+
+[dependency-groups]
+dev = ["sphinx-autobuild>=2024.10.3"]
+
+[tool.uv]
+# The docs are not a Python package, just an environment to build them in.
+package = false
